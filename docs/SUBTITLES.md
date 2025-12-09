@@ -1,6 +1,6 @@
 # Subtitle System
 
-Cinephage includes comprehensive subtitle management with 8 built-in providers and support for 150+ languages.
+Cinephage includes comprehensive subtitle management with 8 built-in providers and support for 80+ languages.
 
 ## Providers
 

@@ -1,6 +1,8 @@
 # Indexers
 
-Cinephage includes built-in support for 23+ torrent indexers using both Cardigann-compatible YAML definitions and native TypeScript implementations. No external tools like Jackett or Prowlarr are required for basic functionality.
+Cinephage includes built-in support for ~20 torrent indexers using both Cardigann-compatible YAML definitions and native TypeScript implementations. No external tools like Jackett or Prowlarr are required for basic functionality.
+
+> **Tip**: For indexers not built into Cinephage, use Torznab integration with [Prowlarr](https://prowlarr.com/) or [Jackett](https://github.com/Jackett/Jackett), which support 500+ indexers including sites with Cloudflare protection.
 
 This document serves as both usage documentation and a comprehensive catalog of indexers in the torrent ecosystem.
 
@@ -11,6 +13,7 @@ This document serves as both usage documentation and a comprehensive catalog of 
 | Status | Meaning |
 |--------|---------|
 | Supported | Built-in definition, tested and working |
+| Cloudflare Blocked | Definition exists but blocked by Cloudflare protection |
 | In Progress | Definition exists, needs testing or fixes |
 | Planned | On the roadmap for future support |
 | Torznab Only | Use via Prowlarr/Jackett Torznab integration |
@@ -25,7 +28,7 @@ This document serves as both usage documentation and a comprehensive catalog of 
 
 | Indexer | Content | Status | Notes |
 |---------|---------|--------|-------|
-| 1337x | Movies, TV, Games, Software | Supported | Top-tier, reliable |
+| 1337x | Movies, TV, Games, Software | Cloudflare Blocked | Definition exists; use Prowlarr + FlareSolverr |
 | The Pirate Bay | All content types | Planned | Historic, intermittent blocks |
 | TorrentGalaxy | Movies, TV, Games | Supported | Good for new releases |
 | LimeTorrents | Movies, TV, General | Supported | Decent coverage |

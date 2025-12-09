@@ -12,6 +12,7 @@ For completed features and changes, see the [CHANGELOG](../CHANGELOG.md).
 |--------|---------|
 | In Progress | Actively being worked on |
 | Planned | Confirmed for future development |
+| Not Yet Started | On the horizon but not actively in development |
 | Under Consideration | Being evaluated, not yet committed |
 | Known Limitation | Acknowledged gap or incomplete feature |
 
@@ -168,30 +169,77 @@ Create and publish an official Docker image.
 
 ---
 
-### Music Support
+## Not Yet Started
 
-Under Consideration | Low | **Area**: Library
+Features on the horizon but not actively in development.
 
-Lidarr-style music library management:
-- Artist/album discovery
-- Music indexer integration
-- Audio quality profiles
-- Metadata from MusicBrainz
+### Live TV / IPTV Support
 
-**Context**: Would extend Cinephage beyond video content to provide a truly unified media management solution.
+Not Yet Started | Medium | **Area**: Streaming
+
+Support for live TV streams and IPTV sources.
+
+**Context**: Would enable users to integrate live television alongside their on-demand library. Requires significant infrastructure work for stream handling.
 
 ---
 
-### Books Support
+### Improved Cloudflare Handling
 
-Under Consideration | Low | **Area**: Library
+Not Yet Started | Medium | **Area**: Infrastructure
 
-Readarr-style book and audiobook management:
-- Author/book discovery
-- Book indexer integration (Library Genesis, etc.)
-- Audiobook handling
+Better handling of Cloudflare-protected indexers.
 
-**Context**: Further extends the "all-in-one" vision to include written media.
+**Context**: Many popular indexers use Cloudflare protection. Better integration with FlareSolverr or similar solutions would improve reliability. Currently, some protected sites may fail or require workarounds via Prowlarr.
+
+---
+
+### Music Support (Lidarr-style)
+
+Not Yet Started | Low | **Area**: Library
+
+Artist/album discovery, music indexers, audio quality profiles.
+
+**Context**: Would extend Cinephage beyond video content. Requires integration with MusicBrainz for metadata and music-specific indexers.
+
+---
+
+### Books Support (Readarr-style)
+
+Not Yet Started | Low | **Area**: Library
+
+Book and ebook management with Library Genesis integration.
+
+**Context**: Further extends the "all-in-one" vision to include written media. Would require book-specific metadata sources and indexers.
+
+---
+
+### Audiobooks Support
+
+Not Yet Started | Low | **Area**: Library
+
+Audiobook library management and metadata.
+
+**Context**: Related to Books Support but with unique requirements for audio file handling and audiobook-specific metadata.
+
+---
+
+### Enhanced Streaming Provider Support
+
+Not Yet Started | Medium | **Area**: Streaming
+
+Deeper integration with streaming services for availability tracking.
+
+**Context**: Currently shows watch providers from TMDB. Enhanced support could include real-time availability checking and cross-platform search.
+
+---
+
+### Additional Subtitle Providers
+
+Not Yet Started | Low | **Area**: Subtitles
+
+Expand subtitle provider support beyond the current 8 providers.
+
+**Context**: More providers means better coverage for obscure content and languages.
 
 ---
 
@@ -241,4 +289,4 @@ We welcome community input on prioritization and new feature ideas!
 
 ---
 
-*Last updated: December 2024*
+*Last updated: December 2025*

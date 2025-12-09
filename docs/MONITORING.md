@@ -2,6 +2,8 @@
 
 Cinephage includes automated monitoring tasks that run in the background to keep your library up-to-date.
 
+> **Experimental Feature**: The monitoring system is functional but still being refined. You may encounter scheduling issues or edge cases. Please report any problems on [GitHub Issues](https://github.com/MoldyTaint/Cinephage/issues).
+
 ## Task Overview
 
 | Task | Default Interval | Description |

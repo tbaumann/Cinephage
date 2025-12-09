@@ -65,6 +65,8 @@ Required for movie and TV metadata.
 
 Configure qBittorrent for downloading.
 
+> **Note**: Currently only qBittorrent is supported. Transmission, Deluge, and other clients are planned for future releases. See the [Roadmap](ROADMAP.md) for details.
+
 1. Navigate to Settings > Integrations > Download Clients
 2. Click "Add Download Client"
 3. Enter connection details:

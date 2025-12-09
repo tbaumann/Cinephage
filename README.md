@@ -28,9 +28,24 @@
 Cinephage consolidates four separate applications into one streamlined experience. Instead of juggling Radarr, Sonarr, Prowlarr, and Bazarr with their own databases and configurations, you get everything in a single interface backed by a single database.
 
 - **Modern Stack** — SvelteKit 5 with TailwindCSS 4 delivers a fast, reactive interface that's a pleasure to use
-- **Built-in Indexers** — 23+ indexer definitions run natively with no external dependencies like Jackett or Prowlarr
+- **Built-in Indexers** — 20+ indexer definitions run natively with no external dependencies like Jackett or Prowlarr
 - **Smart Quality Scoring** — 100+ format attributes ensure you always get the best release for your preferences
-- **Zero External Services** — Just SQLite. No Redis, no Postgres, no message queues, no Docker required
+- **Simple Setup** — Works out of the box with SQLite. No complex infrastructure required to get started
+
+## Project Status
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Content Discovery | Stable | TMDB integration, trending, search |
+| Library Management | Stable | File watching, scanning, TMDB matching |
+| Quality Scoring | Stable | 4 profiles, 100+ format attributes |
+| Download Client | qBittorrent Only | Other clients planned |
+| Indexers | Stable | ~20 indexers + Torznab support |
+| Subtitles | Stable | 8 providers, 80+ languages |
+| Monitoring | Experimental | 5 tasks coded, may have bugs |
+| Live TV/IPTV | Not Started | Planned for future |
+
+**Legend:** Stable = Production-ready | Experimental = Works but expect issues | Not Started = Planned feature
 
 ## Features
 
@@ -45,7 +60,7 @@ Cinephage consolidates four separate applications into one streamlined experienc
 Browse TMDB for movies and TV shows, view trending content, full metadata, trailers, and watch providers.
 
 **Multi-Indexer Search**<br>
-23+ built-in indexers (public + private), Torznab support for Prowlarr/Jackett integration, parallel search with automatic deduplication.
+20+ built-in indexers (public + private), Torznab support for Prowlarr/Jackett integration, parallel search with automatic deduplication.
 
 **Quality Scoring**<br>
 4 built-in profiles (Best, Efficient, Micro, Streaming) that score resolution, audio codecs, HDR formats, and release groups. See [Quality Profiles](docs/QUALITY-PROFILES.md) for details.
@@ -68,7 +83,7 @@ qBittorrent integration with categories, priority handling for recent releases, 
 Automatic searches for missing content, quality upgrades, new episodes, and cutoff unmet items. See [Monitoring](docs/MONITORING.md) for configuration.
 
 **Subtitles**<br>
-8 providers, 150+ languages, auto-search on import, and language profiles. See [Subtitles](docs/SUBTITLES.md) for setup.
+8 providers, 80+ languages, auto-search on import, and language profiles. See [Subtitles](docs/SUBTITLES.md) for setup.
 
 </td>
 <td width="55%">
