@@ -45,8 +45,6 @@ Cinephage consolidates four separate applications into one streamlined experienc
 | Monitoring | Experimental | 5 tasks coded, may have bugs |
 | Live TV/IPTV | Not Started | Planned for future |
 
-**Legend:** Stable = Production-ready | Experimental = Works but expect issues | Not Started = Planned feature
-
 ## Features
 
 <table>
