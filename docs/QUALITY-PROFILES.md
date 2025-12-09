@@ -105,17 +105,19 @@ Releases are scored based on multiple factors. Higher scores indicate better qua
 
 ## Custom Profiles
 
-You can create custom quality profiles in Settings > Profiles:
+You can create custom profiles in Settings > Profiles based on the built-in profiles.
 
-1. Navigate to Settings > Profiles
-2. Click "Add Profile"
-3. Configure scoring weights for each attribute
-4. Set minimum and cutoff quality levels
-5. Assign the profile to movies or series
+### Currently Available
 
-Custom profiles allow you to:
+- Create profiles based on built-in profiles (Best, Efficient, Micro, Streaming)
+- Set profile name and description
+- Configure file size limits (min/max GB for movies, min/max MB for episodes)
+- Set as default profile for new content
+- Basic upgrade settings
 
-- Adjust scoring weights for resolution, audio, HDR
-- Set minimum acceptable quality thresholds
-- Define upgrade cutoffs (stop upgrading after reaching a quality level)
-- Whitelist or blacklist specific release groups
+### Not Yet Implemented
+
+- Custom format score editing (adjusting weights for resolution, audio, HDR)
+- Minimum acceptable quality thresholds
+- Upgrade cutoffs (stop upgrading after reaching a quality level)
+- Release group whitelists/blacklists

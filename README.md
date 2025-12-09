@@ -38,7 +38,7 @@ Cinephage consolidates four separate applications into one streamlined experienc
 |---------|--------|-------|
 | Content Discovery | Stable | TMDB integration, trending, search |
 | Library Management | Stable | File watching, scanning, TMDB matching |
-| Quality Scoring | Stable | 4 profiles, 100+ format attributes |
+| Quality Scoring | In Progress | 4 built-in profiles work; custom profiles incomplete |
 | Download Client | qBittorrent Only | Other clients planned |
 | Indexers | Stable | ~20 indexers + Torznab support |
 | Subtitles | Stable | 8 providers, 80+ languages |
