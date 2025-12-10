@@ -139,7 +139,11 @@ auto.m3u8
 
 		it('should return the only variant for single-item array', () => {
 			const variants: HLSVariant[] = [
-				{ url: 'https://example.com/720p.m3u8', bandwidth: 3000000, resolution: { width: 1280, height: 720 } }
+				{
+					url: 'https://example.com/720p.m3u8',
+					bandwidth: 3000000,
+					resolution: { width: 1280, height: 720 }
+				}
 			];
 			const result = selectBestVariant(variants);
 			expect(result).toEqual(variants[0]);
@@ -147,9 +151,21 @@ auto.m3u8
 
 		it('should select highest resolution variant', () => {
 			const variants: HLSVariant[] = [
-				{ url: 'https://example.com/480p.m3u8', bandwidth: 1500000, resolution: { width: 854, height: 480 } },
-				{ url: 'https://example.com/1080p.m3u8', bandwidth: 5000000, resolution: { width: 1920, height: 1080 } },
-				{ url: 'https://example.com/720p.m3u8', bandwidth: 3000000, resolution: { width: 1280, height: 720 } }
+				{
+					url: 'https://example.com/480p.m3u8',
+					bandwidth: 1500000,
+					resolution: { width: 854, height: 480 }
+				},
+				{
+					url: 'https://example.com/1080p.m3u8',
+					bandwidth: 5000000,
+					resolution: { width: 1920, height: 1080 }
+				},
+				{
+					url: 'https://example.com/720p.m3u8',
+					bandwidth: 3000000,
+					resolution: { width: 1280, height: 720 }
+				}
 			];
 
 			const result = selectBestVariant(variants);
@@ -158,9 +174,21 @@ auto.m3u8
 
 		it('should prefer higher bandwidth when resolutions are equal', () => {
 			const variants: HLSVariant[] = [
-				{ url: 'https://example.com/1080p-low.m3u8', bandwidth: 3000000, resolution: { width: 1920, height: 1080 } },
-				{ url: 'https://example.com/1080p-high.m3u8', bandwidth: 8000000, resolution: { width: 1920, height: 1080 } },
-				{ url: 'https://example.com/1080p-mid.m3u8', bandwidth: 5000000, resolution: { width: 1920, height: 1080 } }
+				{
+					url: 'https://example.com/1080p-low.m3u8',
+					bandwidth: 3000000,
+					resolution: { width: 1920, height: 1080 }
+				},
+				{
+					url: 'https://example.com/1080p-high.m3u8',
+					bandwidth: 8000000,
+					resolution: { width: 1920, height: 1080 }
+				},
+				{
+					url: 'https://example.com/1080p-mid.m3u8',
+					bandwidth: 5000000,
+					resolution: { width: 1920, height: 1080 }
+				}
 			];
 
 			const result = selectBestVariant(variants);
@@ -181,9 +209,17 @@ auto.m3u8
 		it('should prefer resolution over bandwidth when different', () => {
 			const variants: HLSVariant[] = [
 				// High bandwidth but low resolution
-				{ url: 'https://example.com/720p.m3u8', bandwidth: 8000000, resolution: { width: 1280, height: 720 } },
+				{
+					url: 'https://example.com/720p.m3u8',
+					bandwidth: 8000000,
+					resolution: { width: 1280, height: 720 }
+				},
 				// Lower bandwidth but higher resolution
-				{ url: 'https://example.com/1080p.m3u8', bandwidth: 4000000, resolution: { width: 1920, height: 1080 } }
+				{
+					url: 'https://example.com/1080p.m3u8',
+					bandwidth: 4000000,
+					resolution: { width: 1920, height: 1080 }
+				}
 			];
 
 			const result = selectBestVariant(variants);

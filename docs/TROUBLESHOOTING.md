@@ -27,6 +27,7 @@ This guide covers common issues and their solutions when using Cinephage.
 **Solutions**:
 
 1. Clear npm cache:
+
    ```bash
    npm cache clean --force
    rm -rf node_modules package-lock.json
@@ -34,6 +35,7 @@ This guide covers common issues and their solutions when using Cinephage.
    ```
 
 2. Check Node.js version:
+
    ```bash
    node --version  # Should be 20+
    ```
@@ -51,6 +53,7 @@ This guide covers common issues and their solutions when using Cinephage.
 **Solutions**:
 
 1. Run type checking first:
+
    ```bash
    npm run check
    ```
@@ -70,6 +73,7 @@ This guide covers common issues and their solutions when using Cinephage.
 **Solutions**:
 
 1. Check if port is in use:
+
    ```bash
    lsof -i :5173  # Development
    lsof -i :3000  # Production
@@ -93,11 +97,13 @@ This guide covers common issues and their solutions when using Cinephage.
 **Solutions**:
 
 1. Ensure only one instance is running:
+
    ```bash
    ps aux | grep node
    ```
 
 2. Kill any orphaned processes:
+
    ```bash
    pkill -f "node build/index.js"
    ```
@@ -111,11 +117,13 @@ This guide covers common issues and their solutions when using Cinephage.
 **Solutions**:
 
 1. Check database integrity:
+
    ```bash
    sqlite3 data/cinephage.db "PRAGMA integrity_check;"
    ```
 
 2. If corrupted, restore from backup:
+
    ```bash
    cp backup/cinephage.db data/cinephage.db
    ```
@@ -134,6 +142,7 @@ This guide covers common issues and their solutions when using Cinephage.
 **Solutions**:
 
 1. Check for schema conflicts:
+
    ```bash
    npm run db:generate
    ```
@@ -228,6 +237,7 @@ This guide covers common issues and their solutions when using Cinephage.
    - Username and password
 
 3. Verify network access:
+
    ```bash
    curl http://localhost:8080/api/v2/app/version
    ```
@@ -308,6 +318,7 @@ This guide covers common issues and their solutions when using Cinephage.
 **Solutions**:
 
 1. Check disk I/O:
+
    ```bash
    iostat -x 1
    ```
@@ -325,6 +336,7 @@ This guide covers common issues and their solutions when using Cinephage.
 **Solutions**:
 
 1. Install ffprobe:
+
    ```bash
    # Ubuntu/Debian
    sudo apt install ffmpeg
@@ -396,12 +408,14 @@ This guide covers common issues and their solutions when using Cinephage.
 **Solutions**:
 
 1. Reduce worker counts in .env:
+
    ```
    WORKER_MAX_STREAMS=5
    WORKER_MAX_IMPORTS=3
    ```
 
 2. Reduce log retention:
+
    ```
    WORKER_MAX_LOGS=500
    ```
@@ -444,6 +458,7 @@ This guide covers common issues and their solutions when using Cinephage.
 ### Log Levels
 
 Logs include various levels:
+
 - ERROR: Problems requiring attention
 - WARN: Potential issues
 - INFO: Normal operations
@@ -468,6 +483,7 @@ grep "1337x" logs/cinephage.log
 ### Log Rotation
 
 Logs automatically rotate based on:
+
 - `LOG_MAX_SIZE_MB`: Maximum file size (default: 10MB)
 - `LOG_MAX_FILES`: Number of files to keep (default: 5)
 
@@ -526,9 +542,11 @@ npm run db:push
 ### How do I change the port?
 
 Edit `.env`:
+
 ```
 PORT=8080
 ```
+
 Restart the application.
 
 ### Can I run multiple instances?
@@ -538,6 +556,7 @@ Not recommended - SQLite does not handle multiple writers well. Use a single ins
 ### How do I backup my configuration?
 
 Important files to backup:
+
 - `data/cinephage.db` - All settings, library, queue
 - `.env` - Environment configuration
 - `data/indexers/definitions/` - Custom indexer definitions

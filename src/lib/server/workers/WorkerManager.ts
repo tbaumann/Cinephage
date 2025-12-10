@@ -288,7 +288,8 @@ class WorkerManagerImpl extends EventEmitter {
 			import: { active: 0, completed: 0, failed: 0 },
 			scan: { active: 0, completed: 0, failed: 0 },
 			monitoring: { active: 0, completed: 0, failed: 0 },
-			search: { active: 0, completed: 0, failed: 0 }
+			search: { active: 0, completed: 0, failed: 0 },
+			'subtitle-search': { active: 0, completed: 0, failed: 0 }
 		};
 
 		for (const worker of this.workers.values()) {

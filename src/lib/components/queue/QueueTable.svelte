@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { QueueItemWithMedia } from '$lib/types/queue';
 	import {
@@ -133,7 +133,7 @@
 						<td>
 							{#if mediaInfo}
 								<a
-									href={resolve(mediaInfo.href as string)}
+									href={resolvePath(mediaInfo.href)}
 									class="flex items-center gap-2 hover:text-primary"
 								>
 									{#if mediaInfo.type === 'movie'}

@@ -34,16 +34,16 @@ Cinephage consolidates four separate applications into one streamlined experienc
 
 ## Project Status
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Content Discovery | Stable | TMDB integration, trending, search |
-| Library Management | Stable | File watching, scanning, TMDB matching |
-| Quality Scoring | In Progress | 4 built-in profiles work; custom profiles incomplete |
-| Download Client | qBittorrent Only | Other clients planned |
-| Indexers | Stable | ~20 indexers + Torznab support |
-| Subtitles | Stable | 8 providers, 80+ languages |
-| Monitoring | Experimental | 5 tasks coded, may have bugs |
-| Live TV/IPTV | Not Started | Planned for future |
+| Feature            | Status           | Notes                                                |
+| ------------------ | ---------------- | ---------------------------------------------------- |
+| Content Discovery  | Stable           | TMDB integration, trending, search                   |
+| Library Management | Stable           | File watching, scanning, TMDB matching               |
+| Quality Scoring    | In Progress      | 4 built-in profiles work; custom profiles incomplete |
+| Download Client    | qBittorrent Only | Other clients planned                                |
+| Indexers           | Stable           | ~20 indexers + Torznab support                       |
+| Subtitles          | Stable           | 8 providers, 80+ languages                           |
+| Monitoring         | Experimental     | 5 tasks coded, may have bugs                         |
+| Live TV/IPTV       | Not Started      | Planned for future                                   |
 
 ## Features
 
@@ -119,12 +119,14 @@ See [Configuration Guide](docs/CONFIGURATION.md) for detailed setup instructions
 ## Requirements
 
 **Required**
+
 - Node.js 20+
 - npm 10+
 - qBittorrent with WebUI enabled
 - TMDB API key (free)
 
 **Optional**
+
 - ffprobe for media info extraction (resolution, codecs, audio tracks)
 
 ## Tech Stack
@@ -138,17 +140,20 @@ See [Configuration Guide](docs/CONFIGURATION.md) for detailed setup instructions
 ## Documentation
 
 **Getting Started**
+
 - [Configuration](docs/CONFIGURATION.md) — Environment variables and first-run setup
 - [Deployment](docs/DEPLOYMENT.md) — Production setup, systemd, reverse proxy
 - [Troubleshooting](docs/TROUBLESHOOTING.md) — Common issues and solutions
 
 **Feature Guides**
+
 - [Indexers](docs/INDEXERS.md) — Built-in indexers, Torznab, custom definitions
 - [Quality Profiles](docs/QUALITY-PROFILES.md) — Scoring system and built-in profiles
 - [Monitoring](docs/MONITORING.md) — Automated tasks and scheduling
 - [Subtitles](docs/SUBTITLES.md) — Providers and language profiles
 
 **Reference**
+
 - [API Reference](docs/API.md) — REST API endpoints
 - [Roadmap](docs/ROADMAP.md) — Planned features and known limitations
 

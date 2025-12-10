@@ -111,6 +111,7 @@ A systemd service file is provided in `deploy/cinephage.service`.
    ```
 
    Configure at minimum:
+
    ```
    HOST=127.0.0.1
    PORT=3000
@@ -264,16 +265,16 @@ Caddy automatically provisions and renews SSL certificates. No additional config
 
 ### Production Environment Variables
 
-| Variable | Recommended Value | Description |
-|----------|-------------------|-------------|
-| `HOST` | `127.0.0.1` | Bind to localhost only (reverse proxy handles external) |
-| `PORT` | `3000` | Application port |
-| `ORIGIN` | `https://your.domain` | Your public URL for CSRF protection |
-| `NODE_ENV` | `production` | Set by systemd service |
-| `LOG_TO_FILE` | `true` | Enable file logging |
-| `LOG_DIR` | `/opt/cinephage/logs` | Log directory |
-| `LOG_MAX_SIZE_MB` | `10` | Log rotation size |
-| `LOG_MAX_FILES` | `10` | Number of log files to keep |
+| Variable          | Recommended Value     | Description                                             |
+| ----------------- | --------------------- | ------------------------------------------------------- |
+| `HOST`            | `127.0.0.1`           | Bind to localhost only (reverse proxy handles external) |
+| `PORT`            | `3000`                | Application port                                        |
+| `ORIGIN`          | `https://your.domain` | Your public URL for CSRF protection                     |
+| `NODE_ENV`        | `production`          | Set by systemd service                                  |
+| `LOG_TO_FILE`     | `true`                | Enable file logging                                     |
+| `LOG_DIR`         | `/opt/cinephage/logs` | Log directory                                           |
+| `LOG_MAX_SIZE_MB` | `10`                  | Log rotation size                                       |
+| `LOG_MAX_FILES`   | `10`                  | Number of log files to keep                             |
 
 ### Security Considerations
 
@@ -431,11 +432,13 @@ lsof -p $(pgrep -f "node build/index.js") | wc -l
 ### Service Won't Start
 
 1. Check permissions:
+
    ```bash
    ls -la /opt/cinephage/
    ```
 
 2. Check logs:
+
    ```bash
    sudo journalctl -u cinephage -n 50
    ```

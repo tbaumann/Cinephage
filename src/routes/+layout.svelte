@@ -5,7 +5,7 @@
 	import Toasts from '$lib/components/ui/Toasts.svelte';
 	import { layoutState } from '$lib/layout.svelte';
 	import { page } from '$app/stores';
-	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 	import {
 		Menu,
 		Home,
@@ -126,7 +126,7 @@
 										{#each item.children as child (child.href)}
 											<li>
 												<a
-													href={resolve(child.href as string)}
+													href={resolvePath(child.href)}
 													class="flex items-center gap-4 px-4 py-2"
 													class:active={$page.url.pathname === child.href}
 												>
@@ -148,7 +148,7 @@
 							{/if}
 						{:else}
 							<a
-								href={resolve(item.href as string)}
+								href={resolvePath(item.href)}
 								class="flex items-center gap-4 px-4 py-3"
 								class:active={$page.url.pathname === item.href}
 								title={!layoutState.isSidebarExpanded ? item.label : ''}

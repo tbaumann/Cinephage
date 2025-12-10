@@ -197,7 +197,11 @@ export const GET: RequestHandler = async ({ url, request }) => {
 		// SSRF protection: validate URL is safe before proxying
 		const safetyCheck = isUrlSafe(decodedUrl);
 		if (!safetyCheck.safe) {
-			logger.warn('Blocked unsafe URL', { url: decodedUrl, reason: safetyCheck.reason, logCategory: 'streams' });
+			logger.warn('Blocked unsafe URL', {
+				url: decodedUrl,
+				reason: safetyCheck.reason,
+				logCategory: 'streams'
+			});
 			return new Response(
 				JSON.stringify({ error: 'URL not allowed', reason: safetyCheck.reason }),
 				{ status: 403, headers: { 'Content-Type': 'application/json' } }
@@ -231,7 +235,11 @@ export const GET: RequestHandler = async ({ url, request }) => {
 
 			// Check redirect limit
 			if (redirectCount >= MAX_REDIRECTS) {
-				logger.warn('Max redirects exceeded', { url: decodedUrl, maxRedirects: MAX_REDIRECTS, logCategory: 'streams' });
+				logger.warn('Max redirects exceeded', {
+					url: decodedUrl,
+					maxRedirects: MAX_REDIRECTS,
+					logCategory: 'streams'
+				});
 				return new Response(
 					JSON.stringify({ error: 'Too many redirects', maxRedirects: MAX_REDIRECTS }),
 					{ status: 508, headers: { 'Content-Type': 'application/json' } }

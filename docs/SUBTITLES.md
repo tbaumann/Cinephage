@@ -4,16 +4,16 @@ Cinephage includes comprehensive subtitle management with 8 built-in providers a
 
 ## Providers
 
-| Provider | Type | Features |
-|----------|------|----------|
-| OpenSubtitles | API | Hash matching, largest database |
-| Podnapisi | Scraper | Good coverage, hearing impaired |
-| Subscene | Scraper | Large community database |
-| Addic7ed | Scraper | TV focus, multiple languages |
-| SubDL | API | Modern API, good quality |
-| YIFY Subtitles | Scraper | YTS movie focus |
-| Gestdown | API | Addic7ed alternative |
-| Subf2m | Scraper | Wide coverage |
+| Provider       | Type    | Features                        |
+| -------------- | ------- | ------------------------------- |
+| OpenSubtitles  | API     | Hash matching, largest database |
+| Podnapisi      | Scraper | Good coverage, hearing impaired |
+| Subscene       | Scraper | Large community database        |
+| Addic7ed       | Scraper | TV focus, multiple languages    |
+| SubDL          | API     | Modern API, good quality        |
+| YIFY Subtitles | Scraper | YTS movie focus                 |
+| Gestdown       | API     | Addic7ed alternative            |
+| Subf2m         | Scraper | Wide coverage                   |
 
 ### Provider Details
 
@@ -233,13 +233,13 @@ Blacklist poor quality subtitles:
 
 Each provider has built-in rate limiting:
 
-| Provider | Limit |
-|----------|-------|
+| Provider      | Limit                        |
+| ------------- | ---------------------------- |
 | OpenSubtitles | 20/day (free), 200/day (VIP) |
-| Podnapisi | 60/minute |
-| Subscene | 30/minute |
-| Addic7ed | 40/day |
-| SubDL | 100/hour |
-| Others | Provider-specific |
+| Podnapisi     | 60/minute                    |
+| Subscene      | 30/minute                    |
+| Addic7ed      | 40/day                       |
+| SubDL         | 100/hour                     |
+| Others        | Provider-specific            |
 
 Cinephage automatically respects these limits and queues requests when needed.

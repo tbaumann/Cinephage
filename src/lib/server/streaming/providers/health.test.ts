@@ -12,7 +12,7 @@ import {
 	recordProviderFailure,
 	getProviderHealth,
 	getAllProviderHealth,
-	type ProviderHealth
+	type ProviderHealth as _ProviderHealth
 } from './health';
 
 describe('Provider Health Tracker', () => {

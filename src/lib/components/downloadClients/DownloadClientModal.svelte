@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { X, Loader2, CheckCircle2, XCircle, FolderOpen } from 'lucide-svelte';
+	import { X, Loader2, XCircle, FolderOpen } from 'lucide-svelte';
 	import type {
 		DownloadClient,
 		DownloadClientFormData,
@@ -8,7 +8,7 @@
 		ConnectionTestResult
 	} from '$lib/types/downloadClient';
 	import FolderBrowser from '$lib/components/FolderBrowser.svelte';
-	import { SectionHeader, ToggleSetting, TestResult } from '$lib/components/ui/modal';
+	import { SectionHeader, TestResult } from '$lib/components/ui/modal';
 
 	// Available download client definitions
 	const clientDefinitions: DownloadClientDefinition[] = [

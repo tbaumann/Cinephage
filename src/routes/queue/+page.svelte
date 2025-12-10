@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 	import { page } from '$app/stores';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
@@ -97,7 +98,10 @@
 		} else {
 			url.searchParams.set(key, value);
 		}
-		goto(resolve(url.toString() as string), { replaceState: true, invalidateAll: true });
+		goto(resolvePath(url.pathname + url.search), {
+			replaceState: true,
+			invalidateAll: true
+		});
 	}
 
 	// Actions

@@ -15,21 +15,18 @@
  */
 
 import { getIndexerManager } from '$lib/server/indexers/IndexerManager.js';
-import { ReleaseParser } from '$lib/server/indexers/parser/ReleaseParser.js';
 import {
 	releaseDecisionService,
 	getReleaseGrabService,
 	getCascadingSearchStrategy,
 	type EpisodeToSearch,
-	type SeriesData
+	type SeriesData as _SeriesData
 } from '$lib/server/downloads/index.js';
 import { logger } from '$lib/logging/index.js';
 import { db } from '$lib/server/db/index.js';
-import { movies, movieFiles, series, episodes, episodeFiles } from '$lib/server/db/schema.js';
+import { movieFiles, series, episodes, episodeFiles } from '$lib/server/db/schema.js';
 import { eq, and, inArray } from 'drizzle-orm';
 import type { SearchCriteria } from '$lib/server/indexers/core/index.js';
-
-const parser = new ReleaseParser();
 
 interface SearchForMovieParams {
 	movieId: string;

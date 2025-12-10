@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 	import LibraryMediaCard from '$lib/components/library/LibraryMediaCard.svelte';
 	import LibraryControls from '$lib/components/library/LibraryControls.svelte';
 	import { Tv } from 'lucide-svelte';
@@ -57,7 +58,7 @@
 		} else {
 			url.searchParams.set(key, value);
 		}
-		goto(resolve((url.pathname + url.search) as string), { keepFocus: true, noScroll: true });
+		goto(resolvePath(url.pathname + url.search), { keepFocus: true, noScroll: true });
 	}
 
 	function clearFilters() {
@@ -125,7 +126,7 @@
 				{#if data.totalUnfiltered === 0}
 					<p class="text-2xl font-bold">No TV shows in your library</p>
 					<p class="mt-2">Add TV shows from the Discover page to see them here.</p>
-					<a href={resolve('/discover?type=tv' as string)} class="btn mt-6 btn-primary"
+					<a href={resolvePath('/discover?type=tv')} class="btn mt-6 btn-primary"
 						>Discover TV Shows</a
 					>
 				{:else}

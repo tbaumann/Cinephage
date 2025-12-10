@@ -8,7 +8,7 @@
 
 import { logger } from '$lib/logging';
 import { type EncDecClient, getEncDecClient } from '../enc-dec';
-import { resolveEmbed, canResolveEmbed, type HosterResult } from '../hosters';
+import { resolveEmbed, canResolveEmbed } from '../hosters';
 import type {
 	IStreamProvider,
 	ProviderConfig,

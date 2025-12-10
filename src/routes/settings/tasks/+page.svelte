@@ -149,9 +149,7 @@
 						</div>
 						<div class="rounded-lg bg-base-100 p-2">
 							<RefreshCw
-								class="h-5 w-5 {isRunning
-									? 'animate-spin text-primary'
-									: 'text-base-content/40'}"
+								class="h-5 w-5 {isRunning ? 'animate-spin text-primary' : 'text-base-content/40'}"
 							/>
 						</div>
 					</div>
@@ -189,14 +187,14 @@
 					</div>
 
 					<!-- Run Button -->
-					<div class="card-actions mt-4 justify-end">
+					<div class="mt-4 card-actions justify-end">
 						<button
-							class="btn btn-primary btn-sm"
+							class="btn btn-sm btn-primary"
 							onclick={() => runTask(task.id)}
 							disabled={isRunning}
 						>
 							{#if isRunning}
-								<span class="loading loading-spinner loading-sm"></span>
+								<span class="loading loading-sm loading-spinner"></span>
 								Running...
 							{:else}
 								<Play class="h-4 w-4" />

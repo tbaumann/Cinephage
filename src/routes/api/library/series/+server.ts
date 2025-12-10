@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types.js';
 import { db } from '$lib/server/db/index.js';
-import { series, seasons, episodes, rootFolders } from '$lib/server/db/schema.js';
+import { series, seasons, episodes, rootFolders, languageProfiles } from '$lib/server/db/schema.js';
 import { eq } from 'drizzle-orm';
 import { tmdb } from '$lib/server/tmdb.js';
 import { z } from 'zod';
@@ -217,6 +217,19 @@ export const POST: RequestHandler = async ({ request }) => {
 			effectiveProfileId = defaultProfile.id;
 		}
 
+		// Get the default language profile if wantsSubtitles is true
+		let languageProfileId: string | null = null;
+		if (wantsSubtitles) {
+			const defaultLanguageProfile = await db.query.languageProfiles.findFirst({
+				where: eq(languageProfiles.isDefault, true)
+			});
+			languageProfileId = defaultLanguageProfile?.id ?? null;
+
+			if (!languageProfileId) {
+				logger.warn('[API] No default language profile found for subtitle preferences', { tmdbId });
+			}
+		}
+
 		// Insert series into database
 		const [newSeries] = await db
 			.insert(series)
@@ -243,7 +256,8 @@ export const POST: RequestHandler = async ({ request }) => {
 				seriesType,
 				episodeCount: totalEpisodes,
 				episodeFileCount: 0,
-				wantsSubtitles
+				wantsSubtitles,
+				languageProfileId
 			})
 			.returning();
 
@@ -407,14 +421,12 @@ export const POST: RequestHandler = async ({ request }) => {
 					seriesId: newSeries.id,
 					error: error instanceof Error ? error.message : 'Unknown error'
 				});
-				searchOnAdd
-					.searchForMissingEpisodes(newSeries.id)
-					.catch((err) => {
-						logger.warn('[API] Background search failed for series', {
-							seriesId: newSeries.id,
-							error: err instanceof Error ? err.message : 'Unknown error'
-						});
+				searchOnAdd.searchForMissingEpisodes(newSeries.id).catch((err) => {
+					logger.warn('[API] Background search failed for series', {
+						seriesId: newSeries.id,
+						error: err instanceof Error ? err.message : 'Unknown error'
 					});
+				});
 				searchTriggered = true;
 			}
 		}

@@ -26,10 +26,7 @@ export const POST: RequestHandler = async ({ params, fetch, request }) => {
 
 	// Check if task is already running
 	if (taskHistoryService.isTaskRunning(taskId)) {
-		return json(
-			{ success: false, error: `Task '${taskId}' is already running` },
-			{ status: 409 }
-		);
+		return json({ success: false, error: `Task '${taskId}' is already running` }, { status: 409 });
 	}
 
 	logger.info('[TaskRunAPI] Starting task', { taskId, endpoint: taskDef.endpoint });

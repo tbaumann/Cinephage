@@ -7,7 +7,7 @@
 		getMediaLink,
 		getMediaTypeLabel
 	} from '$lib/types/tmdb-guards';
-	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 	import TmdbImage from './TmdbImage.svelte';
 	import { Check, Clock, Plus } from 'lucide-svelte';
 
@@ -52,7 +52,7 @@
 </script>
 
 <a
-	href={resolve(link as string)}
+	href={resolvePath(link)}
 	class="group relative block aspect-[2/3] w-full overflow-hidden rounded-lg bg-base-300 shadow-sm transition-all hover:shadow-md hover:ring-2 hover:ring-primary/50"
 >
 	<TmdbImage

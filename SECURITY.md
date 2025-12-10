@@ -3,7 +3,7 @@
 ## Supported Versions
 
 | Version | Supported |
-|---------|-----------|
+| ------- | --------- |
 | 0.1.x   | Yes       |
 
 As Cinephage is in active development, security updates are applied to the latest version. Users are encouraged to keep their installations up to date.
@@ -140,6 +140,7 @@ Security updates will be announced through:
 ## Responsible Disclosure
 
 If you report responsibly:
+
 - We'll work with you in good faith
 - You'll get credit (unless you want to stay anonymous)
 - No legal action against good-faith researchers

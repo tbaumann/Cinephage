@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 	import { page } from '$app/stores';
 	import { Database, Download, Subtitles, Languages } from 'lucide-svelte';
 
@@ -50,7 +50,7 @@
 				{#each navItems as item (item.href)}
 					{@const Icon = item.icon}
 					<a
-						href={resolve(item.href as string)}
+						href={resolvePath(item.href)}
 						class="flex items-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors {isActive(
 							item.href,
 							item.exact

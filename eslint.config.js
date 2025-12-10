@@ -62,5 +62,13 @@ export default defineConfig(
 		rules: {
 			'@typescript-eslint/no-explicit-any': 'off'
 		}
+	},
+	{
+		// Disable resolve() requirement for components using resolvePath utility
+		// resolvePath internally calls resolve(), so navigation is correctly handled
+		files: ['**/*.svelte'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
 	}
 );

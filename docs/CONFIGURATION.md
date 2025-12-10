@@ -8,43 +8,43 @@ Copy `.env.example` to `.env` and configure as needed. All variables have sensib
 
 ### Server Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `HOST` | `0.0.0.0` | Host address to bind (use `127.0.0.1` behind reverse proxy) |
-| `PORT` | `3000` | Port to listen on |
-| `ORIGIN` | - | Trusted origin for CSRF (e.g., `http://192.168.1.100:3000`) |
+| Variable | Default   | Description                                                 |
+| -------- | --------- | ----------------------------------------------------------- |
+| `HOST`   | `0.0.0.0` | Host address to bind (use `127.0.0.1` behind reverse proxy) |
+| `PORT`   | `3000`    | Port to listen on                                           |
+| `ORIGIN` | -         | Trusted origin for CSRF (e.g., `http://192.168.1.100:3000`) |
 
 ### Logging Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOG_DIR` | `./logs` | Log file directory |
-| `LOG_MAX_SIZE_MB` | `10` | Maximum log file size before rotation |
-| `LOG_MAX_FILES` | `5` | Number of rotated logs to keep |
-| `LOG_TO_FILE` | `true` | Enable/disable file logging |
+| Variable          | Default  | Description                           |
+| ----------------- | -------- | ------------------------------------- |
+| `LOG_DIR`         | `./logs` | Log file directory                    |
+| `LOG_MAX_SIZE_MB` | `10`     | Maximum log file size before rotation |
+| `LOG_MAX_FILES`   | `5`      | Number of rotated logs to keep        |
+| `LOG_TO_FILE`     | `true`   | Enable/disable file logging           |
 
 ### Media Info
 
-| Variable | Default | Description |
-|----------|---------|-------------|
+| Variable       | Default     | Description            |
+| -------------- | ----------- | ---------------------- |
 | `FFPROBE_PATH` | System PATH | Path to ffprobe binary |
 
 ### Worker Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `WORKER_MAX_STREAMS` | `10` | Max concurrent stream workers |
-| `WORKER_MAX_IMPORTS` | `5` | Max concurrent import workers |
-| `WORKER_MAX_SCANS` | `2` | Max concurrent scan workers |
-| `WORKER_MAX_MONITORING` | `5` | Max concurrent monitoring workers |
-| `WORKER_CLEANUP_MS` | `1800000` | Worker cleanup interval (30 min) |
-| `WORKER_MAX_LOGS` | `1000` | Max log entries per worker |
+| Variable                | Default   | Description                       |
+| ----------------------- | --------- | --------------------------------- |
+| `WORKER_MAX_STREAMS`    | `10`      | Max concurrent stream workers     |
+| `WORKER_MAX_IMPORTS`    | `5`       | Max concurrent import workers     |
+| `WORKER_MAX_SCANS`      | `2`       | Max concurrent scan workers       |
+| `WORKER_MAX_MONITORING` | `5`       | Max concurrent monitoring workers |
+| `WORKER_CLEANUP_MS`     | `1800000` | Worker cleanup interval (30 min)  |
+| `WORKER_MAX_LOGS`       | `1000`    | Max log entries per worker        |
 
 ### Graceful Shutdown
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SHUTDOWN_TIMEOUT` | `30` | Seconds to wait for connections to close |
+| Variable           | Default | Description                              |
+| ------------------ | ------- | ---------------------------------------- |
+| `SHUTDOWN_TIMEOUT` | `30`    | Seconds to wait for connections to close |
 
 ---
 
@@ -96,8 +96,8 @@ Define where media files are stored.
 
 If qBittorrent and Cinephage see different paths for the same storage:
 
-| qBittorrent Path | Cinephage Path |
-|------------------|----------------|
+| qBittorrent Path    | Cinephage Path      |
+| ------------------- | ------------------- |
 | `/downloads/movies` | `/mnt/media/movies` |
 
 Configure path mappings in Settings > Integrations > Download Clients.
@@ -129,19 +129,19 @@ See [Quality Profiles](QUALITY-PROFILES.md) for scoring details.
 
 ### Minimum
 
-| Resource | Minimum |
-|----------|---------|
-| RAM | 512 MB |
+| Resource   | Minimum          |
+| ---------- | ---------------- |
+| RAM        | 512 MB           |
 | Disk Space | 100 MB + library |
-| CPU | 1 core |
+| CPU        | 1 core           |
 
 ### Recommended
 
-| Resource | Recommended |
-|----------|-------------|
-| RAM | 1 GB |
+| Resource   | Recommended      |
+| ---------- | ---------------- |
+| RAM        | 1 GB             |
 | Disk Space | 500 MB + library |
-| CPU | 2+ cores |
+| CPU        | 2+ cores         |
 
 ### Optional Dependencies
 

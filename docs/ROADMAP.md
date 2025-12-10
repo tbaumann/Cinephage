@@ -8,21 +8,21 @@ For completed features and changes, see the [CHANGELOG](../CHANGELOG.md).
 
 ## Status Legend
 
-| Status | Meaning |
-|--------|---------|
-| In Progress | Actively being worked on |
-| Planned | Confirmed for future development |
-| Not Yet Started | On the horizon but not actively in development |
-| Under Consideration | Being evaluated, not yet committed |
-| Known Limitation | Acknowledged gap or incomplete feature |
+| Status              | Meaning                                        |
+| ------------------- | ---------------------------------------------- |
+| In Progress         | Actively being worked on                       |
+| Planned             | Confirmed for future development               |
+| Not Yet Started     | On the horizon but not actively in development |
+| Under Consideration | Being evaluated, not yet committed             |
+| Known Limitation    | Acknowledged gap or incomplete feature         |
 
 ## Priority Legend
 
-| Priority | Meaning |
-|----------|---------|
-| High | Core functionality, significant user impact |
-| Medium | Important enhancement, moderate impact |
-| Low | Nice to have, minor improvement |
+| Priority | Meaning                                     |
+| -------- | ------------------------------------------- |
+| High     | Core functionality, significant user impact |
+| Medium   | Important enhancement, moderate impact      |
+| Low      | Nice to have, minor improvement             |
 
 ---
 
@@ -71,6 +71,7 @@ Implement tag matching for content-specific delay and upgrade profiles.
 Planned | Medium | **Area**: Indexers
 
 Continue expanding built-in indexer support:
+
 - The Pirate Bay
 - EZTVx (EZTV mirror)
 - ShowRSS
@@ -86,12 +87,14 @@ Continue expanding built-in indexer support:
 Planned | Medium | **Area**: Infrastructure
 
 Implement notification support for various events:
+
 - Download started/completed
 - Import successful/failed
 - Health check failures
 - New content available
 
 **Notification channels**:
+
 - Discord webhooks
 - Email (SMTP)
 - Generic webhooks
@@ -106,6 +109,7 @@ Implement notification support for various events:
 Planned | Medium | **Area**: Library
 
 Sync watchlists from external services:
+
 - Trakt
 - IMDb watchlists
 - Letterboxd
@@ -134,6 +138,7 @@ Longer-term features under consideration.
 Under Consideration | Medium | **Area**: Infrastructure
 
 Add user authentication and multi-user support:
+
 - User accounts with login
 - Role-based permissions
 - Per-user settings and preferences
@@ -150,6 +155,7 @@ Add user authentication and multi-user support:
 Under Consideration | Medium | **Area**: Download Clients
 
 Support for additional torrent clients:
+
 - Transmission
 - Deluge
 - rTorrent
@@ -289,4 +295,4 @@ We welcome community input on prioritization and new feature ideas!
 
 ---
 
-*Last updated: December 2025*
+_Last updated: December 2025_

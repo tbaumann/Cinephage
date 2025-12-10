@@ -3,7 +3,7 @@
 	import { isLibraryMovie, getBestQualityFromFiles } from '$lib/types/library';
 	import TmdbImage from '$lib/components/tmdb/TmdbImage.svelte';
 	import { Eye, EyeOff, Check, X } from 'lucide-svelte';
-	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 
 	type LibraryItem = LibraryMovie | LibrarySeries;
 
@@ -35,7 +35,7 @@
 </script>
 
 <a
-	href={resolve(link as string)}
+	href={resolvePath(link)}
 	class="group relative block aspect-[2/3] w-full overflow-hidden rounded-lg bg-base-300 shadow-sm transition-all hover:shadow-md hover:ring-2 hover:ring-primary/50"
 >
 	<TmdbImage

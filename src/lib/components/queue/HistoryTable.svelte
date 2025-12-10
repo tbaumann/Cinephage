@@ -9,7 +9,7 @@
 		XCircle,
 		Trash2
 	} from 'lucide-svelte';
-	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 
 	interface Props {
 		items: HistoryItemWithMedia[];
@@ -123,7 +123,7 @@
 						<td>
 							{#if mediaInfo}
 								<a
-									href={resolve(mediaInfo.href as string)}
+									href={resolvePath(mediaInfo.href)}
 									class="flex items-center gap-2 hover:text-primary"
 								>
 									{#if mediaInfo.type === 'movie'}

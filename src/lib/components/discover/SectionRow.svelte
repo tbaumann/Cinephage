@@ -3,7 +3,7 @@
 	import type { TmdbMediaItem } from '$lib/types/tmdb';
 	import { type Snippet } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 
 	let { title, items, link, endpoint, cardSnippet, onAddToLibrary } = $props<{
 		title: string;
@@ -89,7 +89,7 @@
 		</h2>
 		{#if link}
 			<a
-				href={resolve(link as string)}
+				href={resolvePath(link)}
 				class="hover:text-primary-focus group/link flex items-center gap-1 text-sm font-bold text-primary transition-colors"
 			>
 				View All

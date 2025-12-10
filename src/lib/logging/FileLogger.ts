@@ -15,7 +15,14 @@ import {
 } from 'fs';
 import { join } from 'path';
 
-export type LogCategory = 'main' | 'streams' | 'imports' | 'monitoring' | 'scans';
+export type LogCategory =
+	| 'main'
+	| 'streams'
+	| 'imports'
+	| 'monitoring'
+	| 'scans'
+	| 'indexers'
+	| 'subtitles';
 
 export interface FileLoggerConfig {
 	logDir: string;

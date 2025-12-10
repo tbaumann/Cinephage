@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { X, Loader2, CheckCircle2, XCircle, Globe, Key, Hash, Search } from 'lucide-svelte';
+	import { X, Loader2, CheckCircle2, Globe, Key, Hash, Search } from 'lucide-svelte';
 	import type { SubtitleProviderConfig, ProviderImplementation } from '$lib/server/subtitles/types';
 	import type { ProviderDefinition } from '$lib/server/subtitles/providers/interfaces';
-	import { SectionHeader, ToggleSetting, TestResult } from '$lib/components/ui/modal';
+	import { SectionHeader, TestResult } from '$lib/components/ui/modal';
 
 	interface SubtitleProviderFormData {
 		name: string;

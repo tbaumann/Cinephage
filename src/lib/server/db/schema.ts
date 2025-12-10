@@ -1071,7 +1071,9 @@ export const subtitles = sqliteTable(
 		format: text('format').notNull(), // 'srt', 'ass', 'sub', 'vtt'
 
 		// Source info (null if manually added or discovered on disk)
-		providerId: text('provider_id').references(() => subtitleProviders.id, { onDelete: 'set null' }),
+		providerId: text('provider_id').references(() => subtitleProviders.id, {
+			onDelete: 'set null'
+		}),
 		providerSubtitleId: text('provider_subtitle_id'), // External ID from provider
 
 		// Scoring info (how well it matched)

@@ -8,7 +8,7 @@ import type { LogCategory } from '$lib/logging';
 /**
  * Types of workers supported by the system.
  */
-export type WorkerType = 'stream' | 'import' | 'scan' | 'monitoring' | 'search';
+export type WorkerType = 'stream' | 'import' | 'scan' | 'monitoring' | 'search' | 'subtitle-search';
 
 /**
  * Worker lifecycle status.
@@ -71,7 +71,8 @@ export const DEFAULT_WORKER_CONFIG: WorkerManagerConfig = {
 		import: parseInt(process.env.WORKER_MAX_IMPORTS || '5', 10) || 5,
 		scan: parseInt(process.env.WORKER_MAX_SCANS || '2', 10) || 2,
 		monitoring: parseInt(process.env.WORKER_MAX_MONITORING || '5', 10) || 5,
-		search: parseInt(process.env.WORKER_MAX_SEARCH || '3', 10) || 3
+		search: parseInt(process.env.WORKER_MAX_SEARCH || '3', 10) || 3,
+		'subtitle-search': parseInt(process.env.WORKER_MAX_SUBTITLE_SEARCH || '3', 10) || 3
 	},
 	cleanupAfterMs: parseInt(process.env.WORKER_CLEANUP_MS || '1800000', 10) || 1800000, // 30 minutes
 	maxLogsPerWorker: parseInt(process.env.WORKER_MAX_LOGS || '1000', 10) || 1000
@@ -105,6 +106,8 @@ export function workerTypeToLogCategory(type: WorkerType): LogCategory {
 			return 'monitoring';
 		case 'search':
 			return 'indexers';
+		case 'subtitle-search':
+			return 'subtitles';
 		default:
 			return 'main';
 	}
@@ -173,5 +176,18 @@ export interface SearchWorkerMetadata {
 	itemsSearched: number;
 	itemsFound: number;
 	itemsGrabbed: number;
+	[key: string]: unknown;
+}
+
+/**
+ * Subtitle search worker specific metadata.
+ */
+export interface SubtitleSearchWorkerMetadata {
+	mediaType: 'movie' | 'series';
+	mediaId: string;
+	title: string;
+	languageProfileId: string;
+	subtitlesDownloaded: number;
+	errors: string[];
 	[key: string]: unknown;
 }

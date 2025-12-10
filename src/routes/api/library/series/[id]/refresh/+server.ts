@@ -73,8 +73,7 @@ export const POST: RequestHandler = async ({ params }) => {
 						// Update existing season
 						seasonId = existingSeason.id;
 						// Default to true for non-specials if monitored is null
-						seasonMonitored =
-							existingSeason.monitored ?? tmdbSeasonInfo.season_number !== 0;
+						seasonMonitored = existingSeason.monitored ?? tmdbSeasonInfo.season_number !== 0;
 						await db
 							.update(seasons)
 							.set({
@@ -90,9 +89,7 @@ export const POST: RequestHandler = async ({ params }) => {
 						const isSpecials = tmdbSeasonInfo.season_number === 0;
 						const monitorSpecials = seriesData.monitorSpecials ?? false;
 						seasonMonitored =
-							seriesData.monitorNewItems === 'all'
-								? !isSpecials || monitorSpecials
-								: false;
+							seriesData.monitorNewItems === 'all' ? !isSpecials || monitorSpecials : false;
 
 						const [newSeason] = await db
 							.insert(seasons)

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 	import { toasts, type ToastType } from '$lib/stores/toast.svelte';
 	import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-svelte';
 	import { fly } from 'svelte/transition';
@@ -38,7 +38,7 @@
 			<div class="flex items-center gap-2">
 				{#if toast.action}
 					{#if toast.action.href}
-						<a href={resolve(toast.action.href as string)} class="btn btn-ghost btn-xs">
+						<a href={resolvePath(toast.action.href)} class="btn btn-ghost btn-xs">
 							{toast.action.label}
 						</a>
 					{:else if toast.action.onClick}

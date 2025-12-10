@@ -12,8 +12,7 @@
  */
 
 import { getIndexerManager } from '$lib/server/indexers/IndexerManager.js';
-import { getReleaseGrabService, type GrabResult } from './ReleaseGrabService.js';
-import { ReleaseParser } from '$lib/server/indexers/parser/ReleaseParser.js';
+import { getReleaseGrabService } from './ReleaseGrabService.js';
 import {
 	ReleaseBlocklistSpecification,
 	type ReleaseCandidate
@@ -25,11 +24,9 @@ import { db } from '$lib/server/db/index.js';
 import { episodes } from '$lib/server/db/schema.js';
 import { eq, and, inArray } from 'drizzle-orm';
 import type { SearchCriteria } from '$lib/server/indexers/core/index.js';
-import type { EnhancedReleaseResult } from '$lib/server/indexers/core/releaseResult.js';
 import type { ScoringProfile } from '$lib/server/scoring/types.js';
 
 const logger = createChildLogger({ module: 'CascadingSearchStrategy' });
-const parser = new ReleaseParser();
 
 /**
  * Episode data needed for searching
@@ -254,7 +251,7 @@ class CascadingSearchStrategy {
 		}
 
 		// Phase 2: Search remaining episodes individually
-		for (const [seasonNumber, seasonEpisodes] of episodesBySeason) {
+		for (const [, seasonEpisodes] of episodesBySeason) {
 			for (const episode of seasonEpisodes) {
 				// Skip if already grabbed via pack
 				if (grabbedEpisodeIds.has(episode.id)) {

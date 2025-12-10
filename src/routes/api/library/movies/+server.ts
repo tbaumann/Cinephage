@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types.js';
 import { db } from '$lib/server/db/index.js';
-import { movies, movieFiles, rootFolders } from '$lib/server/db/schema.js';
+import { movies, movieFiles, rootFolders, languageProfiles } from '$lib/server/db/schema.js';
 import { eq } from 'drizzle-orm';
 import { tmdb } from '$lib/server/tmdb.js';
 import { z } from 'zod';
@@ -21,7 +21,8 @@ const addMovieSchema = z.object({
 	scoringProfileId: z.string().optional(),
 	monitored: z.boolean().default(true),
 	minimumAvailability: z.enum(['announced', 'inCinemas', 'released', 'preDb']).default('released'),
-	searchOnAdd: z.boolean().default(true)
+	searchOnAdd: z.boolean().default(true),
+	wantsSubtitles: z.boolean().default(true)
 });
 
 /**
@@ -135,7 +136,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			scoringProfileId,
 			monitored,
 			minimumAvailability,
-			searchOnAdd: shouldSearch
+			searchOnAdd: shouldSearch,
+			wantsSubtitles
 		} = result.data;
 
 		// Check if movie already exists
@@ -207,6 +209,19 @@ export const POST: RequestHandler = async ({ request }) => {
 			effectiveProfileId = defaultProfile.id;
 		}
 
+		// Get the default language profile if wantsSubtitles is true
+		let languageProfileId: string | null = null;
+		if (wantsSubtitles) {
+			const defaultLanguageProfile = await db.query.languageProfiles.findFirst({
+				where: eq(languageProfiles.isDefault, true)
+			});
+			languageProfileId = defaultLanguageProfile?.id ?? null;
+
+			if (!languageProfileId) {
+				logger.warn('[API] No default language profile found for subtitle preferences', { tmdbId });
+			}
+		}
+
 		// Insert movie into database
 		const [newMovie] = await db
 			.insert(movies)
@@ -226,7 +241,9 @@ export const POST: RequestHandler = async ({ request }) => {
 				scoringProfileId: effectiveProfileId,
 				monitored,
 				minimumAvailability,
-				hasFile: false
+				hasFile: false,
+				wantsSubtitles,
+				languageProfileId
 			})
 			.returning();
 

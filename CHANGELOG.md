@@ -7,12 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+
 - Features currently in development
 
 ### Changed
+
 - Improvements to existing functionality
 
 ### Fixed
+
 - Bug fixes in progress
 
 ---
@@ -24,6 +27,7 @@ Initial public preview release.
 ### Added
 
 #### Core Features
+
 - TMDB integration for movie and TV show discovery
 - Multi-indexer search with 12+ built-in indexer definitions
 - Smart quality scoring with four built-in profiles (Best, Efficient, Compact, Micro)
@@ -32,6 +36,7 @@ Initial public preview release.
 - Real-time filesystem watching for library updates
 
 #### Indexer System
+
 - Native Cardigann-compatible YAML indexer engine
 - Built-in indexers: YTS, EZTV, 1337x, TorrentGalaxy, Nyaa, SubsPlease, Anidex, Solidtorrents, LimeTorrents, MagnetDL, BitSearch, BTDig, TheRARBG
 - Torznab protocol support for Prowlarr/Jackett integration
@@ -40,6 +45,7 @@ Initial public preview release.
 - Cloudflare detection
 
 #### Monitoring and Automation
+
 - Missing content search task
 - Quality upgrade monitoring
 - New episode detection
@@ -49,6 +55,7 @@ Initial public preview release.
 - Database persistence of task state
 
 #### Subtitle Management
+
 - Eight subtitle providers: OpenSubtitles, Podnapisi, Subscene, Addic7ed, SubDL, YIFY Subtitles, Gestdown, Subf2m
 - 150+ language support with regional variants
 - Language profile management
@@ -57,12 +64,14 @@ Initial public preview release.
 - Download scoring and ranking
 
 #### Streaming Integration
+
 - .strm file generation for external media players
 - Multiple streaming provider support
 - AniList integration for anime metadata
 - CORS proxy for cross-origin content
 
 #### User Interface
+
 - Modern SvelteKit 5 + Svelte 5 frontend
 - TailwindCSS 4 + DaisyUI styling
 - Responsive design
@@ -70,6 +79,7 @@ Initial public preview release.
 - Real-time download progress tracking
 
 #### Developer Experience
+
 - TypeScript throughout
 - Drizzle ORM with SQLite
 - ESLint + Prettier code quality
@@ -77,6 +87,7 @@ Initial public preview release.
 - Hot reload development server
 
 ### Technical Details
+
 - Node.js 20+ required
 - SQLite database (no external database needed)
 - Environment-based configuration

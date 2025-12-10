@@ -6,7 +6,7 @@
 	import AddToLibraryModal from '$lib/components/library/AddToLibraryModal.svelte';
 	import { Plus, Check, Clock, Play, Film, ExternalLink } from 'lucide-svelte';
 	import { formatCurrency, formatLanguage, formatDateShort } from '$lib/utils/format';
-	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 	import { SvelteMap } from 'svelte/reactivity';
 	import { TMDB } from '$lib/config/constants';
 
@@ -270,7 +270,7 @@
 							</div>
 							{#if libraryPageLink}
 								<a
-									href={resolve(libraryPageLink as string)}
+									href={resolvePath(libraryPageLink)}
 									class="btn gap-1 btn-outline btn-sm btn-success"
 								>
 									<Film class="h-4 w-4" />
@@ -286,7 +286,7 @@
 							</div>
 							{#if libraryPageLink}
 								<a
-									href={resolve(libraryPageLink as string)}
+									href={resolvePath(libraryPageLink)}
 									class="btn gap-1 btn-outline btn-sm btn-warning"
 								>
 									<Film class="h-4 w-4" />

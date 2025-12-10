@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 	import {
 		Database,
 		Download,
@@ -134,7 +135,7 @@
 		{#each integrations as integration (integration.href)}
 			{@const Icon = integration.icon}
 			<a
-				href={resolve(integration.href as string)}
+				href={resolvePath(integration.href)}
 				class="card bg-base-100 shadow-xl transition-all hover:-translate-y-0.5 hover:shadow-2xl"
 			>
 				<div class="card-body">

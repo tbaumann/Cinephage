@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { resolvePath } from '$lib/utils/routing';
 	import { tick } from 'svelte';
 	import { SvelteSet, SvelteURLSearchParams } from 'svelte/reactivity';
 	import MediaCard from '$lib/components/tmdb/MediaCard.svelte';
@@ -175,7 +176,7 @@
 		if (key !== 'page') {
 			url.searchParams.set('page', '1');
 		}
-		goto(resolve((url.pathname + url.search) as string), { keepFocus: true });
+		goto(resolvePath(url.pathname + url.search), { keepFocus: true });
 	}
 
 	function updateYear(min: string, max: string) {
@@ -187,7 +188,7 @@
 		else url.searchParams.delete('primary_release_date.lte');
 
 		url.searchParams.set('page', '1');
-		goto(resolve((url.pathname + url.search) as string), { keepFocus: true });
+		goto(resolvePath(url.pathname + url.search), { keepFocus: true });
 	}
 
 	function toggleProvider(providerId: number) {

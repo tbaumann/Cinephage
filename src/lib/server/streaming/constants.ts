@@ -70,10 +70,7 @@ export const PLAYLIST_CACHE_MAX_AGE = 300;
 export const SEGMENT_CACHE_MAX_AGE = 3600;
 
 /** Proxy fetch timeout in milliseconds (default 30s) */
-export const PROXY_FETCH_TIMEOUT_MS = parseInt(
-	process.env.PROXY_FETCH_TIMEOUT_MS || '30000',
-	10
-);
+export const PROXY_FETCH_TIMEOUT_MS = parseInt(process.env.PROXY_FETCH_TIMEOUT_MS || '30000', 10);
 
 /** Maximum segment size in bytes (default 50MB) */
 export const PROXY_SEGMENT_MAX_SIZE = parseInt(
@@ -85,8 +82,7 @@ export const PROXY_SEGMENT_MAX_SIZE = parseInt(
 export const PROXY_MAX_RETRIES = parseInt(process.env.PROXY_MAX_RETRIES || '2', 10);
 
 /** Default referer for proxy requests */
-export const DEFAULT_PROXY_REFERER =
-	process.env.DEFAULT_PROXY_REFERER || 'https://videasy.net';
+export const DEFAULT_PROXY_REFERER = process.env.DEFAULT_PROXY_REFERER || 'https://videasy.net';
 
 /** Referer mappings for different stream domains */
 export const PROXY_REFERER_MAP: Record<string, string> = {
@@ -126,10 +122,7 @@ export const PROVIDER_QUICK_TIMEOUT_MS = 8000;
 // =============================================================================
 
 /** Maximum consecutive failures before circuit opens */
-export const CIRCUIT_BREAKER_THRESHOLD = parseInt(
-	process.env.PROVIDER_MAX_FAILURES || '3',
-	10
-);
+export const CIRCUIT_BREAKER_THRESHOLD = parseInt(process.env.PROVIDER_MAX_FAILURES || '3', 10);
 
 /** Time in milliseconds before circuit breaker enters half-open state */
 export const CIRCUIT_BREAKER_HALF_OPEN_MS = parseInt(
@@ -150,10 +143,7 @@ export const PROVIDER_RESULT_CACHE_TTL_MS = parseInt(
 );
 
 /** Number of providers to try in parallel mode */
-export const PROVIDER_PARALLEL_COUNT = parseInt(
-	process.env.PROVIDER_PARALLEL_COUNT || '3',
-	10
-);
+export const PROVIDER_PARALLEL_COUNT = parseInt(process.env.PROVIDER_PARALLEL_COUNT || '3', 10);
 
 // =============================================================================
 // Legacy Provider Configuration (Deprecated)
