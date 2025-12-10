@@ -204,8 +204,11 @@ export const POST: RequestHandler = async ({ request }) => {
 			: undefined;
 		const folderName = generateSeriesFolderName(tvDetails.name, year, tvdbId ?? undefined);
 
-		// Calculate total episode count
-		const totalEpisodes = tvDetails.number_of_episodes ?? 0;
+		// Calculate total episode count (excluding specials/season 0)
+		const totalEpisodes =
+			tvDetails.seasons
+				?.filter((s) => s.season_number !== 0)
+				.reduce((sum, s) => sum + (s.episode_count ?? 0), 0) ?? 0;
 
 		// Get the default scoring profile if none specified
 		let effectiveProfileId = scoringProfileId;

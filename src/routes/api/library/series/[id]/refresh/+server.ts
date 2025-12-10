@@ -164,10 +164,11 @@ export const POST: RequestHandler = async ({ params }) => {
 			}
 		}
 
-		// Update series episode counts
+		// Update series episode counts (excluding specials/season 0)
 		const allEpisodes = await db.select().from(episodes).where(eq(episodes.seriesId, id));
-		const episodeCount = allEpisodes.length;
-		const episodeFileCount = allEpisodes.filter((e) => e.hasFile).length;
+		const regularEpisodes = allEpisodes.filter((e) => e.seasonNumber !== 0);
+		const episodeCount = regularEpisodes.length;
+		const episodeFileCount = regularEpisodes.filter((e) => e.hasFile).length;
 
 		await db.update(series).set({ episodeCount, episodeFileCount }).where(eq(series.id, id));
 

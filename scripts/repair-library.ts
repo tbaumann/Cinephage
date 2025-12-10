@@ -28,7 +28,7 @@ import {
 	movieFiles,
 	movies
 } from '../src/lib/server/db/schema.js';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, ne } from 'drizzle-orm';
 import { basename, relative, join } from 'path';
 
 // Parse season/episode from filename
@@ -289,13 +289,18 @@ async function main() {
 	const allSeriesForUpdate = await db.select({ id: series.id }).from(series);
 
 	for (const s of allSeriesForUpdate) {
-		// Count episodes with hasFile=true
+		// Count episodes with hasFile=true (excluding specials/season 0)
 		const episodesWithFiles = await db
 			.select()
 			.from(episodes)
-			.where(and(eq(episodes.seriesId, s.id), eq(episodes.hasFile, true)));
+			.where(
+				and(eq(episodes.seriesId, s.id), eq(episodes.hasFile, true), ne(episodes.seasonNumber, 0))
+			);
 
-		const totalEpisodes = await db.select().from(episodes).where(eq(episodes.seriesId, s.id));
+		const totalEpisodes = await db
+			.select()
+			.from(episodes)
+			.where(and(eq(episodes.seriesId, s.id), ne(episodes.seasonNumber, 0)));
 
 		await db
 			.update(series)

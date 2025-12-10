@@ -644,14 +644,16 @@ export class DiskScanService extends EventEmitter {
 	private async updateSeriesAndSeasonStats(seriesId: string): Promise<void> {
 		const allEpisodes = await db.select().from(episodes).where(eq(episodes.seriesId, seriesId));
 
-		const episodesWithFiles = allEpisodes.filter((ep) => ep.hasFile);
+		// Exclude specials (season 0) from series-level counts
+		const regularEpisodes = allEpisodes.filter((ep) => ep.seasonNumber !== 0);
+		const regularEpisodesWithFiles = regularEpisodes.filter((ep) => ep.hasFile);
 
 		// Update series
 		await db
 			.update(series)
 			.set({
-				episodeFileCount: episodesWithFiles.length,
-				episodeCount: allEpisodes.length
+				episodeFileCount: regularEpisodesWithFiles.length,
+				episodeCount: regularEpisodes.length
 			})
 			.where(eq(series.id, seriesId));
 

@@ -624,13 +624,14 @@ export class MediaMatcherService {
 	}
 
 	/**
-	 * Update episode counts for a series
+	 * Update episode counts for a series (excluding specials/season 0)
 	 */
 	private async updateSeriesStats(seriesId: string): Promise<void> {
 		const allEpisodes = await db.select().from(episodes).where(eq(episodes.seriesId, seriesId));
+		const regularEpisodes = allEpisodes.filter((e) => e.seasonNumber !== 0);
 
-		const episodeCount = allEpisodes.length;
-		const episodeFileCount = allEpisodes.filter((e) => e.hasFile).length;
+		const episodeCount = regularEpisodes.length;
+		const episodeFileCount = regularEpisodes.filter((e) => e.hasFile).length;
 
 		await db.update(series).set({ episodeCount, episodeFileCount }).where(eq(series.id, seriesId));
 	}
