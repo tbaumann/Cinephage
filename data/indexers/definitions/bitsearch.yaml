@@ -72,14 +72,14 @@ search:
       selector: span:has(i.fa-download) span:not(.font-medium)
       filters:
         - name: replace
-          args: ["GB", " GB"]
+          args: ['GB', ' GB']
         - name: replace
-          args: ["MB", " MB"]
+          args: ['MB', ' MB']
     date:
       selector: span:has(i.fa-calendar) span
       filters:
         - name: dateparse
-          args: "1/2/2006"
+          args: '1/2/2006'
     seeders:
       selector: span.text-green-600 span.font-medium
     leechers:

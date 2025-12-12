@@ -399,16 +399,43 @@ export class AuthManager {
 
 	/**
 	 * Login via user-provided cookies.
+	 * Supports either:
+	 * 1. A single 'cookie' setting with the full cookie string
+	 * 2. Separate fields (e.g., 'uid' and 'pass' for SceneTime-style trackers)
 	 */
 	private loginCookie(login: LoginBlock, context: AuthContext): LoginResult {
-		// Get cookie from settings
+		// First try the combined 'cookie' setting (backward compatible)
 		const cookieValue = context.settings['cookie'] as string | undefined;
-		if (!cookieValue) {
-			return { success: false, cookies: {}, error: 'Cookie not provided in settings' };
+		if (cookieValue) {
+			this.cookies = CookieStore.parseCookieHeader(cookieValue);
+			return { success: true, cookies: this.cookies };
 		}
 
-		this.cookies = CookieStore.parseCookieHeader(cookieValue);
-		return { success: true, cookies: this.cookies };
+		// Try to build cookie from separate uid/pass fields (SceneTime-style)
+		const uid = context.settings['uid'] as string | undefined;
+		const pass = context.settings['pass'] as string | undefined;
+		if (uid && pass) {
+			this.cookies = { uid, pass };
+			return { success: true, cookies: this.cookies };
+		}
+
+		// Check if there are any cookie-like settings we can use
+		// Look for settings that might be cookie values
+		const cookieSettings: Record<string, string> = {};
+		for (const [key, value] of Object.entries(context.settings)) {
+			// Skip non-string values and special keys
+			if (typeof value !== 'string' || !value) continue;
+			if (['freeleech', 'sort', 'baseUrl'].includes(key)) continue;
+			// Add potential cookie values
+			cookieSettings[key] = value;
+		}
+
+		if (Object.keys(cookieSettings).length > 0) {
+			this.cookies = cookieSettings;
+			return { success: true, cookies: this.cookies };
+		}
+
+		return { success: false, cookies: {}, error: 'No cookie credentials provided. Please provide uid and pass values.' };
 	}
 
 	/**

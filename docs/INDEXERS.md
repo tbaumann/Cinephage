@@ -1,6 +1,6 @@
 # Indexers
 
-Cinephage uses a YAML-based indexer engine with Cardigann-compatible definitions. Currently, four public indexers (BitSearch, EZTV, Knaben, YTS) and one private tracker (OldToons.World) are fully supported, with more being added. For indexers not yet built in, use Torznab or Newznab integration with [Prowlarr](https://prowlarr.com/) or [Jackett](https://github.com/Jackett/Jackett).
+Cinephage uses a YAML-based indexer engine with Cardigann-compatible definitions. Currently, four public indexers (BitSearch, EZTV, Knaben, YTS) and two private trackers (OldToons.World, SceneTime) are fully supported, with more being added. For indexers not yet built in, use Torznab or Newznab integration with [Prowlarr](https://prowlarr.com/) or [Jackett](https://github.com/Jackett/Jackett).
 
 > **Note**: The indexer system was recently overhauled to a unified YAML-only architecture. Many previously supported native indexers are being converted to YAML definitions.
 
@@ -106,18 +106,18 @@ Cinephage uses a YAML-based indexer engine with Cardigann-compatible definitions
 
 DHT search engines and multi-tracker aggregators.
 
-| Indexer          | Type           | Status        | Notes                     |
-| ---------------- | -------------- | ------------- | ------------------------- |
-| BTDig            | DHT search     | In Progress   | Converting to YAML        |
-| BitSearch        | DHT search     | **Supported** | Formerly SolidTorrents    |
-| Knaben           | Aggregator     | **Supported** | Multi-tracker aggregator  |
-| TorrentsCSV      | DHT database   | In Progress   | Converting to YAML        |
-| Torrent Paradise | DHT search     | Planned       | Decentralized             |
-| BT4G             | Meta-search    | Planned       | 91M+ results              |
-| iDope            | Aggregator     | Planned       | Clean, ad-free            |
-| Zooqle           | Aggregator     | Unstable      | Intermittent availability |
-| TorrentDownloads | Aggregator     | Planned       | Long-running              |
-| Snowfl           | Meta-search    | Planned       | Real-time search          |
+| Indexer          | Type         | Status        | Notes                     |
+| ---------------- | ------------ | ------------- | ------------------------- |
+| BTDig            | DHT search   | In Progress   | Converting to YAML        |
+| BitSearch        | DHT search   | **Supported** | Formerly SolidTorrents    |
+| Knaben           | Aggregator   | **Supported** | Multi-tracker aggregator  |
+| TorrentsCSV      | DHT database | In Progress   | Converting to YAML        |
+| Torrent Paradise | DHT search   | Planned       | Decentralized             |
+| BT4G             | Meta-search  | Planned       | 91M+ results              |
+| iDope            | Aggregator   | Planned       | Clean, ad-free            |
+| Zooqle           | Aggregator   | Unstable      | Intermittent availability |
+| TorrentDownloads | Aggregator   | Planned       | Long-running              |
+| Snowfl           | Meta-search  | Planned       | Real-time search          |
 
 ---
 
@@ -137,7 +137,7 @@ Private trackers require invitation or application. Use Torznab/Newznab integrat
 | DigitalCore  | General        | Planned     |                     |
 | Aither       | General        | In Progress | Unit3D-based        |
 | SpeedCD      | General        | In Progress | Converting to YAML  |
-| SceneTime    | Scene releases | In Progress | Converting to YAML  |
+| SceneTime    | Scene releases | **Supported** | Cookie auth, BrowserSolver for Cloudflare |
 
 ### Movies
 
@@ -190,17 +190,17 @@ Private trackers require invitation or application. Use Torznab/Newznab integrat
 
 ### Specialized
 
-| Tracker         | Content          | Status        | Notes                        |
-| --------------- | ---------------- | ------------- | ---------------------------- |
-| OldToons.World  | Classic cartoons | **Supported** | UNIT3D-based, API key auth   |
-| HD-Space      | HD content         | Planned     |                    |
-| HDTorrents    | HD content         | Planned     |                    |
-| Anthelion     | eBooks, audiobooks | Planned     |                    |
-| BitHDTV       | HD content         | Planned     |                    |
-| TorrentSeeds  | General            | Planned     |                    |
-| DanishBytes   | Danish content     | Planned     | Regional           |
-| NorBits       | Norwegian content  | Planned     | Regional           |
-| HDBits.ro     | Romanian HD        | Planned     | Regional           |
+| Tracker        | Content            | Status        | Notes                      |
+| -------------- | ------------------ | ------------- | -------------------------- |
+| OldToons.World | Classic cartoons   | **Supported** | UNIT3D-based, API key auth |
+| HD-Space       | HD content         | Planned       |                            |
+| HDTorrents     | HD content         | Planned       |                            |
+| Anthelion      | eBooks, audiobooks | Planned       |                            |
+| BitHDTV        | HD content         | Planned       |                            |
+| TorrentSeeds   | General            | Planned       |                            |
+| DanishBytes    | Danish content     | Planned       | Regional                   |
+| NorBits        | Norwegian content  | Planned       | Regional                   |
+| HDBits.ro      | Romanian HD        | Planned       | Regional                   |
 
 ---
 
@@ -228,8 +228,11 @@ Cinephage now supports Newznab-compatible usenet indexers via the built-in Newzn
 
 1. Navigate to **Settings > Integrations > Indexers**
 2. Click **Add Indexer**
-3. Select from available indexers (BitSearch, EZTV, Knaben, YTS, or templates)
-4. Configure settings as needed
+3. Select from available indexers:
+   - **Public**: BitSearch, EZTV, Knaben, YTS
+   - **Private**: OldToons.World (API key), SceneTime (cookie auth)
+   - **Templates**: Torznab, Newznab
+4. Configure settings as needed (API keys, cookies, etc.)
 5. Test the indexer to verify connectivity
 
 ### Adding Newznab Indexers (Usenet)

@@ -23,6 +23,8 @@ import {
 } from './RetryPolicy';
 import { getRateLimitRegistry, getHostRateLimiter } from '../ratelimit';
 import type { RateLimitConfig } from '../ratelimit/types';
+import { getBrowserSolver } from './browser';
+import { CloudflareBypassError } from '$lib/errors';
 
 /** HTTP request options */
 export interface HttpRequestOptions {
@@ -241,7 +243,8 @@ export class IndexerHttp {
 	private async doFetch(
 		url: string,
 		options: ResolvedHttpOptions,
-		headers: Record<string, string>
+		headers: Record<string, string>,
+		skipBrowserSolver = false
 	): Promise<HttpResponse> {
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), options.timeout);
@@ -257,9 +260,59 @@ export class IndexerHttp {
 
 			const body = await response.text();
 
-			// Check for Cloudflare challenge - throw error so caller knows this indexer is protected
+			// Check for Cloudflare challenge
 			if (isCloudflareProtected(response.status, response.headers, body)) {
-				throw new CloudflareProtectedError(new URL(url).hostname, response.status);
+				const host = new URL(url).hostname;
+
+				// Try browser solver if available and not already attempted
+				if (!skipBrowserSolver) {
+					const browserSolver = getBrowserSolver();
+
+					if (browserSolver.isEnabled()) {
+						this.log.info('Cloudflare detected, attempting browser solve', { url, host });
+
+						const solveResult = await browserSolver.solve({
+							url,
+							method: options.method,
+							headers,
+							body: options.body?.toString(),
+							indexerId: this.config.indexerId,
+							timeout: Math.max(options.timeout, 60000)
+						});
+
+						if (solveResult.success) {
+							// Store solved cookies
+							this.setCookies(solveResult.cookies);
+
+							this.log.info('Browser solve succeeded, retrying request', {
+								host,
+								solveTimeMs: solveResult.solveTimeMs,
+								challengeType: solveResult.challengeType
+							});
+
+							// Retry the original request with new cookies
+							// Pass skipBrowserSolver=true to avoid infinite loop
+							const newHeaders = this.buildRequestHeaders(url, headers);
+							return await this.doFetch(url, options, newHeaders, true);
+						}
+
+						// Browser solver failed
+						this.log.warn('Browser solve failed', {
+							host,
+							error: solveResult.error,
+							challengeType: solveResult.challengeType
+						});
+
+						throw new CloudflareBypassError(
+							host,
+							solveResult.error ?? 'Browser solver failed',
+							solveResult.challengeType
+						);
+					}
+				}
+
+				// Browser solver not available or already tried, throw original error
+				throw new CloudflareProtectedError(host, response.status);
 			}
 
 			// Check for HTTP errors
@@ -362,6 +415,14 @@ export class IndexerHttp {
 				shouldRetry: true,
 				suggestedDelayMs: 3000,
 				reason: 'Cloudflare protection (will retry)'
+			};
+		}
+
+		// Don't retry CloudflareBypassError - browser solver already tried
+		if (error instanceof CloudflareBypassError) {
+			return {
+				shouldRetry: false,
+				reason: 'Cloudflare bypass already attempted'
 			};
 		}
 

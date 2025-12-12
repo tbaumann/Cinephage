@@ -12,6 +12,7 @@ import { getExternalIdService } from '$lib/server/services/ExternalIdService.js'
 import { qualityFilter } from '$lib/server/quality';
 import { isAppError } from '$lib/errors';
 import { initializeDatabase } from '$lib/server/db';
+import { getBrowserSolver } from '$lib/server/indexers/http/browser';
 
 /**
  * Content Security Policy header.
@@ -45,6 +46,7 @@ let libraryInitialized = false;
 let downloadMonitorInitialized = false;
 let monitoringInitialized = false;
 let externalIdServiceInitialized = false;
+let browserSolverInitialized = false;
 
 async function checkFFprobe() {
 	const available = await isFFprobeAvailable();
@@ -128,6 +130,21 @@ async function initializeExternalIdService() {
 	}
 }
 
+async function initializeBrowserSolver() {
+	if (browserSolverInitialized) return;
+
+	try {
+		const browserSolver = getBrowserSolver();
+		await browserSolver.initialize();
+		browserSolverInitialized = true;
+		logger.info('BrowserSolver initialized for Cloudflare bypass');
+	} catch (error) {
+		// Non-fatal - application continues without browser solving
+		// Users can still manually configure cookies for protected indexers
+		logger.error('Failed to initialize BrowserSolver (Cloudflare bypass disabled)', error);
+	}
+}
+
 // Start initialization in next tick - ensures module loading completes immediately
 // so the HTTP server can start responding to requests while services initialize in background.
 // Using setImmediate pushes the async work to the next event loop iteration.
@@ -150,8 +167,37 @@ setImmediate(async () => {
 			initializeMonitoring().catch((e) => logger.error('Monitoring init failed', e));
 			initializeExternalIdService().catch((e) => logger.error('External ID init failed', e));
 		}, 5000);
+
+		// 4. Browser solver starts after other services (resource-intensive, lower priority)
+		// This is delayed to allow core services to stabilize first
+		setTimeout(() => {
+			initializeBrowserSolver().catch((e) => logger.error('BrowserSolver init failed', e));
+		}, 10000);
 	} catch (error) {
 		logger.error('Critical: Database initialization failed - application may not function', error);
+	}
+});
+
+// Graceful shutdown handler for browser solver
+process.on('SIGTERM', async () => {
+	if (browserSolverInitialized) {
+		logger.info('Shutting down BrowserSolver...');
+		try {
+			await getBrowserSolver().shutdown();
+		} catch (error) {
+			logger.error('Error shutting down BrowserSolver', error);
+		}
+	}
+});
+
+process.on('SIGINT', async () => {
+	if (browserSolverInitialized) {
+		logger.info('Shutting down BrowserSolver...');
+		try {
+			await getBrowserSolver().shutdown();
+		} catch (error) {
+			logger.error('Error shutting down BrowserSolver', error);
+		}
 	}
 });
 

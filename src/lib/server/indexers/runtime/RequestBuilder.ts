@@ -436,10 +436,13 @@ export class RequestBuilder {
 			'query_term',
 			'name', // UNIT3D trackers use 'name' for keyword search
 			'search',
+			'imdb', // Some trackers use 'imdb' instead of 'imdbid'
 			'imdbid',
 			'imdb_id',
+			'tmdb', // Some trackers use 'tmdb' instead of 'tmdbid'
 			'tmdbid',
 			'tmdb_id',
+			'tvdb', // Some trackers use 'tvdb' instead of 'tvdbid'
 			'tvdbid',
 			'tvdb_id',
 			'tvmazeid',

@@ -405,7 +405,11 @@ export class Subf2mProvider extends BaseSubtitleProvider {
 					// Get uploader from comment-col
 					const uploader =
 						$row.find('.comment-col a').text().trim() ||
-						$row.find('.comment-col b').text().replace(/^By\s*/i, '').trim() ||
+						$row
+							.find('.comment-col b')
+							.text()
+							.replace(/^By\s*/i, '')
+							.trim() ||
 						undefined;
 
 					// Try to extract season/episode from release name
