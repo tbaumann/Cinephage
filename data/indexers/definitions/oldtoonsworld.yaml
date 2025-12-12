@@ -1,0 +1,170 @@
+---
+id: oldtoonsworld
+name: OldToons.World
+description: Private torrent tracker for animated movies and TV shows (UNIT3D)
+type: private
+protocol: torrent
+language: en-US
+encoding: UTF-8
+requestdelay: 2
+
+links:
+  - https://oldtoons.world
+
+settings:
+  - name: apikey
+    type: password
+    label: API Key
+  - name: info_key
+    type: info
+    label: Where to find your API key
+    default: 'Go to your OldToons.World account Settings > API Key tab to generate or view your API token.'
+  - name: freeleech
+    type: checkbox
+    label: Search freeleech only
+    default: false
+  - name: sort
+    type: select
+    label: Sort results by
+    default: created_at
+    options:
+      created_at: Upload Date
+      seeders: Seeders
+      size: Size
+      name: Title
+  - name: direction
+    type: select
+    label: Sort direction
+    default: desc
+    options:
+      desc: Descending
+      asc: Ascending
+
+caps:
+  modes:
+    search: [q]
+    movie-search: [q, imdbid, tmdbid]
+    tv-search: [q, imdbid, tvdbid, tmdbid, season, ep]
+  categories:
+    '2000': Movies
+    '5000': TV
+    '5070': TV/Anime
+  categorymappings:
+    - id: '1'
+      cat: '2000'
+      desc: Movies
+      default: true
+    - id: '2'
+      cat: '5000'
+      desc: TV
+
+login:
+  method: get
+  path: /api/torrents
+  headers:
+    Authorization:
+      - 'Bearer {{ .Config.apikey }}'
+  error:
+    - selector: a[href*="/login"]
+      message:
+        text: 'The API key was not accepted. Please verify your API key is correct.'
+
+search:
+  paths:
+    # General search (fallback - must be first for basic searches)
+    - path: /api/torrents/filter
+      method: get
+      inputs:
+        name: '{{ .Keywords }}'
+        imdbId: '{{ .Query.IMDBID }}'
+        tmdbId: '{{ .Query.TMDBID }}'
+        tvdbId: '{{ .Query.TVDBID }}'
+        seasonNumber: '{{ .Query.Season }}'
+        episodeNumber: '{{ .Query.Ep }}'
+        'free[]': '{{ if .Config.freeleech }}100{{ else }}{{ end }}'
+        sortField: '{{ .Config.sort }}'
+        sortDirection: '{{ .Config.direction }}'
+        perPage: '100'
+
+    # Movie search
+    - path: /api/torrents/filter
+      method: get
+      categories: [Movies]
+      inputs:
+        name: '{{ .Keywords }}'
+        imdbId: '{{ .Query.IMDBID }}'
+        tmdbId: '{{ .Query.TMDBID }}'
+        'categories[]': '1'
+        'free[]': '{{ if .Config.freeleech }}100{{ else }}{{ end }}'
+        sortField: '{{ .Config.sort }}'
+        sortDirection: '{{ .Config.direction }}'
+        perPage: '100'
+
+    # TV search
+    - path: /api/torrents/filter
+      method: get
+      categories: [TV, TV/Anime]
+      inputs:
+        name: '{{ .Keywords }}'
+        imdbId: '{{ .Query.IMDBID }}'
+        tmdbId: '{{ .Query.TMDBID }}'
+        tvdbId: '{{ .Query.TVDBID }}'
+        seasonNumber: '{{ .Query.Season }}'
+        episodeNumber: '{{ .Query.Ep }}'
+        'categories[]': '2'
+        'free[]': '{{ if .Config.freeleech }}100{{ else }}{{ end }}'
+        sortField: '{{ .Config.sort }}'
+        sortDirection: '{{ .Config.direction }}'
+        perPage: '100'
+
+  response:
+    type: json
+
+  headers:
+    Authorization:
+      - 'Bearer {{ .Config.apikey }}'
+
+  rows:
+    selector: data
+
+  fields:
+    title:
+      selector: attributes.name
+    guid:
+      selector: id
+    details:
+      selector: attributes.details_link
+    download:
+      selector: attributes.download_link
+    size:
+      selector: attributes.size
+    seeders:
+      selector: attributes.seeders
+    leechers:
+      selector: attributes.leechers
+    grabs:
+      selector: attributes.times_completed
+    date:
+      selector: attributes.created_at
+      filters:
+        - name: dateparse
+          args: '2006-01-02T15:04:05.000000Z'
+    category:
+      selector: attributes.category_id
+    imdbid:
+      selector: attributes.imdb_id
+      optional: true
+    tmdbid:
+      selector: attributes.tmdb_id
+      optional: true
+    tvdbid:
+      selector: attributes.tvdb_id
+      optional: true
+    poster:
+      selector: attributes.meta.poster
+      optional: true
+      filters:
+        - name: replace
+          args:
+            - 'https://via.placeholder.com/90x135'
+            - ''

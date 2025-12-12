@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **OldToons.World indexer** - Private UNIT3D tracker for classic animated content with API key authentication
 - **SABnzbd download client** - Full usenet downloader support with queue/history monitoring
 - **Newznab protocol** - Generic usenet indexer integration with dynamic capability discovery
 - **NZB validation service** - XML structure validation and metadata extraction
@@ -23,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- RequestBuilder now recognizes `name` and `search` as valid search parameters (for UNIT3D trackers)
 - Migrated from native TypeScript indexers to YAML-only definitions
 - Rebuilt indexer database schema with definitions table and enhanced status tracking
 - Enhanced health tracking with consecutive failure counting and exponential backoff

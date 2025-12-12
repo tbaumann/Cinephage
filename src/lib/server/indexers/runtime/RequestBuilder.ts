@@ -434,6 +434,8 @@ export class RequestBuilder {
 			'q',
 			'query',
 			'query_term',
+			'name', // UNIT3D trackers use 'name' for keyword search
+			'search',
 			'imdbid',
 			'imdb_id',
 			'tmdbid',

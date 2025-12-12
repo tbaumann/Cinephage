@@ -1,6 +1,6 @@
 # Indexers
 
-Cinephage uses a YAML-based indexer engine with Cardigann-compatible definitions. Currently, four public indexers are fully supported (BitSearch, EZTV, Knaben, and YTS), with more being added. For indexers not yet built in, use Torznab or Newznab integration with [Prowlarr](https://prowlarr.com/) or [Jackett](https://github.com/Jackett/Jackett).
+Cinephage uses a YAML-based indexer engine with Cardigann-compatible definitions. Currently, four public indexers (BitSearch, EZTV, Knaben, YTS) and one private tracker (OldToons.World) are fully supported, with more being added. For indexers not yet built in, use Torznab or Newznab integration with [Prowlarr](https://prowlarr.com/) or [Jackett](https://github.com/Jackett/Jackett).
 
 > **Note**: The indexer system was recently overhauled to a unified YAML-only architecture. Many previously supported native indexers are being converted to YAML definitions.
 
@@ -190,9 +190,9 @@ Private trackers require invitation or application. Use Torznab/Newznab integrat
 
 ### Specialized
 
-| Tracker       | Content            | Status      | Notes              |
-| ------------- | ------------------ | ----------- | ------------------ |
-| OldToonsWorld | Classic cartoons   | In Progress | Converting to YAML |
+| Tracker         | Content          | Status        | Notes                        |
+| --------------- | ---------------- | ------------- | ---------------------------- |
+| OldToons.World  | Classic cartoons | **Supported** | UNIT3D-based, API key auth   |
 | HD-Space      | HD content         | Planned     |                    |
 | HDTorrents    | HD content         | Planned     |                    |
 | Anthelion     | eBooks, audiobooks | Planned     |                    |

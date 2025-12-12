@@ -40,7 +40,7 @@ Cinephage consolidates four separate applications into one streamlined experienc
 | Library Management | Stable       | File watching, scanning, TMDB matching               |
 | Quality Scoring    | In Progress  | 4 built-in profiles work; custom profiles incomplete |
 | Download Client    | Stable       | qBittorrent + SABnzbd                                |
-| Indexers           | In Progress  | 4 public indexers + Torznab/Newznab templates        |
+| Indexers           | In Progress  | 4 public + 1 private indexer + Torznab/Newznab       |
 | Subtitles          | Stable       | 6 providers, 80+ languages                           |
 | Monitoring         | Experimental | 5 tasks coded, may have bugs                         |
 | Live TV/IPTV       | Not Started  | Planned for future                                   |
