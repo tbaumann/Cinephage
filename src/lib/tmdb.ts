@@ -3,7 +3,8 @@ import type {
 	MovieDetails,
 	TVShowDetails,
 	Season,
-	Collection
+	Collection,
+	PersonDetails
 } from './types/tmdb';
 
 // Cache both the result AND the pending promise to prevent duplicate requests
@@ -92,5 +93,11 @@ export const tmdb = {
 	},
 	async getCollection(id: number, customFetch = fetch): Promise<Collection> {
 		return this.get<Collection>(`/collection/${id}`, customFetch);
+	},
+	async getPerson(id: number, customFetch = fetch): Promise<PersonDetails> {
+		return this.get<PersonDetails>(
+			`/person/${id}?append_to_response=combined_credits,external_ids`,
+			customFetch
+		);
 	}
 };

@@ -136,7 +136,15 @@ export class MonitoringScheduler extends EventEmitter {
 		const settings = await db.select().from(monitoringSettings);
 		const settingsMap = new Map(settings.map((s) => [s.key, s.value]));
 
-		const taskTypes = ['missing', 'upgrade', 'newEpisode', 'cutoffUnmet', 'pendingRelease', 'missingSubtitles', 'subtitleUpgrade'];
+		const taskTypes = [
+			'missing',
+			'upgrade',
+			'newEpisode',
+			'cutoffUnmet',
+			'pendingRelease',
+			'missingSubtitles',
+			'subtitleUpgrade'
+		];
 		for (const taskType of taskTypes) {
 			const key = `last_run_${taskType}`;
 			const value = settingsMap.get(key);
@@ -211,8 +219,10 @@ export class MonitoringScheduler extends EventEmitter {
 				settingsMap.get('subtitle_upgrade_interval_hours') ||
 					String(DEFAULT_INTERVALS.subtitleUpgrade)
 			),
-			subtitleSearchOnImportEnabled: settingsMap.get('subtitle_search_on_import_enabled') !== 'false',
-			subtitleSearchTrigger: (settingsMap.get('subtitle_search_trigger') as SubtitleSearchTrigger) || 'after_metadata'
+			subtitleSearchOnImportEnabled:
+				settingsMap.get('subtitle_search_on_import_enabled') !== 'false',
+			subtitleSearchTrigger:
+				(settingsMap.get('subtitle_search_trigger') as SubtitleSearchTrigger) || 'after_metadata'
 		};
 	}
 

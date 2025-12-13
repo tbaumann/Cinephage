@@ -242,9 +242,7 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 					const episodesWithFiles = await db
 						.select({ id: episodes.id })
 						.from(episodes)
-						.where(
-							and(eq(episodes.seriesId, params.id), eq(episodes.hasFile, true))
-						);
+						.where(and(eq(episodes.seriesId, params.id), eq(episodes.hasFile, true)));
 
 					if (episodesWithFiles.length > 0) {
 						logger.info('[API] Subtitle monitoring enabled for series, triggering search', {

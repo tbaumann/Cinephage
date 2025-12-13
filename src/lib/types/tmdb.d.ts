@@ -245,6 +245,78 @@ export interface Person {
 	media_type?: 'person';
 }
 
+// Person's cast credit in combined_credits (filmography as actor)
+export interface PersonCastCredit {
+	id: number;
+	title?: string; // Movies
+	name?: string; // TV shows
+	original_title?: string;
+	original_name?: string;
+	poster_path: string | null;
+	backdrop_path: string | null;
+	release_date?: string; // Movies
+	first_air_date?: string; // TV shows
+	vote_average: number;
+	vote_count: number;
+	popularity: number;
+	overview: string;
+	media_type: 'movie' | 'tv';
+	character: string;
+	credit_id: string;
+	order?: number;
+	episode_count?: number; // TV only
+}
+
+// Person's crew credit in combined_credits (filmography as crew)
+export interface PersonCrewCredit {
+	id: number;
+	title?: string;
+	name?: string;
+	original_title?: string;
+	original_name?: string;
+	poster_path: string | null;
+	backdrop_path: string | null;
+	release_date?: string;
+	first_air_date?: string;
+	vote_average: number;
+	vote_count: number;
+	popularity: number;
+	overview: string;
+	media_type: 'movie' | 'tv';
+	department: string;
+	job: string;
+	credit_id: string;
+	episode_count?: number;
+}
+
+export interface PersonCombinedCredits {
+	cast: PersonCastCredit[];
+	crew: PersonCrewCredit[];
+}
+
+export interface PersonExternalIds {
+	imdb_id: string | null;
+	facebook_id: string | null;
+	instagram_id: string | null;
+	twitter_id: string | null;
+	tiktok_id: string | null;
+	youtube_id: string | null;
+	wikidata_id: string | null;
+}
+
+// Full person details from /person/{id} with append_to_response
+export interface PersonDetails extends Person {
+	birthday: string | null;
+	deathday: string | null;
+	biography: string;
+	place_of_birth: string | null;
+	homepage: string | null;
+	also_known_as: string[];
+	imdb_id: string | null;
+	combined_credits: PersonCombinedCredits;
+	external_ids: PersonExternalIds;
+}
+
 export interface Collection {
 	id: number;
 	name: string;

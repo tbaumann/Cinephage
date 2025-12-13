@@ -127,16 +127,16 @@ Private trackers require invitation or application. Use Torznab/Newznab integrat
 
 ### General
 
-| Tracker      | Content        | Status      | Notes               |
-| ------------ | -------------- | ----------- | ------------------- |
-| IPTorrents   | General        | In Progress | Converting to YAML  |
-| TorrentLeech | General, 0DAY  | Planned     | Fast pre-times      |
-| TorrentDay   | General        | In Progress | Converting to YAML  |
-| FileList     | General        | Planned     | Romanian, excellent |
-| AlphaRatio   | General        | Planned     | Scene releases      |
-| DigitalCore  | General        | Planned     |                     |
-| Aither       | General        | In Progress | Unit3D-based        |
-| SpeedCD      | General        | In Progress | Converting to YAML  |
+| Tracker      | Content        | Status        | Notes                                     |
+| ------------ | -------------- | ------------- | ----------------------------------------- |
+| IPTorrents   | General        | In Progress   | Converting to YAML                        |
+| TorrentLeech | General, 0DAY  | Planned       | Fast pre-times                            |
+| TorrentDay   | General        | In Progress   | Converting to YAML                        |
+| FileList     | General        | Planned       | Romanian, excellent                       |
+| AlphaRatio   | General        | Planned       | Scene releases                            |
+| DigitalCore  | General        | Planned       |                                           |
+| Aither       | General        | In Progress   | Unit3D-based                              |
+| SpeedCD      | General        | In Progress   | Converting to YAML                        |
 | SceneTime    | Scene releases | **Supported** | Cookie auth, BrowserSolver for Cloudflare |
 
 ### Movies

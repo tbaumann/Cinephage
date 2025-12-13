@@ -435,7 +435,11 @@ export class AuthManager {
 			return { success: true, cookies: this.cookies };
 		}
 
-		return { success: false, cookies: {}, error: 'No cookie credentials provided. Please provide uid and pass values.' };
+		return {
+			success: false,
+			cookies: {},
+			error: 'No cookie credentials provided. Please provide uid and pass values.'
+		};
 	}
 
 	/**

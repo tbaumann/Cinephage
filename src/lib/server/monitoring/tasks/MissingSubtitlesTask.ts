@@ -79,7 +79,9 @@ export async function executeMissingSubtitlesTask(): Promise<TaskResult> {
 	const availableProviders = await providerManager.getEnabledProviders();
 
 	if (availableProviders.length === 0) {
-		logger.warn('[MissingSubtitlesTask] No subtitle providers available (all throttled or disabled), skipping search');
+		logger.warn(
+			'[MissingSubtitlesTask] No subtitle providers available (all throttled or disabled), skipping search'
+		);
 		return {
 			taskType: 'missingSubtitles',
 			itemsProcessed: 0,
@@ -280,7 +282,8 @@ async function searchMissingMovieSubtitles(
 								logger.warn('[MissingSubtitlesTask] Failed to download subtitle for movie', {
 									movieId: movie.id,
 									language: missing.code,
-									error: downloadError instanceof Error ? downloadError.message : String(downloadError)
+									error:
+										downloadError instanceof Error ? downloadError.message : String(downloadError)
 								});
 							}
 						}

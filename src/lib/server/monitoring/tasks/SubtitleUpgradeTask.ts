@@ -137,7 +137,10 @@ async function searchMovieSubtitleUpgrades(
 	});
 
 	// Group by movie to avoid duplicate searches
-	const movieMap = new Map<string, { movie: typeof movies.$inferSelect; subtitles: typeof subtitles.$inferSelect[] }>();
+	const movieMap = new Map<
+		string,
+		{ movie: typeof movies.$inferSelect; subtitles: (typeof subtitles.$inferSelect)[] }
+	>();
 
 	for (const row of movieSubtitles) {
 		const existing = movieMap.get(row.movie.id);
@@ -262,7 +265,10 @@ async function searchEpisodeSubtitleUpgrades(
 	});
 
 	// Group by episode
-	const episodeMap = new Map<string, { episode: typeof episodes.$inferSelect; subtitles: typeof subtitles.$inferSelect[] }>();
+	const episodeMap = new Map<
+		string,
+		{ episode: typeof episodes.$inferSelect; subtitles: (typeof subtitles.$inferSelect)[] }
+	>();
 
 	for (const row of episodeSubtitles) {
 		const existing = episodeMap.get(row.episode.id);
@@ -278,11 +284,7 @@ async function searchEpisodeSubtitleUpgrades(
 	const seriesData = await db
 		.select()
 		.from(series)
-		.where(
-			and(
-				isNotNull(series.languageProfileId)
-			)
-		);
+		.where(and(isNotNull(series.languageProfileId)));
 
 	const seriesProfileMap = new Map(seriesData.map((s) => [s.id, s.languageProfileId]));
 

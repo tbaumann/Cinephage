@@ -7,7 +7,7 @@ import { logger } from '$lib/logging';
 
 const searchQuerySchema = z.object({
 	query: z.string().min(1, 'Search query is required'),
-	type: z.enum(['all', 'movie', 'tv']).default('all'),
+	type: z.enum(['all', 'movie', 'tv', 'person']).default('all'),
 	page: z.coerce.number().int().min(1).default(1)
 });
 
@@ -38,15 +38,19 @@ export const GET: RequestHandler = async ({ url }) => {
 			results = data.results.map((t: Record<string, unknown>) => ({ ...t, media_type: 'tv' }));
 			totalResults = data.total_results;
 			totalPages = data.total_pages;
+		} else if (type === 'person') {
+			const data = await tmdb.fetch(
+				`/search/person?query=${encodeURIComponent(query)}&page=${page}`
+			);
+			results = data.results.map((p: Record<string, unknown>) => ({ ...p, media_type: 'person' }));
+			totalResults = data.total_results;
+			totalPages = data.total_pages;
 		} else {
-			// Use multi search for combined results
+			// Use multi search for combined results (movies, TV, and persons)
 			const data = await tmdb.fetch(
 				`/search/multi?query=${encodeURIComponent(query)}&page=${page}`
 			);
-			// Filter to only movies and TV shows (exclude people)
-			results = data.results.filter(
-				(item: { media_type?: string }) => item.media_type === 'movie' || item.media_type === 'tv'
-			);
+			results = data.results;
 			totalResults = data.total_results;
 			totalPages = data.total_pages;
 		}

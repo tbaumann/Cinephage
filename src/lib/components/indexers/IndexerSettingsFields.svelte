@@ -39,7 +39,10 @@
 			<!-- Info-only fields (not editable) -->
 			<div class="rounded-lg bg-info/10 p-3">
 				<div class="flex items-start gap-2">
-					<svelte:component this={getInfoIcon(setting.type)} class="mt-0.5 h-4 w-4 flex-shrink-0 text-info" />
+					<svelte:component
+						this={getInfoIcon(setting.type)}
+						class="mt-0.5 h-4 w-4 flex-shrink-0 text-info"
+					/>
 					<div class="min-w-0">
 						<span class="text-sm font-medium text-base-content">{setting.label}</span>
 						{#if setting.default}

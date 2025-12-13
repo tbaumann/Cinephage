@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { CastMember, CrewMember } from '$lib/types/tmdb';
 	import { isCastMember } from '$lib/types/tmdb-guards';
+	import { resolvePath } from '$lib/utils/routing';
 	import TmdbImage from './TmdbImage.svelte';
 
 	let { person }: { person: CastMember | CrewMember } = $props();
@@ -10,7 +11,10 @@
 	}
 </script>
 
-<div class="card w-36 shrink-0 bg-base-200 shadow-sm transition-all hover:shadow-md md:w-44">
+<a
+	href={resolvePath(`/person/${person.id}`)}
+	class="card w-36 shrink-0 bg-base-200 shadow-sm transition-all hover:shadow-md hover:ring-2 hover:ring-primary/50 md:w-44"
+>
 	<figure class="aspect-[2/3] w-full overflow-hidden">
 		{#if person.profile_path}
 			<TmdbImage
@@ -43,4 +47,4 @@
 			{getRole(person)}
 		</p>
 	</div>
-</div>
+</a>

@@ -194,12 +194,16 @@ const THROTTLEABLE_ERROR_NAMES = [
  */
 export function isThrottleableError(error: unknown): error is ThrottleableError {
 	if (error instanceof ProviderError) {
-		return THROTTLEABLE_ERROR_NAMES.includes(error.name as (typeof THROTTLEABLE_ERROR_NAMES)[number]);
+		return THROTTLEABLE_ERROR_NAMES.includes(
+			error.name as (typeof THROTTLEABLE_ERROR_NAMES)[number]
+		);
 	}
 	// Fallback: check if it's an Error with a throttleable name
 	// This handles cases where instanceof fails due to bundling issues
 	if (error instanceof Error && 'provider' in error) {
-		return THROTTLEABLE_ERROR_NAMES.includes(error.name as (typeof THROTTLEABLE_ERROR_NAMES)[number]);
+		return THROTTLEABLE_ERROR_NAMES.includes(
+			error.name as (typeof THROTTLEABLE_ERROR_NAMES)[number]
+		);
 	}
 	return false;
 }

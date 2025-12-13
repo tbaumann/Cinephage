@@ -17,8 +17,10 @@ interface CacheEntry<T> {
  * TTL configuration in milliseconds
  */
 const TTL = {
-	/** Movie/TV details - changes rarely */
+	/** Movie/TV details - ratings change frequently */
 	DETAILS: 5 * 60 * 1000, // 5 minutes
+	/** Person details - bio/credits rarely change */
+	PERSON: 60 * 60 * 1000, // 1 hour
 	/** Search results - more dynamic */
 	SEARCH: 2 * 60 * 1000, // 2 minutes
 	/** Discover results - constantly changing */
@@ -37,6 +39,9 @@ const TTL = {
 function getTtlForEndpoint(endpoint: string): number {
 	if (endpoint.includes('/external_ids')) {
 		return TTL.EXTERNAL_IDS;
+	}
+	if (endpoint.includes('/person/')) {
+		return TTL.PERSON;
 	}
 	if (endpoint.includes('/search/')) {
 		return TTL.SEARCH;

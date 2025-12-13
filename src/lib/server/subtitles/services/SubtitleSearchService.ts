@@ -245,10 +245,7 @@ export class SubtitleSearchService {
 				logger.error(`Provider search failed: ${provider.name}`, { error: errorMsg });
 
 				// Record error - pass actual error object to preserve type information for proper throttling
-				await providerManager.recordError(
-					provider.id,
-					error instanceof Error ? error : errorMsg
-				);
+				await providerManager.recordError(provider.id, error instanceof Error ? error : errorMsg);
 
 				return {
 					providerId: provider.id,
