@@ -22,15 +22,48 @@ export const load: PageServerLoad = async ({ url }) => {
 	} = params;
 	const isDefaultViewCheck = checkDefaultView(url.searchParams, params);
 
+	// Check if TMDB is configured before making any API calls
+	const tmdbConfigured = await tmdb.isConfigured();
+	if (!tmdbConfigured) {
+		return {
+			viewType: 'not_configured' as const,
+			tmdbConfigured: false,
+			providers: [],
+			genres: [],
+			filters: {
+				type,
+				sort_by: sortBy,
+				with_watch_providers: withWatchProviders,
+				with_genres: withGenres
+			}
+		};
+	}
+
 	try {
 		// Always fetch providers and genres
 		const [providersData, movieGenresData, tvGenresData] = await Promise.all([
 			tmdb.fetch(`/watch/providers/movie?watch_region=${watchRegion}`) as Promise<{
 				results: WatchProvider[];
-			}>,
-			tmdb.fetch('/genre/movie/list') as Promise<{ genres: { id: number; name: string }[] }>,
-			tmdb.fetch('/genre/tv/list') as Promise<{ genres: { id: number; name: string }[] }>
+			} | null>,
+			tmdb.fetch('/genre/movie/list') as Promise<{ genres: { id: number; name: string }[] } | null>,
+			tmdb.fetch('/genre/tv/list') as Promise<{ genres: { id: number; name: string }[] } | null>
 		]);
+
+		// Handle null responses (shouldn't happen since we checked tmdbConfigured, but be safe)
+		if (!providersData || !movieGenresData || !tvGenresData) {
+			return {
+				viewType: 'not_configured' as const,
+				tmdbConfigured: false,
+				providers: [],
+				genres: [],
+				filters: {
+					type,
+					sort_by: sortBy,
+					with_watch_providers: withWatchProviders,
+					with_genres: withGenres
+				}
+			};
+		}
 
 		const providers = providersData.results.sort((a, b) => a.display_priority - b.display_priority);
 
@@ -40,16 +73,24 @@ export const load: PageServerLoad = async ({ url }) => {
 		tvGenresData.genres.forEach((g) => allGenres.set(g.id, g));
 		const genres = Array.from(allGenres.values()).sort((a, b) => a.name.localeCompare(b.name));
 
+		// Type for paginated TMDB results
+		interface TmdbPaginatedResult {
+			results: Array<{ id: number } & Record<string, unknown>>;
+			page: number;
+			total_pages: number;
+			total_results: number;
+		}
+
 		if (isDefaultViewCheck && page === '1') {
 			// Fetch sections for the dashboard-style view
 			const [trendingDay, trendingWeek, popularMovies, popularTV, topRatedMovies] =
-				await Promise.all([
+				(await Promise.all([
 					tmdb.fetch('/trending/all/day'),
 					tmdb.fetch('/trending/all/week'),
 					tmdb.fetch('/movie/popular'),
 					tmdb.fetch('/tv/popular'),
 					tmdb.fetch('/movie/top_rated')
-				]);
+				])) as TmdbPaginatedResult[];
 
 			// Enrich all sections with library status
 			const [
@@ -68,6 +109,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 			return {
 				viewType: 'dashboard',
+				tmdbConfigured: true,
 				sections: {
 					trendingDay: enrichedTrendingDay,
 					trendingWeek: enrichedTrendingWeek,
@@ -104,6 +146,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 			return {
 				viewType: 'grid',
+				tmdbConfigured: true,
 				results: enrichedResults,
 				pagination,
 				providers,
@@ -120,6 +163,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		logger.error('Discover load error', e, { type, sortBy });
 		return {
 			viewType: 'error',
+			tmdbConfigured: true, // API key exists but request failed
 			error: 'Failed to load content',
 			providers: [],
 			genres: [],

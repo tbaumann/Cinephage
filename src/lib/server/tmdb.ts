@@ -18,7 +18,22 @@ import { tmdbCache, getCacheKey } from './tmdb-cache';
 const inFlightRequests = new Map<string, Promise<unknown>>();
 
 export const tmdb = {
-	async fetch(endpoint: string, options: RequestInit = {}, skipFilters = false) {
+	/**
+	 * Check if TMDB API key is configured
+	 * Use this to conditionally render UI or skip TMDB calls
+	 */
+	async isConfigured(): Promise<boolean> {
+		const apiKeySetting = await db.query.settings.findFirst({
+			where: eq(settings.key, 'tmdb_api_key')
+		});
+		return !!apiKeySetting?.value;
+	},
+
+	/**
+	 * Fetch data from TMDB API
+	 * Returns null if API key is not configured (prevents crashes during fresh install)
+	 */
+	async fetch(endpoint: string, options: RequestInit = {}, skipFilters = false): Promise<unknown | null> {
 		// Ensure endpoint starts with /
 		const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 
@@ -47,8 +62,9 @@ export const tmdb = {
 				db.query.settings.findFirst({ where: eq(settings.key, 'global_filters') })
 			]);
 
-			if (!apiKeySetting) {
-				throw new Error('TMDB API Key not configured');
+			if (!apiKeySetting?.value) {
+				logger.debug('TMDB API Key not configured - skipping API call', { endpoint: path });
+				return null;
 			}
 
 			let filters: GlobalTmdbFilters | null = null;

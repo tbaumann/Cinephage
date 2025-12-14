@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { PageData, ActionData } from './$types';
+	import TmdbConfigRequired from '$lib/components/ui/TmdbConfigRequired.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -33,6 +34,12 @@
 			automated tasks.
 		</p>
 	</div>
+
+	{#if !data.tmdbConfigured}
+		<div class="mb-6">
+			<TmdbConfigRequired message="Configure your TMDB API key to enable genre filtering and other TMDB-powered features." />
+		</div>
+	{/if}
 
 	<form method="POST" use:enhance class="space-y-8">
 		<!-- Content Settings -->
@@ -137,20 +144,30 @@
 			<div class="card-body">
 				<h2 class="card-title">Excluded Genres</h2>
 				<p class="mb-4 text-sm text-base-content/70">Select genres to exclude from all results.</p>
-				<div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-					{#each data.genres as genre (genre.id)}
-						<label class="label cursor-pointer justify-start gap-2">
-							<input
-								type="checkbox"
-								name="excluded_genres"
-								value={genre.id}
-								class="checkbox checkbox-sm"
-								checked={data.filters.excluded_genre_ids.includes(genre.id)}
-							/>
-							<span class="label-text">{genre.name}</span>
-						</label>
-					{/each}
-				</div>
+				{#if data.genres.length === 0}
+					<p class="text-sm text-base-content/50 italic">
+						{#if !data.tmdbConfigured}
+							Configure your TMDB API key to load available genres.
+						{:else}
+							No genres available.
+						{/if}
+					</p>
+				{:else}
+					<div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+						{#each data.genres as genre (genre.id)}
+							<label class="label cursor-pointer justify-start gap-2">
+								<input
+									type="checkbox"
+									name="excluded_genres"
+									value={genre.id}
+									class="checkbox checkbox-sm"
+									checked={data.filters.excluded_genre_ids.includes(genre.id)}
+								/>
+								<span class="label-text">{genre.name}</span>
+							</label>
+						{/each}
+					</div>
+				{/if}
 			</div>
 		</div>
 

@@ -10,8 +10,23 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw error(400, 'Invalid TV Show ID');
 	}
 
+	// Check if TMDB is configured
+	const tmdbConfigured = await tmdb.isConfigured();
+	if (!tmdbConfigured) {
+		throw error(503, {
+			message: 'TMDB API key not configured. Please configure your TMDB API key in Settings > Integrations.'
+		});
+	}
+
 	try {
 		const tv = await tmdb.getTVShow(id);
+
+		// Handle null response (shouldn't happen since we checked config, but be safe)
+		if (!tv) {
+			throw error(503, {
+				message: 'TMDB API key not configured. Please configure your TMDB API key in Settings > Integrations.'
+			});
+		}
 
 		// Get library status for the TV show itself
 		const tvStatus = await getLibraryStatus([id], 'tv');

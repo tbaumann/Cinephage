@@ -29,30 +29,38 @@ export const load: PageServerLoad = async () => {
 		}
 	}
 
-	// Fetch Genres
+	// Check if TMDB is configured
+	const tmdbConfigured = await tmdb.isConfigured();
+
+	// Fetch Genres (only if TMDB is configured)
 	let genres: { id: number; name: string }[] = [];
-	try {
-		const [movieGenres, tvGenres] = await Promise.all([
-			tmdb.fetch('/genre/movie/list') as Promise<{ genres: { id: number; name: string }[] }>,
-			tmdb.fetch('/genre/tv/list') as Promise<{ genres: { id: number; name: string }[] }>
-		]);
+	if (tmdbConfigured) {
+		try {
+			const [movieGenres, tvGenres] = await Promise.all([
+				tmdb.fetch('/genre/movie/list') as Promise<{ genres: { id: number; name: string }[] } | null>,
+				tmdb.fetch('/genre/tv/list') as Promise<{ genres: { id: number; name: string }[] } | null>
+			]);
 
-		// Merge and deduplicate
-		const genreMap = new Map<number, string>();
-		movieGenres.genres.forEach((g) => genreMap.set(g.id, g.name));
-		tvGenres.genres.forEach((g) => genreMap.set(g.id, g.name));
+			// Handle null responses (API key not configured)
+			if (movieGenres && tvGenres) {
+				// Merge and deduplicate
+				const genreMap = new Map<number, string>();
+				movieGenres.genres.forEach((g) => genreMap.set(g.id, g.name));
+				tvGenres.genres.forEach((g) => genreMap.set(g.id, g.name));
 
-		genres = Array.from(genreMap.entries())
-			.map(([id, name]) => ({ id, name }))
-			.sort((a, b) => a.name.localeCompare(b.name));
-	} catch (e) {
-		logger.error('Failed to fetch genres', e);
-		// Fallback or empty if API key not set
+				genres = Array.from(genreMap.entries())
+					.map(([id, name]) => ({ id, name }))
+					.sort((a, b) => a.name.localeCompare(b.name));
+			}
+		} catch (e) {
+			logger.error('Failed to fetch genres', e);
+		}
 	}
 
 	return {
 		filters: currentFilters,
-		genres
+		genres,
+		tmdbConfigured
 	};
 };
 

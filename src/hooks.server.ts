@@ -250,6 +250,15 @@ async function gracefulShutdown(signal: string) {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
+// Safety net for unhandled promise rejections - prevents crashes from missed error handling
+process.on('unhandledRejection', (reason, promise) => {
+	logger.error('Unhandled Promise Rejection (safety net caught)', {
+		reason: reason instanceof Error ? reason.message : String(reason),
+		stack: reason instanceof Error ? reason.stack : undefined
+	});
+	// Don't exit - let the app continue running
+});
+
 /**
  * Server hooks for SvelteKit.
  * Adds correlation IDs to all requests for tracing.

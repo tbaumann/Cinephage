@@ -12,23 +12,27 @@ import type { CastMember } from '$lib/types/tmdb';
 // However, $env/dynamic/private needs to be available.
 // If the user has a .env file, Vitest usually loads it.
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TmdbResponse = any;
+
 describe('TMDB Integration', () => {
 	it('should fetch configuration', async () => {
-		const config = await tmdb.fetch('/configuration');
-		expect(config).toBeDefined();
+		const config = (await tmdb.fetch('/configuration')) as TmdbResponse;
+		expect(config).not.toBeNull();
 		expect(config.images).toBeDefined();
 		expect(config.images.secure_base_url).toContain('https://');
 	});
 
 	it('should fetch a specific movie (Fight Club)', async () => {
-		const movie = await tmdb.fetch('/movie/550');
-		expect(movie).toBeDefined();
+		const movie = (await tmdb.fetch('/movie/550')) as TmdbResponse;
+		expect(movie).not.toBeNull();
 		expect(movie.id).toBe(550);
 		expect(movie.title).toBe('Fight Club');
 	});
 
 	it('should search for a movie', async () => {
-		const search = await tmdb.fetch('/search/movie?query=Inception');
+		const search = (await tmdb.fetch('/search/movie?query=Inception')) as TmdbResponse;
+		expect(search).not.toBeNull();
 		expect(search.results).toBeDefined();
 		expect(search.results.length).toBeGreaterThan(0);
 		expect(search.results[0].title).toContain('Inception');
@@ -36,7 +40,10 @@ describe('TMDB Integration', () => {
 
 	it('should fetch full movie details (credits, providers, videos)', async () => {
 		// Fight Club (550)
-		const movie = await tmdb.fetch('/movie/550?append_to_response=credits,watch/providers,videos');
+		const movie = (await tmdb.fetch(
+			'/movie/550?append_to_response=credits,watch/providers,videos'
+		)) as TmdbResponse;
+		expect(movie).not.toBeNull();
 
 		// Basic Info
 		expect(movie.title).toBe('Fight Club');
@@ -63,7 +70,8 @@ describe('TMDB Integration', () => {
 
 	it('should fetch TV show details with seasons', async () => {
 		// Breaking Bad (1396)
-		const show = await tmdb.fetch('/tv/1396');
+		const show = (await tmdb.fetch('/tv/1396')) as TmdbResponse;
+		expect(show).not.toBeNull();
 
 		expect(show.name).toBe('Breaking Bad');
 		expect(show.number_of_seasons).toBeGreaterThanOrEqual(5);
@@ -73,19 +81,27 @@ describe('TMDB Integration', () => {
 
 	it('should fetch specific TV episode details', async () => {
 		// Breaking Bad S01E01
-		const episode = await tmdb.fetch('/tv/1396/season/1/episode/1?append_to_response=credits');
+		const episode = (await tmdb.fetch(
+			'/tv/1396/season/1/episode/1?append_to_response=credits'
+		)) as TmdbResponse;
+		expect(episode).not.toBeNull();
 
 		expect(episode.name).toBe('Pilot');
 		expect(episode.air_date).toBe('2008-01-20');
 		expect(episode.credits).toBeDefined();
 		expect(episode.credits.cast.length).toBeGreaterThan(0);
-		const bryanCranston = episode.credits.cast.find((c: CastMember) => c.name === 'Bryan Cranston');
+		const bryanCranston = episode.credits.cast.find(
+			(c: CastMember) => c.name === 'Bryan Cranston'
+		);
 		expect(bryanCranston).toBeDefined();
 	});
 
 	it('should fetch person details and credits', async () => {
 		// Brad Pitt (287)
-		const person = await tmdb.fetch('/person/287?append_to_response=combined_credits');
+		const person = (await tmdb.fetch(
+			'/person/287?append_to_response=combined_credits'
+		)) as TmdbResponse;
+		expect(person).not.toBeNull();
 
 		expect(person.name).toBe('Brad Pitt');
 		expect(person.combined_credits).toBeDefined();
@@ -100,5 +116,11 @@ describe('TMDB Integration', () => {
 
 	it('should handle 404 errors gracefully', async () => {
 		await expect(tmdb.fetch('/movie/999999999')).rejects.toThrow();
+	});
+
+	it('should return null when API key is not configured', async () => {
+		// Note: This test would need to mock the database to properly test
+		// For now, it's a placeholder to document expected behavior
+		// When API key is missing, tmdb.fetch() returns null instead of throwing
 	});
 });
