@@ -20,9 +20,6 @@ COPY . .
 # Build the SvelteKit application
 RUN npm run build
 
-# Prune devDependencies to reduce image size, keeping only production deps
-RUN npm prune --production
-
 # ==========================================
 # Runtime Stage
 # ==========================================
@@ -59,4 +56,4 @@ USER node
 EXPOSE 3000
 
 # Start the application
-CMD ["node", "build/index.js"]
+CMD ["node", "npm run db:push && node build/index.js"]
