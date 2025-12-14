@@ -17,6 +17,7 @@ import type {
 } from '$lib/types/downloadClient';
 import { QBittorrentClient } from './qbittorrent/QBittorrentClient';
 import { SABnzbdClient, type SABnzbdConfig } from './sabnzbd';
+import { NZBGetClient } from './nzbget';
 
 /**
  * Protocol type for download clients.
@@ -345,9 +346,10 @@ export class DownloadClientManager {
 			case 'sabnzbd':
 				return new SABnzbdClient(config as SABnzbdConfig);
 
+			case 'nzbget':
+				return new NZBGetClient(config);
+
 			// Future implementations
-			// case 'nzbget':
-			//   return new NZBGetClient(config);
 			// case 'transmission':
 			//   return new TransmissionClient(config);
 

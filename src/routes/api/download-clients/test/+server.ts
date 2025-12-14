@@ -36,7 +36,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			port: validated.port,
 			useSsl: validated.useSsl,
 			username: validated.username,
-			password: validated.password
+			password: validated.password,
+			implementation: validated.implementation,
+			apiKey: validated.implementation === 'sabnzbd' ? validated.password : undefined
 		});
 
 		return json(testResult);

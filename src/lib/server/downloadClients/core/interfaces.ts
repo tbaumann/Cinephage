@@ -4,6 +4,7 @@
  */
 
 import type { ConnectionTestResult } from '$lib/types/downloadClient';
+export type { ConnectionTestResult };
 
 /**
  * Configuration for connecting to a download client.

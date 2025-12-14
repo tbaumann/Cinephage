@@ -344,7 +344,9 @@ export const downloadClientImplementationSchema = z.enum([
 	'transmission',
 	'deluge',
 	'rtorrent',
-	'aria2'
+	'aria2',
+	'nzbget',
+	'sabnzbd'
 ]);
 
 /**
