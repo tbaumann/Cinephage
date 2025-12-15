@@ -11,15 +11,18 @@
 <p align="center">
   <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen" alt="Node.js Version"></a>
-  <a href="#"><img src="https://img.shields.io/badge/status-Alpha%20·%20Active%20Development-orange" alt="Status: Alpha - Active Development"></a>
+  <a href="#"><img src="https://img.shields.io/badge/status-Alpha%20%C2%B7%20Active%20Development-orange" alt="Status: Alpha - Active Development"></a>
   <a href="https://github.com/MoldyTaint/Cinephage/issues"><img src="https://img.shields.io/github/issues/MoldyTaint/Cinephage" alt="GitHub Issues"></a>
   <a href="https://discord.gg/scGCBTSWEt"><img src="https://img.shields.io/discord/1449917989561303165?color=5865F2&logo=discord&logoColor=white&label=Discord" alt="Discord"></a>
 </p>
 
 <p align="center">
-  Search torrents, grab downloads, organize your library, fetch subtitles — all in one app.<br>
-  Think Radarr + Sonarr + Prowlarr + Bazarr, but built from scratch as a single application.
+  <em>Cinephage</em> — from Greek <em>cine</em> (film) + <em>phage</em> (to devour). A film devourer.
 </p>
+
+---
+
+Search for movies and TV shows, grab them from your indexers, organize your library, and fetch subtitles. One app handles it all, backed by a single database.
 
 > [!CAUTION]
 > **This project is under active development.** Features may be incomplete, APIs may change, and bugs are expected. This is a passion project by a solo developer — your patience and feedback are appreciated. Please report issues on GitHub, but understand that breaking changes may occur between updates.
@@ -30,18 +33,7 @@
 
 ---
 
-## Why Cinephage?
-
-Cinephage consolidates four separate applications into one streamlined experience. Instead of juggling Radarr, Sonarr, Prowlarr, and Bazarr with their own databases and configurations, you get everything in a single interface backed by a single database.
-
-- **Modern Stack** — SvelteKit 5 with TailwindCSS 4 delivers a fast, reactive interface that's a pleasure to use
-- **Built-in Indexers** — YAML-based indexer engine with Torznab/Newznab support for external integrations
-- **Smart Quality Scoring** — 100+ format attributes ensure you always get the best release for your preferences
-- **Simple Setup** — Works out of the box with SQLite. No complex infrastructure required to get started
-
-## Project Status
-
-> **Early adopters welcome, but expect rough edges.** This project is evolving rapidly. Some features work well, others are experimental. Check the table below for current status, and see the [Roadmap](docs/ROADMAP.md) for what's planned.
+## Status
 
 | Feature            | Status       | Notes                                                |
 | ------------------ | ------------ | ---------------------------------------------------- |
@@ -54,120 +46,94 @@ Cinephage consolidates four separate applications into one streamlined experienc
 | Monitoring         | Experimental | 5 tasks coded, may have bugs                         |
 | Live TV/IPTV       | Not Started  | Planned for future                                   |
 
-## Features
-
-<table>
-<tr>
-<td width="55%">
-<img src="docs/images/discover.png" alt="Content Discovery" width="100%">
-</td>
-<td width="45%" valign="top">
-
-**Content Discovery**<br>
-Browse TMDB for movies and TV shows, view trending content, full metadata, trailers, and watch providers.
-
-**Multi-Indexer Search**<br>
-YAML-based indexers including 4 public (BitSearch, EZTV, Knaben, YTS) and 2 private trackers (OldToons.World, SceneTime), plus Torznab/Newznab templates for external integrations. Parallel search with automatic deduplication.
-
-**Quality Scoring**<br>
-4 built-in profiles (Best, Efficient, Micro, Streaming) that score resolution, audio codecs, HDR formats, and release groups. See [Quality Profiles](docs/QUALITY-PROFILES.md) for details.
-
-</td>
-</tr>
-</table>
-
-<table>
-<tr>
-<td width="45%" valign="top">
-
-**Library Management**<br>
-Real-time file watching, scheduled scans, auto-match to TMDB metadata, and media info extraction via ffprobe.
-
-**Automated Downloads**<br>
-qBittorrent integration with categories, priority handling for recent releases, auto-import on completion, and path mapping support.
-
-**Monitoring**<br>
-Automatic searches for missing content, quality upgrades, new episodes, and cutoff unmet items. See [Monitoring](docs/MONITORING.md) for configuration.
-
-**Subtitles**<br>
-6 providers, 80+ languages, auto-search on import, and language profiles. See [Subtitles](docs/SUBTITLES.md) for setup.
-
-</td>
-<td width="55%">
-<img src="docs/images/library-movies.png" alt="Library Management" width="100%">
-</td>
-</tr>
-</table>
-
 ---
 
 ## Quick Start
 
+### Docker
+
 ```bash
-# Clone and install
+git clone https://github.com/MoldyTaint/cinephage.git
+cd cinephage
+```
+
+Edit `docker-compose.yml` to set your media paths:
+
+```yaml
+volumes:
+  - ./data:/app/data
+  - /your/movies:/movies
+  - /your/tv:/tv
+```
+
+Then start it:
+
+```bash
+docker compose up -d
+```
+
+### Manual
+
+```bash
 git clone https://github.com/MoldyTaint/cinephage.git
 cd cinephage
 npm install
-
-# Build the application
 npm run build
-
-# Start production server (database auto-initializes on first run)
 npm start
 ```
 
-Open http://localhost:5173 and complete first-run setup:
+### First-Run Setup
+
+Open http://localhost:3000 and configure:
 
 1. Add your TMDB API key (free at [themoviedb.org](https://www.themoviedb.org/settings/api))
 2. Configure qBittorrent connection
 3. Set up root folders for movies and TV
 4. Enable indexers
 
-See [Configuration Guide](docs/CONFIGURATION.md) for detailed setup instructions.
+See [Configuration Guide](docs/getting-started/configuration.md) for detailed setup.
+
+---
 
 ## Requirements
 
-**Required**
+- **qBittorrent** with WebUI enabled (or SABnzbd)
+- **TMDB API key** (free)
+- **Node.js 20+** (manual install only)
+- **ffprobe** (optional, for media info extraction)
 
-- Node.js 20+
-- npm 10+
-- qBittorrent with WebUI enabled
-- TMDB API key (free)
+---
 
-**Optional**
+## Features
 
-- ffprobe for media info extraction (resolution, codecs, audio tracks)
+- **Content Discovery** — Browse TMDB for movies and TV shows, view trending, trailers, and watch providers
+- **Indexer Search** — 4 public + 2 private trackers built-in, plus Torznab/Newznab support for external indexers
+- **Quality Scoring** — 4 built-in profiles (Best, Efficient, Micro, Streaming) scoring 100+ release attributes
+- **Library Management** — Real-time file watching, scheduled scans, auto-match to TMDB metadata
+- **Download Automation** — qBittorrent/SABnzbd integration with categories, priority handling, auto-import
+- **Subtitles** — 6 providers, 80+ languages, auto-search on import
+- **Monitoring** — Automatic searches for missing content, quality upgrades, and new episodes
+
+See [Documentation](docs/INDEX.md) for full details.
+
+---
 
 ## Tech Stack
 
-**Frontend:** SvelteKit 5 · Svelte 5 · TailwindCSS 4 · DaisyUI 5
+**Frontend:** SvelteKit 5, Svelte 5, TailwindCSS 4, DaisyUI 5
+**Backend:** Node.js, SQLite, Drizzle ORM
 
-**Backend:** Node.js · SQLite · Drizzle ORM · Zod
-
-**External:** TMDB · qBittorrent WebUI
+---
 
 ## Documentation
 
-See the [Documentation Index](docs/INDEX.md) for the complete guide.
+- [Installation](docs/getting-started/installation.md)
+- [Configuration](docs/getting-started/configuration.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [API Reference](docs/reference/api.md)
+- [Roadmap](docs/roadmap.md)
 
-**Quick Links**
-
-- [Installation](docs/getting-started/installation.md) - Get up and running
-- [Configuration](docs/getting-started/configuration.md) - First-run setup
-- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
-
-**Feature Guides**
-
-- [Library Management](docs/guides/library-management.md) - Scanning, matching, organizing
-- [Indexers](docs/guides/indexers.md) - Built-in indexers, Torznab, custom definitions
-- [Quality Profiles](docs/guides/quality-profiles.md) - Scoring system and built-in profiles
-- [Monitoring](docs/guides/monitoring.md) - Automated tasks and scheduling
-- [Subtitles](docs/guides/subtitles.md) - Providers and language profiles
-
-**Reference**
-
-- [API Reference](docs/reference/api.md) - REST API endpoints
-- [Roadmap](docs/roadmap.md) - Planned features and known limitations
+---
 
 ## Development
 
@@ -182,15 +148,15 @@ npm run db:studio    # Drizzle Studio
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
-## Support
+---
 
-- [Discord](https://discord.gg/scGCBTSWEt) — Community chat and support
+## Community
+
+- [Discord](https://discord.gg/scGCBTSWEt) — Chat and support
 - [GitHub Issues](https://github.com/MoldyTaint/cinephage/issues) — Bug reports and feature requests
-- [Troubleshooting Guide](docs/TROUBLESHOOTING.md) — Common issues and solutions
-- [Contributing](CONTRIBUTING.md) — Development guidelines and workflow
+- [Contributing](CONTRIBUTING.md) — Development guidelines
 - [Code of Conduct](CODE_OF_CONDUCT.md) — Community standards
 - [Security Policy](SECURITY.md) — Vulnerability reporting
-- [Changelog](CHANGELOG.md) — Version history
 
 ---
 
@@ -204,11 +170,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
 ## Acknowledgments
 
-Cinephage is an original implementation that stands on the shoulders of giants. The architecture draws inspiration from [Radarr](https://github.com/Radarr/Radarr) and [Sonarr](https://github.com/Sonarr/Sonarr) for download management, monitoring, and quality handling logic. The indexer system, including Cardigann format support and health tracking, is inspired by [Prowlarr](https://github.com/Prowlarr/Prowlarr). Subtitle provider architecture comes from [Bazarr](https://github.com/morpheus65535/bazarr), and modern UI patterns from [Overseerr](https://github.com/sct/overseerr).
-
-Special thanks to [Dictionarry](https://github.com/Dictionarry-Hub/database) for the quality scoring database, [EncDec Endpoints](https://github.com/AzartX47/EncDecEndpoints) for streaming functionality, and [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) for Cloudflare handling approaches.
-
-Uses [TMDB](https://www.themoviedb.org/) for metadata and [qBittorrent](https://www.qbittorrent.org/) for downloads. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for complete attribution details.
+Cinephage draws inspiration from the architecture of [Radarr](https://github.com/Radarr/Radarr), [Sonarr](https://github.com/Sonarr/Sonarr), [Prowlarr](https://github.com/Prowlarr/Prowlarr), and [Bazarr](https://github.com/morpheus65535/bazarr), with modern UI patterns influenced by [Overseerr](https://github.com/sct/overseerr). Thanks to [Dictionarry](https://github.com/Dictionarry-Hub/database) for quality scoring data, [EncDec Endpoints](https://github.com/AzartX47/EncDecEndpoints) for streaming functionality, and [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) for Cloudflare handling. Uses [TMDB](https://www.themoviedb.org/) for metadata. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for complete attribution.
 
 ## AI Disclosure
 
