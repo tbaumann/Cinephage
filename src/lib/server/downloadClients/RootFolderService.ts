@@ -211,10 +211,10 @@ export class RootFolderService {
 				};
 			}
 
-			// Check if writable by trying to access
-			try {
-				await fs.access(normalizedPath, fs.constants.W_OK);
-			} catch {
+			// Check if writable by actually attempting to write a test file
+			const isWritable = await this.testWriteAccess(normalizedPath);
+			if (!isWritable) {
+				logger.warn('Write test failed for path', { path: normalizedPath });
 				return {
 					valid: false,
 					exists: true,
@@ -299,6 +299,34 @@ export class RootFolderService {
 	}
 
 	/**
+	 * Test if a directory is actually writable by creating and deleting a temp directory.
+	 * This is more reliable than fs.access() which only checks permission bits.
+	 */
+	private async testWriteAccess(dirPath: string): Promise<boolean> {
+		const testDir = path.join(dirPath, `.cinephage-write-test-${Date.now()}`);
+		try {
+			await fs.mkdir(testDir);
+			await fs.rmdir(testDir);
+			return true;
+		} catch (err) {
+			const errObj = err as NodeJS.ErrnoException;
+			logger.warn('testWriteAccess failed', {
+				path: dirPath,
+				testDir,
+				errorCode: errObj.code,
+				errorMessage: errObj.message
+			});
+			// Attempt cleanup in case mkdir succeeded but rmdir failed
+			try {
+				await fs.rmdir(testDir);
+			} catch {
+				// Ignore cleanup errors
+			}
+			return false;
+		}
+	}
+
+	/**
 	 * Convert database row to RootFolder with live accessibility check.
 	 */
 	private async rowToFolder(row: typeof rootFoldersTable.$inferSelect): Promise<RootFolder> {
@@ -308,8 +336,10 @@ export class RootFolderService {
 		let freeSpaceFormatted: string | undefined;
 
 		try {
-			await fs.access(row.path, fs.constants.R_OK | fs.constants.W_OK);
-			accessible = true;
+			// Check read access first
+			await fs.access(row.path, fs.constants.R_OK);
+			// Then test actual write capability
+			accessible = await this.testWriteAccess(row.path);
 
 			// Update free space if it's stale (older than 5 minutes)
 			const lastChecked = row.lastCheckedAt ? new Date(row.lastCheckedAt) : null;

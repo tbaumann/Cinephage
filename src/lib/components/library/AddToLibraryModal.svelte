@@ -61,6 +61,20 @@
 		poster_path?: string;
 	}
 
+	interface CollectionPart {
+		id: number;
+		title: string;
+		release_date?: string;
+		poster_path?: string;
+		inLibrary?: boolean;
+	}
+
+	interface CollectionInfo {
+		id: number;
+		name: string;
+		parts: CollectionPart[];
+	}
+
 	// Monitor type options for TV shows (similar to Sonarr)
 	type MonitorType =
 		| 'all'
@@ -166,6 +180,10 @@
 	let error = $state<string | null>(null);
 	let showAdvanced = $state(false);
 
+	// Collection state (for movies only)
+	let collection = $state<CollectionInfo | null>(null);
+	let addEntireCollection = $state(false);
+
 	// Form state - Common
 	let selectedRootFolder = $state('');
 	let selectedScoringProfile = $state('');
@@ -187,6 +205,11 @@
 
 	// Derived: Filter root folders by media type
 	const filteredRootFolders = $derived(rootFolders.filter((f) => f.mediaType === mediaType));
+
+	// Derived: Collection movies not in library (excluding current movie)
+	const missingCollectionMovies = $derived(
+		collection?.parts?.filter((p) => !p.inLibrary && p.id !== tmdbId) ?? []
+	);
 
 	// Derived: Check if all seasons are monitored
 	const allSeasonsMonitored = $derived(
@@ -303,6 +326,10 @@
 			showAdvanced = false;
 			error = null;
 
+			// Reset collection state
+			collection = null;
+			addEntireCollection = false;
+
 			loadData();
 		}
 	});
@@ -400,6 +427,11 @@
 				}
 			}
 
+			// Fetch collection data for movies (non-blocking, don't fail if it errors)
+			if (mediaType === 'movie') {
+				fetchCollectionData();
+			}
+
 			// Set defaults
 			const defaultFolder = filteredRootFolders.find((f) => f.mediaType === mediaType);
 			if (defaultFolder) {
@@ -421,6 +453,57 @@
 			error = e instanceof Error ? e.message : 'Failed to load data';
 		} finally {
 			isLoading = false;
+		}
+	}
+
+	/**
+	 * Fetch collection data for movies (non-blocking)
+	 * Checks if the movie belongs to a collection and fetches collection parts with library status
+	 */
+	async function fetchCollectionData() {
+		try {
+			// First fetch the movie to check if it belongs to a collection
+			const movieRes = await fetch(`/api/tmdb/movie/${tmdbId}`);
+			if (!movieRes.ok) return;
+
+			const movieData = await movieRes.json();
+			if (!movieData.belongs_to_collection) return;
+
+			// Fetch the collection details
+			const collectionRes = await fetch(
+				`/api/tmdb/collection/${movieData.belongs_to_collection.id}`
+			);
+			if (!collectionRes.ok) return;
+
+			const collectionData = await collectionRes.json();
+			if (!collectionData.parts || collectionData.parts.length <= 1) return;
+
+			// Fetch library status for all collection parts
+			const tmdbIds = collectionData.parts.map((p: CollectionPart) => p.id);
+			const statusRes = await fetch('/api/library/status', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ tmdbIds, mediaType: 'movie' })
+			});
+
+			let statusMap: Record<number, { inLibrary: boolean }> = {};
+			if (statusRes.ok) {
+				const statusData = await statusRes.json();
+				statusMap = statusData.status ?? {};
+			}
+
+			// Enrich collection parts with library status
+			collection = {
+				id: collectionData.id,
+				name: collectionData.name,
+				parts: collectionData.parts.map((p: CollectionPart) => ({
+					...p,
+					inLibrary: statusMap[p.id]?.inLibrary ?? false
+				}))
+			};
+		} catch (e) {
+			// Collection fetch is non-critical, just log and continue
+			console.warn('Failed to fetch collection data:', e);
 		}
 	}
 
@@ -452,6 +535,12 @@
 		error = null;
 
 		try {
+			// Check if we're doing a bulk add for a collection
+			if (mediaType === 'movie' && addEntireCollection && missingCollectionMovies.length > 0) {
+				await handleBulkCollectionAdd();
+				return;
+			}
+
 			const endpoint = mediaType === 'movie' ? '/api/library/movies' : '/api/library/series';
 
 			const payload: Record<string, unknown> = {
@@ -503,6 +592,62 @@
 			onSuccess?.();
 		} catch (e) {
 			const errorMessage = e instanceof Error ? e.message : 'Failed to add to library';
+			error = errorMessage;
+			toasts.error(errorMessage);
+		} finally {
+			isSubmitting = false;
+		}
+	}
+
+	/**
+	 * Handle bulk add for an entire collection
+	 */
+	async function handleBulkCollectionAdd() {
+		try {
+			// Include the current movie plus all missing collection movies
+			const allTmdbIds = [tmdbId, ...missingCollectionMovies.map((m) => m.id)];
+
+			const payload = {
+				tmdbIds: allTmdbIds,
+				rootFolderId: selectedRootFolder,
+				scoringProfileId: selectedScoringProfile || undefined,
+				monitored: willBeMonitored,
+				minimumAvailability,
+				searchOnAdd: willSearchOnAdd,
+				wantsSubtitles
+			};
+
+			const response = await fetch('/api/library/movies/bulk', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			});
+
+			if (!response.ok) {
+				const data = await response.json();
+				throw new Error(data.error || 'Failed to add collection');
+			}
+
+			const result = await response.json();
+
+			// Show success message with count
+			const addedCount = result.added ?? 0;
+			const errorCount = result.errors?.length ?? 0;
+
+			if (addedCount > 0) {
+				toasts.success(`Added ${addedCount} movie${addedCount > 1 ? 's' : ''} from ${collection?.name}`, {
+					description: willSearchOnAdd ? 'Searching for releases...' : undefined
+				});
+			}
+
+			if (errorCount > 0) {
+				toasts.error(`Failed to add ${errorCount} movie${errorCount > 1 ? 's' : ''}`);
+			}
+
+			isOpen = false;
+			onSuccess?.();
+		} catch (e) {
+			const errorMessage = e instanceof Error ? e.message : 'Failed to add collection';
 			error = errorMessage;
 			toasts.error(errorMessage);
 		} finally {
@@ -679,6 +824,27 @@
 								</span>
 							</div>
 						</div>
+
+						<!-- Collection Option -->
+						{#if collection && missingCollectionMovies.length > 0}
+							<div class="form-control">
+								<label class="label cursor-pointer justify-start gap-4 rounded-lg bg-base-300/50 p-4">
+									<input
+										type="checkbox"
+										class="checkbox checkbox-primary"
+										bind:checked={addEntireCollection}
+									/>
+									<div class="flex-1">
+										<span class="label-text font-medium">
+											Add entire {collection.name}
+										</span>
+										<span class="label-text-alt block text-base-content/60">
+											Also add {missingCollectionMovies.length} other movie{missingCollectionMovies.length > 1 ? 's' : ''} from this collection
+										</span>
+									</div>
+								</label>
+							</div>
+						{/if}
 					{/if}
 
 					<!-- TV-specific: Monitor Type -->
