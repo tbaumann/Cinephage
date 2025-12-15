@@ -97,11 +97,7 @@
 			</div>
 			<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{#each scheduledTasks as task (task.id)}
-					<TaskCard
-						{task}
-						history={data.taskHistory[task.id] ?? []}
-						onRunTask={handleRunTask}
-					/>
+					<TaskCard {task} history={data.taskHistory[task.id] ?? []} onRunTask={handleRunTask} />
 				{/each}
 			</div>
 		</section>
@@ -117,11 +113,7 @@
 			</div>
 			<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{#each maintenanceTasks as task (task.id)}
-					<TaskCard
-						{task}
-						history={data.taskHistory[task.id] ?? []}
-						onRunTask={handleRunTask}
-					/>
+					<TaskCard {task} history={data.taskHistory[task.id] ?? []} onRunTask={handleRunTask} />
 				{/each}
 			</div>
 		</section>

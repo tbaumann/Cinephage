@@ -33,9 +33,7 @@ const NAMING_TOKENS = {
 		{ token: '{AudioCodec}', description: 'Audio codec (TrueHD, DTS-HD MA)' },
 		{ token: '{AudioChannels}', description: 'Audio channels (5.1, 7.1)' }
 	],
-	release: [
-		{ token: '{ReleaseGroup}', description: 'Release group name' }
-	],
+	release: [{ token: '{ReleaseGroup}', description: 'Release group name' }],
 	series: [
 		{ token: '{SeriesTitle}', description: 'Series title as-is' },
 		{ token: '{SeriesCleanTitle}', description: 'Series title cleaned' },

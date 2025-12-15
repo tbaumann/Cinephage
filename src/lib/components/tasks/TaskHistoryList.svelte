@@ -209,7 +209,7 @@
 
 {#if loading}
 	<div class="flex items-center justify-center py-4">
-		<span class="loading loading-spinner loading-sm"></span>
+		<span class="loading loading-sm loading-spinner"></span>
 		<span class="ml-2 text-sm text-base-content/60">Loading history...</span>
 	</div>
 {:else if history.length === 0}
@@ -292,7 +292,7 @@
 					<div class="border-t border-base-300 px-3 py-2">
 						{#if isLoadingActivity}
 							<div class="flex items-center justify-center py-2">
-								<span class="loading loading-spinner loading-xs"></span>
+								<span class="loading loading-xs loading-spinner"></span>
 								<span class="ml-2 text-xs text-base-content/60">Loading activity...</span>
 							</div>
 						{:else if activity.length === 0}
@@ -302,9 +302,7 @@
 						{:else}
 							<div class="space-y-1.5">
 								{#each activity as item (item.id)}
-									<div
-										class="flex items-start gap-2 rounded bg-base-200/50 px-2 py-1.5 text-xs"
-									>
+									<div class="flex items-start gap-2 rounded bg-base-200/50 px-2 py-1.5 text-xs">
 										<!-- Media Type Icon -->
 										<div class="mt-0.5 flex-shrink-0">
 											{#if item.mediaType === 'movie'}

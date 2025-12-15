@@ -332,8 +332,8 @@ export class SABnzbdProxy {
 		parts.push(
 			Buffer.from(
 				`--${boundary}\r\n` +
-				`Content-Disposition: form-data; name="${file.name}"; filename="${file.filename}"\r\n` +
-				`Content-Type: ${file.contentType}\r\n\r\n`
+					`Content-Disposition: form-data; name="${file.name}"; filename="${file.filename}"\r\n` +
+					`Content-Type: ${file.contentType}\r\n\r\n`
 			)
 		);
 		parts.push(file.data);
@@ -344,7 +344,9 @@ export class SABnzbdProxy {
 			for (const [key, value] of Object.entries(fields)) {
 				parts.push(
 					Buffer.from(
-						`--${boundary}\r\n` + `Content-Disposition: form-data; name="${key}"\r\n\r\n` + `${value}\r\n`
+						`--${boundary}\r\n` +
+							`Content-Disposition: form-data; name="${key}"\r\n\r\n` +
+							`${value}\r\n`
 					)
 				);
 			}

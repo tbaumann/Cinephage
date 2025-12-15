@@ -1,6 +1,13 @@
 <script lang="ts">
-	import { invalidateAll, goto } from '$app/navigation';
-	import { Plus, HardDrive, RefreshCw, CheckCircle, AlertCircle, ExternalLink } from 'lucide-svelte';
+	import { invalidateAll } from '$app/navigation';
+	import {
+		Plus,
+		HardDrive,
+		RefreshCw,
+		CheckCircle,
+		AlertCircle,
+		ExternalLink
+	} from 'lucide-svelte';
 	import type { PageData, ActionData } from './$types';
 	import type {
 		RootFolder,
@@ -56,10 +63,11 @@
 
 		eventSource.addEventListener('scanComplete', (e) => {
 			const result = JSON.parse(e.data);
-			const totalUnmatched = result.results?.reduce(
-				(sum: number, r: { unmatchedFiles?: number }) => sum + (r.unmatchedFiles ?? 0),
-				0
-			) ?? 0;
+			const totalUnmatched =
+				result.results?.reduce(
+					(sum: number, r: { unmatchedFiles?: number }) => sum + (r.unmatchedFiles ?? 0),
+					0
+				) ?? 0;
 			scanSuccess = {
 				message: `Scan complete: ${result.results?.length ?? 0} folder(s) scanned`,
 				unmatchedCount: totalUnmatched
@@ -290,7 +298,7 @@
 				</p>
 			</div>
 			<button
-				class="btn btn-primary gap-2"
+				class="btn gap-2 btn-primary"
 				onclick={() => triggerLibraryScan()}
 				disabled={scanning || data.rootFolders.length === 0}
 			>
@@ -305,27 +313,29 @@
 		</div>
 
 		{#if data.rootFolders.length === 0}
-			<div class="alert alert-warning mb-4">
+			<div class="mb-4 alert alert-warning">
 				<AlertCircle class="h-5 w-5" />
 				<span>Add a root folder above before scanning your library.</span>
 			</div>
 		{/if}
 
 		{#if scanError}
-			<div class="alert alert-error mb-4">
+			<div class="mb-4 alert alert-error">
 				<AlertCircle class="h-5 w-5" />
 				<span>{scanError}</span>
 			</div>
 		{/if}
 
 		{#if scanSuccess}
-			<div class="alert alert-success mb-4">
+			<div class="mb-4 alert alert-success">
 				<CheckCircle class="h-5 w-5" />
 				<div class="flex flex-1 items-center justify-between">
 					<span>{scanSuccess.message}</span>
 					{#if scanSuccess.unmatchedCount > 0}
-						<a href="/library/unmatched" class="btn btn-sm btn-ghost gap-1">
-							{scanSuccess.unmatchedCount} unmatched file{scanSuccess.unmatchedCount !== 1 ? 's' : ''}
+						<a href="/library/unmatched" class="btn gap-1 btn-ghost btn-sm">
+							{scanSuccess.unmatchedCount} unmatched file{scanSuccess.unmatchedCount !== 1
+								? 's'
+								: ''}
 							<ExternalLink class="h-3 w-3" />
 						</a>
 					{/if}
@@ -336,7 +346,7 @@
 		{#if scanning && scanProgress}
 			<div class="card bg-base-200 p-4">
 				<div class="mb-2 flex justify-between text-sm">
-					<span class="truncate max-w-md">
+					<span class="max-w-md truncate">
 						{scanProgress.phase === 'scanning' ? 'Discovering files...' : ''}
 						{scanProgress.phase === 'processing' ? 'Processing...' : ''}
 						{scanProgress.phase === 'matching' ? 'Matching files...' : ''}
@@ -347,7 +357,7 @@
 					</span>
 				</div>
 				<progress
-					class="progress progress-primary w-full"
+					class="progress w-full progress-primary"
 					value={scanProgress.filesProcessed}
 					max={scanProgress.filesFound || 1}
 				></progress>

@@ -830,13 +830,21 @@ export class MonitoringSearchService {
 		try {
 			// Search for movie upgrades
 			if (!options.seriesIds) {
-				const movieResults = await this.searchMovieUpgrades(options.movieIds, maxItems, cutoffUnmetOnly);
+				const movieResults = await this.searchMovieUpgrades(
+					options.movieIds,
+					maxItems,
+					cutoffUnmetOnly
+				);
 				results.push(...movieResults);
 			}
 
 			// Search for episode upgrades
 			if (!options.movieIds) {
-				const episodeResults = await this.searchEpisodeUpgrades(options.seriesIds, maxItems, cutoffUnmetOnly);
+				const episodeResults = await this.searchEpisodeUpgrades(
+					options.seriesIds,
+					maxItems,
+					cutoffUnmetOnly
+				);
 				results.push(...episodeResults);
 			}
 		} catch (error) {

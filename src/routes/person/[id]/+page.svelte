@@ -47,9 +47,7 @@
 
 	// Get active tab's data (deduplicated)
 	const activeCredits = $derived(
-		dedupeById(
-			activeTab === 'movies' ? movieCredits : activeTab === 'tv' ? tvCredits : crewCredits
-		)
+		dedupeById(activeTab === 'movies' ? movieCredits : activeTab === 'tv' ? tvCredits : crewCredits)
 	);
 	const activePage = $derived(
 		activeTab === 'movies' ? moviePage : activeTab === 'tv' ? tvPage : crewPage
@@ -159,12 +157,12 @@
 		<!-- Tabs -->
 		{#if loading}
 			<div class="flex gap-2">
-				<div class="skeleton h-10 w-28"></div>
-				<div class="skeleton h-10 w-28"></div>
-				<div class="skeleton h-10 w-28"></div>
+				<div class="h-10 w-28 skeleton"></div>
+				<div class="h-10 w-28 skeleton"></div>
+				<div class="h-10 w-28 skeleton"></div>
 			</div>
 		{:else}
-			<div role="tablist" class="tabs tabs-boxed w-fit bg-base-200">
+			<div role="tablist" class="tabs-boxed tabs w-fit bg-base-200">
 				{#if movieTotal > 0}
 					<button
 						type="button"
@@ -215,13 +213,17 @@
 
 		<!-- Grid -->
 		{#if loading}
-			<div class="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
-				{#each Array(14) as _}
+			<div
+				class="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7"
+			>
+				{#each Array(14) as _, i (i)}
 					<div class="aspect-[2/3] animate-pulse rounded-lg bg-base-300"></div>
 				{/each}
 			</div>
 		{:else if activeCredits.length > 0}
-			<div class="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
+			<div
+				class="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7"
+			>
 				{#each activeCredits as credit (credit.id)}
 					<FilmographyCard {credit} showRole={activeTab === 'crew'} />
 				{/each}
@@ -230,14 +232,11 @@
 			<!-- Infinite scroll sentinel -->
 			<div bind:this={sentinel} class="flex justify-center py-4">
 				{#if loadingMore}
-					<span class="loading loading-spinner loading-md text-primary"></span>
+					<span class="loading loading-md loading-spinner text-primary"></span>
 				{:else if !hasMore}
 					<span class="text-sm text-base-content/50">
-						Showing all {activeCredits.length} {activeTab === 'movies'
-							? 'movies'
-							: activeTab === 'tv'
-								? 'TV shows'
-								: 'crew credits'}
+						Showing all {activeCredits.length}
+						{activeTab === 'movies' ? 'movies' : activeTab === 'tv' ? 'TV shows' : 'crew credits'}
 					</span>
 				{/if}
 			</div>

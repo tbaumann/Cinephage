@@ -1,6 +1,10 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { NamingService, type MediaNamingInfo, type NamingConfig } from '$lib/server/library/naming/NamingService';
+import {
+	NamingService,
+	type MediaNamingInfo,
+	type NamingConfig
+} from '$lib/server/library/naming/NamingService';
 import { namingSettingsService } from '$lib/server/library/naming/NamingSettingsService';
 import { logger } from '$lib/logging';
 

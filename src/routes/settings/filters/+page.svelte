@@ -37,7 +37,9 @@
 
 	{#if !data.tmdbConfigured}
 		<div class="mb-6">
-			<TmdbConfigRequired message="Configure your TMDB API key to enable genre filtering and other TMDB-powered features." />
+			<TmdbConfigRequired
+				message="Configure your TMDB API key to enable genre filtering and other TMDB-powered features."
+			/>
 		</div>
 	{/if}
 

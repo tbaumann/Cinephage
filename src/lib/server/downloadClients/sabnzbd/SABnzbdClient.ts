@@ -121,11 +121,17 @@ export class SABnzbdClient implements IDownloadClient {
 			// Check for NZB file content
 			const nzbContent = options.nzbFile || options.torrentFile;
 			if (nzbContent) {
-				const safeTitle = options.title && options.title.trim().length > 0 ? options.title : `SABnzbd_Grab_${Date.now()}`;
+				const safeTitle =
+					options.title && options.title.trim().length > 0
+						? options.title
+						: `SABnzbd_Grab_${Date.now()}`;
 				const filename = `${safeTitle}.nzb`;
 				response = await this.proxy.downloadNzb(nzbContent, filename, options.category, priority);
 			} else if (options.downloadUrl) {
-				const safeTitle = options.title && options.title.trim().length > 0 ? options.title : `SABnzbd_Grab_${Date.now()}`;
+				const safeTitle =
+					options.title && options.title.trim().length > 0
+						? options.title
+						: `SABnzbd_Grab_${Date.now()}`;
 				const filename = `${safeTitle}.nzb`;
 				response = await this.proxy.downloadNzbByUrl(
 					options.downloadUrl,
@@ -166,7 +172,9 @@ export class SABnzbdClient implements IDownloadClient {
 		try {
 			// Get queue items
 			const queue = await this.proxy.getQueue(0, 1000);
-			logger.debug(`[SABnzbd] Fetched ${queue.slots.length} queue items`, { categoryFilter: category });
+			logger.debug(`[SABnzbd] Fetched ${queue.slots.length} queue items`, {
+				categoryFilter: category
+			});
 			for (const item of queue.slots) {
 				logger.debug(`[SABnzbd] Queue item`, {
 					nzo_id: item.nzo_id,

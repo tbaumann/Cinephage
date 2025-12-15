@@ -134,15 +134,11 @@
 			</p>
 		</div>
 		<div class="flex gap-2">
-			<button class="btn btn-ghost gap-2" onclick={resetToDefaults} disabled={saving}>
+			<button class="btn gap-2 btn-ghost" onclick={resetToDefaults} disabled={saving}>
 				<RotateCcw class="h-4 w-4" />
 				Reset to Defaults
 			</button>
-			<button
-				class="btn btn-primary gap-2"
-				onclick={saveConfig}
-				disabled={saving || !hasChanges}
-			>
+			<button class="btn gap-2 btn-primary" onclick={saveConfig} disabled={saving || !hasChanges}>
 				{#if saving}
 					<RefreshCw class="h-4 w-4 animate-spin" />
 					Saving...
@@ -158,7 +154,7 @@
 	</div>
 
 	{#if error}
-		<div class="alert alert-error mb-4">
+		<div class="mb-4 alert alert-error">
 			<span>{error}</span>
 		</div>
 	{/if}
@@ -202,14 +198,14 @@
 							<input
 								id="movieFolderFormat"
 								type="text"
-								class="input input-bordered font-mono text-sm"
+								class="input-bordered input font-mono text-sm"
 								bind:value={config.movieFolderFormat}
 							/>
-							<label class="label">
+							<div class="label">
 								<span class="label-text-alt text-base-content/60"
 									>Folder name inside root folder</span
 								>
-							</label>
+							</div>
 						</div>
 
 						<div class="form-control">
@@ -221,15 +217,15 @@
 							</label>
 							<textarea
 								id="movieFileFormat"
-								class="textarea textarea-bordered font-mono text-sm"
+								class="textarea-bordered textarea font-mono text-sm"
 								rows="2"
 								bind:value={config.movieFileFormat}
 							></textarea>
-							<label class="label">
+							<div class="label">
 								<span class="label-text-alt text-base-content/60"
 									>Movie filename (extension added automatically)</span
 								>
-							</label>
+							</div>
 						</div>
 					</div>
 				{/if}
@@ -271,7 +267,7 @@
 							<input
 								id="seriesFolderFormat"
 								type="text"
-								class="input input-bordered font-mono text-sm"
+								class="input-bordered input font-mono text-sm"
 								bind:value={config.seriesFolderFormat}
 							/>
 						</div>
@@ -289,7 +285,7 @@
 							<input
 								id="seasonFolderFormat"
 								type="text"
-								class="input input-bordered font-mono text-sm"
+								class="input-bordered input font-mono text-sm"
 								bind:value={config.seasonFolderFormat}
 							/>
 						</div>
@@ -306,7 +302,7 @@
 							</label>
 							<textarea
 								id="episodeFileFormat"
-								class="textarea textarea-bordered font-mono text-sm"
+								class="textarea-bordered textarea font-mono text-sm"
 								rows="2"
 								bind:value={config.episodeFileFormat}
 							></textarea>
@@ -324,7 +320,7 @@
 							</label>
 							<textarea
 								id="dailyEpisodeFormat"
-								class="textarea textarea-bordered font-mono text-sm"
+								class="textarea-bordered textarea font-mono text-sm"
 								rows="2"
 								bind:value={config.dailyEpisodeFormat}
 							></textarea>
@@ -342,7 +338,7 @@
 							</label>
 							<textarea
 								id="animeEpisodeFormat"
-								class="textarea textarea-bordered font-mono text-sm"
+								class="textarea-bordered textarea font-mono text-sm"
 								rows="2"
 								bind:value={config.animeEpisodeFormat}
 							></textarea>
@@ -377,17 +373,17 @@
 							</label>
 							<select
 								id="mediaServerIdFormat"
-								class="select select-bordered"
+								class="select-bordered select"
 								bind:value={config.mediaServerIdFormat}
 							>
 								<option value="plex">Plex / Emby: {'{tmdb-12345}'}</option>
 								<option value="jellyfin">Jellyfin: [tmdbid-12345]</option>
 							</select>
-							<label class="label">
+							<div class="label">
 								<span class="label-text-alt text-base-content/60"
 									>Format for {'{MediaId}'} and {'{SeriesId}'} tokens in folder names</span
 								>
-							</label>
+							</div>
 						</div>
 
 						<div class="form-control">
@@ -396,7 +392,7 @@
 							</label>
 							<select
 								id="multiEpisodeStyle"
-								class="select select-bordered"
+								class="select-bordered select"
 								bind:value={config.multiEpisodeStyle}
 							>
 								<option value="range">Range: S01E01-E03</option>
@@ -413,7 +409,7 @@
 							</label>
 							<select
 								id="colonReplacement"
-								class="select select-bordered"
+								class="select-bordered select"
 								bind:value={config.colonReplacement}
 							>
 								<option value="smart">Smart: "Title: Subtitle" becomes "Title - Subtitle"</option>
@@ -450,11 +446,11 @@
 				</div>
 				{#if tokensSectionOpen}
 					<div class="card-body space-y-4 border-t border-base-300 pt-4">
-						{#each Object.entries(data.tokens) as [category, tokens]}
+						{#each Object.entries(data.tokens) as [category, tokens] (category)}
 							<div>
 								<h3 class="mb-2 font-medium capitalize">{category}</h3>
 								<div class="grid grid-cols-1 gap-1 md:grid-cols-2">
-									{#each tokens as { token, description }}
+									{#each tokens as { token, description } (token)}
 										<div class="flex items-center gap-2 text-sm">
 											<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs"
 												>{token}</code
@@ -470,7 +466,8 @@
 							<p class="font-medium">Conditional Blocks:</p>
 							<ul class="mt-1 list-inside list-disc space-y-1 text-base-content/70">
 								<li>
-									<code class="font-mono">{'{[{Token}]}'}</code> - Include brackets only if Token has value
+									<code class="font-mono">{'{[{Token}]}'}</code> - Include brackets only if Token has
+									value
 								</li>
 								<li>
 									<code class="font-mono">{'{prefix{Token}suffix}'}</code> - Include prefix/suffix only
@@ -511,7 +508,7 @@
 										</div>
 										<div>
 											<span class="text-xs text-base-content/50">File:</span>
-											<p class="break-all font-mono text-xs">{previews.movie?.file}</p>
+											<p class="font-mono text-xs break-all">{previews.movie?.file}</p>
 										</div>
 									</div>
 								</div>
@@ -520,7 +517,7 @@
 								<div>
 									<h3 class="mb-1 font-medium text-primary">Movie (with Edition)</h3>
 									<div class="space-y-1 text-base-content/80">
-										<p class="break-all font-mono text-xs">{previews.movieWithEdition?.file}</p>
+										<p class="font-mono text-xs break-all">{previews.movieWithEdition?.file}</p>
 									</div>
 								</div>
 
@@ -542,7 +539,7 @@
 								<!-- Episode Preview -->
 								<div>
 									<h3 class="mb-1 font-medium text-secondary">Episode</h3>
-									<p class="break-all font-mono text-xs text-base-content/80">
+									<p class="font-mono text-xs break-all text-base-content/80">
 										{previews.episode?.file}
 									</p>
 								</div>
@@ -550,7 +547,7 @@
 								<!-- Multi-Episode Preview -->
 								<div>
 									<h3 class="mb-1 font-medium text-secondary">Multi-Episode</h3>
-									<p class="break-all font-mono text-xs text-base-content/80">
+									<p class="font-mono text-xs break-all text-base-content/80">
 										{previews.multiEpisode?.file}
 									</p>
 								</div>
@@ -558,7 +555,7 @@
 								<!-- Anime Preview -->
 								<div>
 									<h3 class="mb-1 font-medium text-accent">Anime</h3>
-									<p class="break-all font-mono text-xs text-base-content/80">
+									<p class="font-mono text-xs break-all text-base-content/80">
 										{previews.anime?.file}
 									</p>
 								</div>
@@ -566,7 +563,7 @@
 								<!-- Daily Preview -->
 								<div>
 									<h3 class="mb-1 font-medium text-accent">Daily Show</h3>
-									<p class="break-all font-mono text-xs text-base-content/80">
+									<p class="font-mono text-xs break-all text-base-content/80">
 										{previews.daily?.file}
 									</p>
 								</div>

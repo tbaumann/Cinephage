@@ -279,6 +279,16 @@ export const tmdb = {
 	 */
 	clearCache(pattern?: string) {
 		return tmdbCache.invalidate(pattern);
+	},
+
+	/**
+	 * Check if TMDB API key is configured
+	 */
+	async isConfigured(): Promise<boolean> {
+		const apiKeySetting = await db.query.settings.findFirst({
+			where: eq(settings.key, 'tmdb_api_key')
+		});
+		return !!apiKeySetting?.value;
 	}
 };
 

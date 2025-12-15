@@ -580,7 +580,10 @@ export class MonitoringScheduler extends EventEmitter {
 			}
 			case 'newEpisode': {
 				const { executeNewEpisodeMonitorTask } = await import('./tasks/NewEpisodeMonitorTask.js');
-				return await executeNewEpisodeMonitorTask(settings.newEpisodeCheckIntervalHours, taskHistoryId);
+				return await executeNewEpisodeMonitorTask(
+					settings.newEpisodeCheckIntervalHours,
+					taskHistoryId
+				);
 			}
 			case 'cutoffUnmet': {
 				const { executeCutoffUnmetTask } = await import('./tasks/CutoffUnmetTask.js');

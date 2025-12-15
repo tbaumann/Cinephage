@@ -6,8 +6,15 @@
 
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getUnifiedTaskById, isScheduledTask, isIntervalEditable } from '$lib/server/tasks/UnifiedTaskRegistry';
-import { monitoringScheduler, type MonitoringSettings } from '$lib/server/monitoring/MonitoringScheduler';
+import {
+	getUnifiedTaskById,
+	isScheduledTask,
+	isIntervalEditable
+} from '$lib/server/tasks/UnifiedTaskRegistry';
+import {
+	monitoringScheduler,
+	type MonitoringSettings
+} from '$lib/server/monitoring/MonitoringScheduler';
 import { z } from 'zod';
 
 const bodySchema = z.object({

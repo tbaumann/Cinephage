@@ -149,7 +149,10 @@ export const actions = {
 			await db.update(series).set({ monitored });
 			return { success: true };
 		} catch (error) {
-			logger.error('[TV] Failed to toggle all monitored', error instanceof Error ? error : undefined);
+			logger.error(
+				'[TV] Failed to toggle all monitored',
+				error instanceof Error ? error : undefined
+			);
 			return { success: false, error: 'Failed to update series' };
 		}
 	}

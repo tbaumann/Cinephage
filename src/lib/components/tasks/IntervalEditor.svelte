@@ -106,7 +106,7 @@
 	<div class="flex items-center gap-1">
 		<input
 			type="number"
-			class="input input-bordered input-xs w-16"
+			class="input-bordered input input-xs w-16"
 			bind:value={editValue}
 			onkeydown={handleKeydown}
 			min={minHours}
@@ -114,19 +114,14 @@
 			disabled={isSaving}
 		/>
 		<span class="text-xs text-base-content/60">h</span>
-		<button
-			class="btn btn-ghost btn-xs btn-square"
-			onclick={save}
-			disabled={isSaving}
-			title="Save"
-		>
+		<button class="btn btn-square btn-ghost btn-xs" onclick={save} disabled={isSaving} title="Save">
 			{#if isSaving}
-				<span class="loading loading-spinner loading-xs"></span>
+				<span class="loading loading-xs loading-spinner"></span>
 			{:else}
 				<Check class="h-3 w-3 text-success" />
 			{/if}
 		</button>
-		<button class="btn btn-ghost btn-xs btn-square" onclick={cancelEdit} title="Cancel">
+		<button class="btn btn-square btn-ghost btn-xs" onclick={cancelEdit} title="Cancel">
 			<X class="h-3 w-3 text-error" />
 		</button>
 	</div>

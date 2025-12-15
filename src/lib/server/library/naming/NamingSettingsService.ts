@@ -64,7 +64,7 @@ export class NamingSettingsService {
 	private static instance: NamingSettingsService;
 	private cachedConfig: NamingConfig | null = null;
 
-	private constructor() { }
+	private constructor() {}
 
 	static getInstance(): NamingSettingsService {
 		if (!NamingSettingsService.instance) {
@@ -91,7 +91,9 @@ export class NamingSettingsService {
 			});
 			// Determine if table is missing
 			if (String(error).includes('no such table')) {
-				logger.error('[NamingSettingsService] CRITICAL: naming_settings table is missing! Please run migrations.');
+				logger.error(
+					'[NamingSettingsService] CRITICAL: naming_settings table is missing! Please run migrations.'
+				);
 			}
 		}
 
@@ -136,7 +138,9 @@ export class NamingSettingsService {
 			// Cannot log async here easily if logger.warn is async, but usually it's safe.
 			// Just suppress specifically for missing table or sync issues.
 			if (String(error).includes('no such table')) {
-				console.error('[NamingSettingsService] CRITICAL: naming_settings table missing (sync load)');
+				console.error(
+					'[NamingSettingsService] CRITICAL: naming_settings table missing (sync load)'
+				);
 			}
 		}
 
@@ -184,7 +188,10 @@ export class NamingSettingsService {
 			const existing = db.select().from(namingSettings).where(eq(namingSettings.key, dbKey)).get();
 
 			if (existing) {
-				db.update(namingSettings).set({ value: stringValue }).where(eq(namingSettings.key, dbKey)).run();
+				db.update(namingSettings)
+					.set({ value: stringValue })
+					.where(eq(namingSettings.key, dbKey))
+					.run();
 			} else {
 				db.insert(namingSettings).values({ key: dbKey, value: stringValue }).run();
 			}

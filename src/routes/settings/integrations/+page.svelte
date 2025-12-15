@@ -214,15 +214,21 @@
 
 <!-- TMDB API Key Modal -->
 {#if tmdbModalOpen}
-	<div class="modal modal-open">
+	<div class="modal-open modal">
 		<div class="modal-box">
-			<button onclick={closeTmdbModal} class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+			<button
+				onclick={closeTmdbModal}
+				class="btn absolute top-2 right-2 btn-circle btn-ghost btn-sm"
+			>
 				<X class="h-4 w-4" />
 			</button>
 			<h3 class="text-lg font-bold">TMDB API Key</h3>
 			<p class="py-2 text-sm text-base-content/70">
-				Enter your TMDB API key to fetch movie and TV show metadata.
-				Get a free key at <a href="https://www.themoviedb.org/settings/api" target="_blank" class="link link-primary">themoviedb.org</a>.
+				Enter your TMDB API key to fetch movie and TV show metadata. Get a free key at <a
+					href="https://www.themoviedb.org/settings/api"
+					target="_blank"
+					class="link link-primary">themoviedb.org</a
+				>.
 			</p>
 			<form
 				method="POST"
@@ -246,20 +252,21 @@
 						name="apiKey"
 						bind:value={tmdbApiKey}
 						placeholder="Enter your TMDB API key"
-						class="input input-bordered w-full"
+						class="input-bordered input w-full"
 					/>
 				</div>
 				<div class="modal-action">
 					<button type="button" onclick={closeTmdbModal} class="btn btn-ghost">Cancel</button>
 					<button type="submit" class="btn btn-primary" disabled={saving}>
 						{#if saving}
-							<span class="loading loading-spinner loading-sm"></span>
+							<span class="loading loading-sm loading-spinner"></span>
 						{/if}
 						Save
 					</button>
 				</div>
 			</form>
 		</div>
-		<button type="button" class="modal-backdrop" onclick={closeTmdbModal} aria-label="Close modal"></button>
+		<button type="button" class="modal-backdrop" onclick={closeTmdbModal} aria-label="Close modal"
+		></button>
 	</div>
 {/if}

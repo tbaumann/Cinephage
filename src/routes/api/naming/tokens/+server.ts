@@ -33,9 +33,7 @@ const NAMING_TOKENS = {
 		{ token: '{AudioChannels}', description: 'Audio channels (5.1, 7.1, etc.)' },
 		{ token: '{AudioLanguages}', description: 'Audio languages in file' }
 	],
-	release: [
-		{ token: '{ReleaseGroup}', description: 'Release group name' }
-	],
+	release: [{ token: '{ReleaseGroup}', description: 'Release group name' }],
 	series: [
 		{ token: '{SeriesTitle}', description: 'Series title as-is' },
 		{ token: '{SeriesCleanTitle}', description: 'Series title with special chars removed' },

@@ -375,11 +375,13 @@
 	<main class="w-full space-y-12 px-4 py-8 lg:px-8">
 		{#if data.viewType === 'not_configured'}
 			<div class="mx-auto max-w-2xl py-12">
-				<TmdbConfigRequired message="Configure your TMDB API key to browse and discover movies and TV shows." />
+				<TmdbConfigRequired
+					message="Configure your TMDB API key to browse and discover movies and TV shows."
+				/>
 				<div class="mt-8 text-center">
 					<p class="text-base-content/60">
-						TMDB (The Movie Database) provides the metadata for all movies and TV shows in Cinephage.
-						You'll need a free API key to get started.
+						TMDB (The Movie Database) provides the metadata for all movies and TV shows in
+						Cinephage. You'll need a free API key to get started.
 					</p>
 				</div>
 			</div>

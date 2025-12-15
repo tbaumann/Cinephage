@@ -90,9 +90,7 @@ describe('TMDB Integration', () => {
 		expect(episode.air_date).toBe('2008-01-20');
 		expect(episode.credits).toBeDefined();
 		expect(episode.credits.cast.length).toBeGreaterThan(0);
-		const bryanCranston = episode.credits.cast.find(
-			(c: CastMember) => c.name === 'Bryan Cranston'
-		);
+		const bryanCranston = episode.credits.cast.find((c: CastMember) => c.name === 'Bryan Cranston');
 		expect(bryanCranston).toBeDefined();
 	});
 

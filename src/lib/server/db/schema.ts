@@ -1092,7 +1092,9 @@ export const monitoringHistory = sqliteTable(
 			.primaryKey()
 			.$defaultFn(() => randomUUID()),
 		// Link to parent task execution (for unified task history)
-		taskHistoryId: text('task_history_id').references(() => taskHistory.id, { onDelete: 'cascade' }),
+		taskHistoryId: text('task_history_id').references(() => taskHistory.id, {
+			onDelete: 'cascade'
+		}),
 		// Task type that triggered this action
 		taskType: text('task_type').notNull(), // 'missing', 'upgrade', 'new_episode', 'cutoff_unmet'
 

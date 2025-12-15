@@ -135,7 +135,10 @@ export const actions = {
 			await db.update(movies).set({ monitored });
 			return { success: true };
 		} catch (error) {
-			logger.error('[Movies] Failed to toggle all monitored', error instanceof Error ? error : undefined);
+			logger.error(
+				'[Movies] Failed to toggle all monitored',
+				error instanceof Error ? error : undefined
+			);
 			return { success: false, error: 'Failed to update movies' };
 		}
 	}

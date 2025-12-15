@@ -14,7 +14,8 @@ export const load: PageServerLoad = async ({ params }) => {
 	const tmdbConfigured = await tmdb.isConfigured();
 	if (!tmdbConfigured) {
 		throw error(503, {
-			message: 'TMDB API key not configured. Please configure your TMDB API key in Settings > Integrations.'
+			message:
+				'TMDB API key not configured. Please configure your TMDB API key in Settings > Integrations.'
 		});
 	}
 
@@ -24,7 +25,8 @@ export const load: PageServerLoad = async ({ params }) => {
 		// Handle null response (shouldn't happen since we checked config, but be safe)
 		if (!movie) {
 			throw error(503, {
-				message: 'TMDB API key not configured. Please configure your TMDB API key in Settings > Integrations.'
+				message:
+					'TMDB API key not configured. Please configure your TMDB API key in Settings > Integrations.'
 			});
 		}
 		let collection = null;

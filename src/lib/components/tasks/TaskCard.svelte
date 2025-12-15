@@ -164,17 +164,17 @@
 				<div class="flex items-center gap-2">
 					<h3 class="truncate text-base font-semibold">{task.name}</h3>
 					{#if isRunning}
-						<span class="badge badge-primary badge-sm gap-1">
+						<span class="badge gap-1 badge-sm badge-primary">
 							<RefreshCw class="h-3 w-3 animate-spin" />
 							Running
 						</span>
 					{:else if lastRunStatus() === 'completed'}
-						<span class="badge badge-success badge-sm gap-1">
+						<span class="badge gap-1 badge-sm badge-success">
 							<CheckCircle class="h-3 w-3" />
 							OK
 						</span>
 					{:else if lastRunStatus() === 'failed'}
-						<span class="badge badge-error badge-sm gap-1">
+						<span class="badge gap-1 badge-sm badge-error">
 							<XCircle class="h-3 w-3" />
 							Failed
 						</span>
@@ -224,12 +224,12 @@
 		<div class="mt-1 flex items-center justify-between gap-2">
 			<!-- History Toggle -->
 			<button
-				class="btn btn-ghost btn-sm gap-1 text-base-content/60"
+				class="btn gap-1 text-base-content/60 btn-ghost btn-sm"
 				onclick={toggleHistory}
 				disabled={loadingHistory}
 			>
 				{#if loadingHistory}
-					<span class="loading loading-spinner loading-xs"></span>
+					<span class="loading loading-xs loading-spinner"></span>
 				{:else if isExpanded}
 					<ChevronUp class="h-4 w-4" />
 				{:else}
@@ -239,9 +239,9 @@
 			</button>
 
 			<!-- Run Button -->
-			<button class="btn btn-primary btn-sm gap-1" onclick={runTask} disabled={isRunning}>
+			<button class="btn gap-1 btn-sm btn-primary" onclick={runTask} disabled={isRunning}>
 				{#if isRunning}
-					<span class="loading loading-spinner loading-xs"></span>
+					<span class="loading loading-xs loading-spinner"></span>
 					Running...
 				{:else}
 					<Play class="h-4 w-4" />

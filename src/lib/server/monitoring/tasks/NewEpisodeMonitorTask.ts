@@ -16,9 +16,15 @@ import type { TaskResult } from '../MonitoringScheduler.js';
  * @param intervalHours - The interval in hours for determining "recently aired"
  * @param taskHistoryId - Optional ID linking to taskHistory for activity tracking
  */
-export async function executeNewEpisodeMonitorTask(intervalHours: number, taskHistoryId?: string): Promise<TaskResult> {
+export async function executeNewEpisodeMonitorTask(
+	intervalHours: number,
+	taskHistoryId?: string
+): Promise<TaskResult> {
 	const executedAt = new Date();
-	logger.info('[NewEpisodeMonitorTask] Starting new episode search', { intervalHours, taskHistoryId });
+	logger.info('[NewEpisodeMonitorTask] Starting new episode search', {
+		intervalHours,
+		taskHistoryId
+	});
 
 	let itemsProcessed = 0;
 	let itemsGrabbed = 0;

@@ -204,9 +204,9 @@ async function gracefulShutdown(signal: string) {
 	// Stop monitoring scheduler (clears scheduler timer)
 	if (monitoringInitialized) {
 		shutdownPromises.push(
-			monitoringScheduler.shutdown().catch((e) =>
-				logger.error('Error stopping monitoring scheduler', e)
-			)
+			monitoringScheduler
+				.shutdown()
+				.catch((e) => logger.error('Error stopping monitoring scheduler', e))
 		);
 	}
 
@@ -222,18 +222,18 @@ async function gracefulShutdown(signal: string) {
 	// Stop external ID service
 	if (externalIdServiceInitialized) {
 		shutdownPromises.push(
-			getExternalIdService().stop().catch((e) =>
-				logger.error('Error stopping external ID service', e)
-			)
+			getExternalIdService()
+				.stop()
+				.catch((e) => logger.error('Error stopping external ID service', e))
 		);
 	}
 
 	// Stop browser solver
 	if (browserSolverInitialized) {
 		shutdownPromises.push(
-			getBrowserSolver().shutdown().catch((e) =>
-				logger.error('Error shutting down BrowserSolver', e)
-			)
+			getBrowserSolver()
+				.shutdown()
+				.catch((e) => logger.error('Error shutting down BrowserSolver', e))
 		);
 	}
 

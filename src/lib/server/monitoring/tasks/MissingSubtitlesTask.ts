@@ -6,7 +6,13 @@
  */
 
 import { db } from '$lib/server/db/index.js';
-import { movies, series, episodes, subtitleHistory, monitoringHistory } from '$lib/server/db/schema.js';
+import {
+	movies,
+	series,
+	episodes,
+	subtitleHistory,
+	monitoringHistory
+} from '$lib/server/db/schema.js';
 import { eq, and, isNotNull } from 'drizzle-orm';
 import { getSubtitleSearchService } from '$lib/server/subtitles/services/SubtitleSearchService.js';
 import { getSubtitleDownloadService } from '$lib/server/subtitles/services/SubtitleDownloadService.js';
@@ -287,7 +293,8 @@ async function searchMissingMovieSubtitles(
 								});
 							} catch (downloadError) {
 								errorCount++;
-								movieError = downloadError instanceof Error ? downloadError.message : String(downloadError);
+								movieError =
+									downloadError instanceof Error ? downloadError.message : String(downloadError);
 								logger.warn('[MissingSubtitlesTask] Failed to download subtitle for movie', {
 									movieId: movie.id,
 									language: missing.code,
@@ -461,7 +468,10 @@ async function searchMissingEpisodeSubtitles(
 										});
 									} catch (downloadError) {
 										errorCount++;
-										episodeError = downloadError instanceof Error ? downloadError.message : String(downloadError);
+										episodeError =
+											downloadError instanceof Error
+												? downloadError.message
+												: String(downloadError);
 										logger.warn('[MissingSubtitlesTask] Failed to download subtitle for episode', {
 											episodeId,
 											language: missing.code,
@@ -479,7 +489,8 @@ async function searchMissingEpisodeSubtitles(
 								seriesId: show.id,
 								status: episodeDownloaded > 0 ? 'grabbed' : episodeError ? 'error' : 'no_results',
 								releasesFound: status.missing.length, // Number of missing languages
-								releaseGrabbed: episodeDownloaded > 0 ? `${episodeDownloaded} subtitle(s)` : undefined,
+								releaseGrabbed:
+									episodeDownloaded > 0 ? `${episodeDownloaded} subtitle(s)` : undefined,
 								isUpgrade: false,
 								errorMessage: episodeError,
 								executedAt: executedAt.toISOString()

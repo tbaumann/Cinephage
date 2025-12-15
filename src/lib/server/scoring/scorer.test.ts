@@ -3,6 +3,9 @@ import { scoreRelease, isUpgrade } from './scorer';
 import { DEFAULT_PROFILES } from './profiles';
 import type { ScoringProfile } from './types';
 
+// Profiles that support torrent-based release scoring (excludes streaming-only)
+const TORRENT_PROFILES = DEFAULT_PROFILES.filter((p) => p.id !== 'streaming');
+
 /**
  * Comprehensive tests for the scoring/upgrade system.
  * Tests run against ALL profiles to ensure correct behavior regardless of user's profile choice.
@@ -160,8 +163,9 @@ describe('Scoring System - All Profiles', () => {
 	});
 });
 
-describe('Upgrade Detection - All Profiles', () => {
-	describe.each(DEFAULT_PROFILES)('Profile: $name', (profile: ScoringProfile) => {
+describe('Upgrade Detection - Torrent Profiles', () => {
+	// Uses TORRENT_PROFILES because streaming profile doesn't have torrent format scores
+	describe.each(TORRENT_PROFILES)('Profile: $name', (profile: ScoringProfile) => {
 		describe('Resolution Upgrades', () => {
 			it('should identify 720p → 1080p as upgrade', () => {
 				const result = isUpgrade(

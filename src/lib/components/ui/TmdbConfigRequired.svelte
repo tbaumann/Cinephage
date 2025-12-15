@@ -11,7 +11,7 @@
 		<h3 class="font-bold">TMDB Configuration Required</h3>
 		<p class="text-sm">{message}</p>
 	</div>
-	<a href="/settings/integrations" class="btn btn-sm btn-primary gap-2">
+	<a href="/settings/integrations" class="btn gap-2 btn-sm btn-primary">
 		<Settings class="h-4 w-4" />
 		Configure TMDB
 	</a>

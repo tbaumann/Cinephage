@@ -6,7 +6,14 @@
  */
 
 import { db } from '$lib/server/db/index.js';
-import { movies, series, episodes, subtitles, subtitleHistory, monitoringHistory } from '$lib/server/db/schema.js';
+import {
+	movies,
+	series,
+	episodes,
+	subtitles,
+	subtitleHistory,
+	monitoringHistory
+} from '$lib/server/db/schema.js';
 import { eq, and, isNotNull, lt } from 'drizzle-orm';
 import { getSubtitleSearchService } from '$lib/server/subtitles/services/SubtitleSearchService.js';
 import { getSubtitleDownloadService } from '$lib/server/subtitles/services/SubtitleDownloadService.js';
@@ -224,7 +231,8 @@ async function searchMovieSubtitleUpgrades(
 								});
 							} catch (downloadError) {
 								errorCount++;
-								movieError = downloadError instanceof Error ? downloadError.message : String(downloadError);
+								movieError =
+									downloadError instanceof Error ? downloadError.message : String(downloadError);
 								logger.warn('[SubtitleUpgradeTask] Failed to download upgraded subtitle', {
 									movieId: movie.id,
 									language: existingSub.language,
@@ -403,7 +411,8 @@ async function searchEpisodeSubtitleUpgrades(
 								});
 							} catch (downloadError) {
 								errorCount++;
-								episodeError = downloadError instanceof Error ? downloadError.message : String(downloadError);
+								episodeError =
+									downloadError instanceof Error ? downloadError.message : String(downloadError);
 								logger.warn('[SubtitleUpgradeTask] Failed to download upgraded subtitle', {
 									episodeId: episode.id,
 									language: existingSub.language,
