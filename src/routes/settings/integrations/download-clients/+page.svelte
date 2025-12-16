@@ -9,6 +9,7 @@
 	} from '$lib/types/downloadClient';
 
 	import { DownloadClientModal, DownloadClientTable } from '$lib/components/downloadClients';
+	import { ConfirmationModal } from '$lib/components/ui/modal';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -197,26 +198,12 @@
 />
 
 <!-- Delete Confirmation Modal -->
-{#if confirmClientDeleteOpen}
-	<div class="modal-open modal">
-		<div class="modal-box">
-			<h3 class="text-lg font-bold">Confirm Delete</h3>
-			<p class="py-4">
-				Are you sure you want to delete <strong>{deleteClientTarget?.name}</strong>? This action
-				cannot be undone.
-			</p>
-			<div class="modal-action">
-				<button class="btn btn-ghost" onclick={() => (confirmClientDeleteOpen = false)}
-					>Cancel</button
-				>
-				<button class="btn btn-error" onclick={handleConfirmClientDelete}>Delete</button>
-			</div>
-		</div>
-		<button
-			type="button"
-			class="modal-backdrop cursor-default border-none bg-black/50"
-			onclick={() => (confirmClientDeleteOpen = false)}
-			aria-label="Close modal"
-		></button>
-	</div>
-{/if}
+<ConfirmationModal
+	open={confirmClientDeleteOpen}
+	title="Confirm Delete"
+	message="Are you sure you want to delete {deleteClientTarget?.name}? This action cannot be undone."
+	confirmLabel="Delete"
+	confirmVariant="error"
+	onConfirm={handleConfirmClientDelete}
+	onCancel={() => (confirmClientDeleteOpen = false)}
+/>

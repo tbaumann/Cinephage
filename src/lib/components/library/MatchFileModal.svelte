@@ -27,10 +27,11 @@
 	interface Props {
 		open: boolean;
 		file: UnmatchedFile;
+		onClose: () => void;
 		onSuccess: (fileId: string) => void;
 	}
 
-	let { open = $bindable(), file, onSuccess }: Props = $props();
+	let { open, file, onClose, onSuccess }: Props = $props();
 
 	// Form state (defaults only, effect syncs from props)
 	let searchQuery = $state('');
@@ -149,19 +150,29 @@
 
 	// Close modal
 	function close() {
-		open = false;
+		onClose();
 		selectedShow = null;
+	}
+
+	function handleModalKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			close();
+		}
 	}
 </script>
 
-{#if open}
-	<dialog class="modal-open modal">
-		<div class="modal-box max-w-2xl">
-			<button class="btn absolute top-2 right-2 btn-circle btn-ghost btn-sm" onclick={close}>
-				<X class="h-4 w-4" />
-			</button>
+<svelte:window onkeydown={open ? handleModalKeydown : undefined} />
 
-			<h3 class="text-lg font-bold">Match File to TMDB</h3>
+{#if open}
+	<div class="modal-open modal">
+		<div class="modal-box max-w-2xl">
+			<!-- Header -->
+			<div class="mb-4 flex items-center justify-between">
+				<h3 class="text-lg font-bold">Match File to TMDB</h3>
+				<button class="btn btn-circle btn-ghost btn-sm" onclick={close} aria-label="Close">
+					<X class="h-4 w-4" />
+				</button>
+			</div>
 			<p class="mt-1 truncate text-sm text-base-content/70" title={file.path}>
 				{file.path.split('/').pop()}
 			</p>
@@ -325,8 +336,11 @@
 				{/if}
 			{/if}
 		</div>
-		<form method="dialog" class="modal-backdrop">
-			<button onclick={close}>close</button>
-		</form>
-	</dialog>
+		<button
+			type="button"
+			class="modal-backdrop cursor-default border-none bg-black/50"
+			onclick={close}
+			aria-label="Close modal"
+		></button>
+	</div>
 {/if}

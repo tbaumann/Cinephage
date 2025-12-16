@@ -559,12 +559,13 @@
 	<!-- Add to Library Modal -->
 	{#if selectedItem}
 		<AddToLibraryModal
-			bind:isOpen={addModalOpen}
+			open={addModalOpen}
 			mediaType={selectedItem.mediaType}
 			tmdbId={selectedItem.tmdbId}
 			title={selectedItem.title}
 			year={selectedItem.year}
 			posterPath={selectedItem.posterPath}
+			onClose={() => (addModalOpen = false)}
 			onSuccess={handleAddSuccess}
 		/>
 	{/if}

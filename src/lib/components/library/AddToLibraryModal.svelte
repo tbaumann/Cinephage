@@ -18,23 +18,18 @@
 	import { resolve } from '$app/paths';
 
 	// Props
-	let {
-		isOpen = $bindable(false),
-		mediaType,
-		tmdbId,
-		title,
-		year,
-		posterPath,
-		onSuccess
-	}: {
-		isOpen: boolean;
+	interface Props {
+		open: boolean;
 		mediaType: 'movie' | 'tv';
 		tmdbId: number;
 		title: string;
 		year?: number;
 		posterPath?: string | null;
+		onClose: () => void;
 		onSuccess?: () => void;
-	} = $props();
+	}
+
+	let { open, mediaType, tmdbId, title, year, posterPath, onClose, onSuccess }: Props = $props();
 
 	// Types
 	interface RootFolder {
@@ -310,7 +305,7 @@
 
 	// Reset form state when modal opens/closes or media type changes
 	$effect(() => {
-		if (isOpen) {
+		if (open) {
 			// Reset to defaults
 			monitored = true;
 			searchOnAdd = true;
@@ -588,7 +583,7 @@
 					: undefined
 			});
 
-			isOpen = false;
+			onClose();
 			onSuccess?.();
 		} catch (e) {
 			const errorMessage = e instanceof Error ? e.message : 'Failed to add to library';
@@ -647,7 +642,7 @@
 				toasts.error(`Failed to add ${errorCount} movie${errorCount > 1 ? 's' : ''}`);
 			}
 
-			isOpen = false;
+			onClose();
 			onSuccess?.();
 		} catch (e) {
 			const errorMessage = e instanceof Error ? e.message : 'Failed to add collection';
@@ -660,13 +655,7 @@
 
 	function handleClose() {
 		if (!isSubmitting) {
-			isOpen = false;
-		}
-	}
-
-	function handleBackdropClick(e: MouseEvent) {
-		if (e.target === e.currentTarget) {
-			handleClose();
+			onClose();
 		}
 	}
 
@@ -677,35 +666,26 @@
 	}
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={open ? handleKeydown : undefined} />
 
-{#if isOpen}
-	<!-- Modal Backdrop -->
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-		onclick={handleBackdropClick}
-	>
-		<!-- Modal Content -->
-		<div
-			class="animate-in zoom-in-95 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-base-200 shadow-2xl duration-200"
-		>
+{#if open}
+	<div class="modal-open modal">
+		<div class="modal-box max-h-[90vh] max-w-2xl overflow-y-auto">
 			<!-- Header -->
-			<div class="flex shrink-0 items-center justify-between border-b border-base-300 px-6 py-4">
-				<h2 class="text-xl font-bold">Add to Library</h2>
+			<div class="mb-6 flex items-center justify-between">
+				<h3 class="text-xl font-bold">Add to Library</h3>
 				<button
 					class="btn btn-circle btn-ghost btn-sm"
 					onclick={handleClose}
 					disabled={isSubmitting}
 					aria-label="Close"
 				>
-					<X class="h-5 w-5" />
+					<X class="h-4 w-4" />
 				</button>
 			</div>
 
 			<!-- Body -->
-			<div class="flex-1 space-y-5 overflow-y-auto p-6">
+			<div class="space-y-5">
 				{#if isLoading}
 					<div class="flex items-center justify-center py-12">
 						<Loader2 class="h-8 w-8 animate-spin text-primary" />
@@ -1137,9 +1117,7 @@
 			</div>
 
 			<!-- Footer -->
-			<div
-				class="flex shrink-0 justify-end gap-3 border-t border-base-300 bg-base-300/30 px-6 py-4"
-			>
+			<div class="modal-action mt-6 border-t border-base-300 pt-4">
 				<button class="btn btn-ghost" onclick={handleClose} disabled={isSubmitting}>
 					Cancel
 				</button>
@@ -1160,5 +1138,11 @@
 				</button>
 			</div>
 		</div>
+		<button
+			type="button"
+			class="modal-backdrop cursor-default border-none bg-black/50"
+			onclick={handleClose}
+			aria-label="Close modal"
+		></button>
 	</div>
 {/if}

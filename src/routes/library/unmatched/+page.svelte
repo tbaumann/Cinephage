@@ -287,5 +287,10 @@
 
 <!-- Match Modal -->
 {#if selectedFile}
-	<MatchFileModal bind:open={matchModalOpen} file={selectedFile} onSuccess={handleMatchSuccess} />
+	<MatchFileModal
+		open={matchModalOpen}
+		file={selectedFile}
+		onClose={() => (matchModalOpen = false)}
+		onSuccess={handleMatchSuccess}
+	/>
 {/if}

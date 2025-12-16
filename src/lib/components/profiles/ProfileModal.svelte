@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ScoringProfile, ScoringProfileFormData } from '$lib/types/profile';
-	import { X, Save, Info } from 'lucide-svelte';
+	import { X, Save, Info, Loader2 } from 'lucide-svelte';
 
 	interface Props {
 		open: boolean;
@@ -296,7 +296,7 @@
 				{#if !isFullyReadonly}
 					<button class="btn gap-2 btn-primary" onclick={handleSave} disabled={saving || !name}>
 						{#if saving}
-							<span class="loading loading-sm loading-spinner"></span>
+							<Loader2 class="h-4 w-4 animate-spin" />
 						{:else}
 							<Save class="h-4 w-4" />
 						{/if}

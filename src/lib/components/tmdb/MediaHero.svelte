@@ -466,11 +466,12 @@
 
 <!-- Add to Library Modal -->
 <AddToLibraryModal
-	bind:isOpen={showAddModal}
+	open={showAddModal}
 	{mediaType}
 	tmdbId={item.id}
 	{title}
 	{year}
 	posterPath={item.poster_path}
+	onClose={() => (showAddModal = false)}
 	onSuccess={handleAddSuccess}
 />

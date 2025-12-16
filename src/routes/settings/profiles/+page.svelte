@@ -3,6 +3,7 @@
 	import type { PageData } from './$types';
 	import type { ScoringProfile, ScoringProfileFormData } from '$lib/types/profile';
 	import { ProfileList, ProfileModal } from '$lib/components/profiles';
+	import { ConfirmationModal } from '$lib/components/ui/modal';
 
 	let { data }: { data: PageData } = $props();
 
@@ -152,24 +153,12 @@
 />
 
 <!-- Delete Confirmation Modal -->
-{#if deleteConfirmOpen}
-	<div class="modal-open modal">
-		<div class="modal-box">
-			<h3 class="text-lg font-bold">Confirm Delete</h3>
-			<p class="py-4">
-				Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be
-				undone.
-			</p>
-			<div class="modal-action">
-				<button class="btn btn-ghost" onclick={() => (deleteConfirmOpen = false)}> Cancel </button>
-				<button class="btn btn-error" onclick={handleDelete}> Delete </button>
-			</div>
-		</div>
-		<button
-			type="button"
-			class="modal-backdrop"
-			onclick={() => (deleteConfirmOpen = false)}
-			aria-label="Close modal"
-		></button>
-	</div>
-{/if}
+<ConfirmationModal
+	open={deleteConfirmOpen}
+	title="Confirm Delete"
+	message="Are you sure you want to delete {deleteTarget?.name}? This action cannot be undone."
+	confirmLabel="Delete"
+	confirmVariant="error"
+	onConfirm={handleDelete}
+	onCancel={() => (deleteConfirmOpen = false)}
+/>
