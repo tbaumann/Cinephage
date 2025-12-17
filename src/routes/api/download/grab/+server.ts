@@ -180,18 +180,23 @@ export const POST: RequestHandler = async ({ request }) => {
 		// ============================================================
 		const manager = getDownloadClientManager();
 
-		// Get enabled clients
-		const enabledClients = await manager.getEnabledClients();
+		// Determine protocol (default to torrent for backwards compatibility)
+		const protocol = data.protocol === 'usenet' ? 'usenet' : 'torrent';
 
-		if (enabledClients.length === 0) {
+		// Get client for the specific protocol
+		const clientResult = await manager.getClientForProtocol(protocol);
+
+		if (!clientResult) {
 			return json(
-				{ success: false, error: 'No enabled download clients configured' } satisfies GrabResponse,
+				{
+					success: false,
+					error: `No enabled ${protocol} download client configured`
+				} satisfies GrabResponse,
 				{ status: 400 }
 			);
 		}
 
-		// Use the first enabled client (highest priority)
-		const { client: clientConfig, instance: clientInstance } = enabledClients[0];
+		const { client: clientConfig, instance: clientInstance } = clientResult;
 
 		// Determine category based on media type
 		const category =
@@ -245,38 +250,46 @@ export const POST: RequestHandler = async ({ request }) => {
 			seedTimeLimit
 		});
 
-		// Resolve the download URL to get a magnet link or torrent file
-		// This fetches through the indexer with proper auth/cookies
-		const resolutionService = getDownloadResolutionService();
-		const resolved = await resolutionService.resolve({
-			downloadUrl: data.downloadUrl,
-			magnetUrl: data.magnetUrl,
-			infoHash: data.infoHash,
-			indexerId: data.indexerId,
-			title: data.title
-		});
+		// For Usenet, skip torrent resolution - just pass URL directly to client
+		// For torrents, resolve the download URL to get a magnet link or torrent file
+		let resolved: { success: boolean; magnetUrl?: string; torrentFile?: Buffer; infoHash?: string; error?: string };
 
-		if (!resolved.success) {
-			logger.error('Failed to resolve download', {
-				title: data.title,
-				error: resolved.error
+		if (protocol === 'usenet') {
+			// Usenet doesn't need resolution - the NZB URL is passed directly to the client
+			resolved = { success: true };
+			logger.debug('Skipping resolution for Usenet download', { title: data.title });
+		} else {
+			// Resolve torrent - fetches through the indexer with proper auth/cookies
+			const resolutionService = getDownloadResolutionService();
+			resolved = await resolutionService.resolve({
+				downloadUrl: data.downloadUrl,
+				magnetUrl: data.magnetUrl,
+				infoHash: data.infoHash,
+				indexerId: data.indexerId,
+				title: data.title
 			});
-			return json(
-				{
-					success: false,
-					error: `Failed to resolve download: ${resolved.error}`
-				} satisfies GrabResponse,
-				{ status: 500 }
-			);
-		}
 
-		logger.debug('Download resolved', {
-			title: data.title,
-			hasMagnet: !!resolved.magnetUrl,
-			hasTorrentFile: !!resolved.torrentFile,
-			infoHash: resolved.infoHash,
-			usedFallback: resolved.usedFallback
-		});
+			if (!resolved.success) {
+				logger.error('Failed to resolve download', {
+					title: data.title,
+					error: resolved.error
+				});
+				return json(
+					{
+						success: false,
+						error: `Failed to resolve download: ${resolved.error}`
+					} satisfies GrabResponse,
+					{ status: 500 }
+				);
+			}
+
+			logger.debug('Download resolved', {
+				title: data.title,
+				hasMagnet: !!resolved.magnetUrl,
+				hasTorrentFile: !!resolved.torrentFile,
+				infoHash: resolved.infoHash
+			});
+		}
 
 		// Send to download client
 		let hash: string;
@@ -287,6 +300,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				magnetUri: resolved.magnetUrl,
 				torrentFile: resolved.torrentFile,
 				infoHash: resolved.infoHash,
+				downloadUrl: data.downloadUrl,
 				category,
 				paused,
 				priority: clientConfig.recentPriority,
@@ -330,7 +344,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			indexerName: data.indexerName,
 			downloadUrl: data.downloadUrl,
 			magnetUrl: resolved.magnetUrl || data.magnetUrl,
-			protocol: 'torrent',
+			protocol: protocol,
 			movieId: data.movieId,
 			seriesId: data.seriesId,
 			episodeIds: data.episodeIds,
