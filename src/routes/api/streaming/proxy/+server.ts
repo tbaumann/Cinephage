@@ -208,12 +208,12 @@ export const GET: RequestHandler = async ({ url, request }) => {
 			);
 		}
 
+		// Note: Don't send Origin header - some CDNs reject it
 		const headers: HeadersInit = {
 			'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
 			Accept: '*/*',
 			'Accept-Encoding': 'identity',
-			Referer: referer,
-			Origin: new URL(referer).origin
+			Referer: referer
 		};
 
 		// Follow redirects with loop protection

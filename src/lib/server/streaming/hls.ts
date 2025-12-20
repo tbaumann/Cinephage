@@ -290,13 +290,13 @@ export async function getBestQualityStreamUrl(
 ): Promise<BestQualityResult> {
 	try {
 		// Fetch the master playlist DIRECTLY (not through proxy - avoids loopback issues)
+		// Note: Don't send Origin header - some CDNs reject it
 		const response = await fetchWithTimeout(masterUrl, {
 			referer,
 			timeout: 15000,
 			headers: {
-				Accept: '*/*',
-				Origin: referer ? new URL(referer).origin : undefined
-			} as Record<string, string>
+				Accept: '*/*'
+			}
 		});
 
 		if (!response.ok) {

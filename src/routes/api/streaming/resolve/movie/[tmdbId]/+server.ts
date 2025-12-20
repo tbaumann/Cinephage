@@ -129,29 +129,41 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			);
 		}
 
-		// Find first working source
-		const workingSource = result.sources.find((s) => s.status === 'working') || result.sources[0];
+		// Try each source until one works (HLS fetch succeeds)
+		const errors: string[] = [];
+		for (const source of result.sources) {
+			try {
+				// Get the best quality stream URL by parsing the HLS master playlist
+				const bestResult = await getBestQualityStreamUrl(source.url, source.referer);
 
-		if (!workingSource) {
-			worker?.fail('No working stream sources');
-			return errorResponse('No working stream sources', 'NO_SOURCES', 503);
+				// Try to fetch the playlist - this validates the URL actually works
+				const response = await fetchAndRewritePlaylist(
+					bestResult.rawUrl,
+					source.referer,
+					baseUrl
+				);
+
+				// Success - cache and return
+				worker?.extractionSucceeded(source.provider || 'unknown', source.quality);
+				streamCache.set(
+					cacheKey,
+					JSON.stringify({ rawUrl: bestResult.rawUrl, referer: source.referer })
+				);
+				return response;
+			} catch (error) {
+				const msg = error instanceof Error ? error.message : String(error);
+				errors.push(`${source.provider}: ${msg}`);
+				// Continue to next source
+			}
 		}
 
-		// Record successful extraction
-		worker?.extractionSucceeded(result.provider || 'unknown', workingSource.quality);
-
-		// Get the best quality stream URL by parsing the HLS master playlist
-		// This returns the RAW URL, not a proxy URL
-		const bestResult = await getBestQualityStreamUrl(workingSource.url, workingSource.referer);
-
-		// Cache the raw URL and referer for future requests (as JSON string)
-		streamCache.set(
-			cacheKey,
-			JSON.stringify({ rawUrl: bestResult.rawUrl, referer: workingSource.referer })
+		// All sources failed
+		worker?.fail('All stream sources failed');
+		return errorResponse(
+			`All stream sources failed: ${errors.join('; ')}`,
+			'ALL_SOURCES_FAILED',
+			503
 		);
-
-		// Fetch the playlist directly and rewrite URLs for proxy (no server-to-server loopback)
-		return await fetchAndRewritePlaylist(bestResult.rawUrl, workingSource.referer, baseUrl);
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 		worker?.fail(errorMessage);

@@ -327,13 +327,13 @@ export async function fetchAndRewritePlaylist(
 	proxyBaseUrl: string
 ): Promise<Response> {
 	// Fetch the playlist directly with proper headers
+	// Note: Don't send Origin header - some CDNs reject it
 	const response = await fetchWithTimeout(playlistUrl, {
 		referer,
 		timeout: 15000,
 		headers: {
-			Accept: '*/*',
-			Origin: referer ? new URL(referer).origin : undefined
-		} as Record<string, string>
+			Accept: '*/*'
+		}
 	});
 
 	if (!response.ok) {
