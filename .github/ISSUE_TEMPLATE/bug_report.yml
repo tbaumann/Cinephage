@@ -132,11 +132,45 @@ body:
       label: Browser (if UI issue)
       placeholder: 'e.g., Chrome 120, Firefox 121, Safari 17'
 
+  - type: markdown
+    attributes:
+      value: |
+        ### How to get logs
+
+        **Log files location:**
+        - Docker: `./logs/` (mapped from container's `/app/logs/`)
+        - Native install: `logs/` in your Cinephage directory
+
+        **Log files (attach the relevant ones to this issue):**
+        - `main.log` - General application logs (always include this)
+        - `indexers.log` - Indexer/search issues
+        - `imports.log` - Download import issues
+        - `streams.log` - Streaming issues
+        - `monitoring.log` - Scheduler/automated task issues
+
+        **How to retrieve:**
+        ```bash
+        # Docker Compose
+        docker compose cp cinephage:/app/logs ./cinephage-logs
+
+        # Native install
+        # Logs are in the logs/ folder of your install directory
+        ```
+
+        Drag and drop the .log files below or paste the content.
+
   - type: textarea
     id: logs
     attributes:
       label: Relevant Logs
-      description: Paste any relevant error logs (check browser console and server logs)
+      description: Attach log files by dragging them here, or paste relevant excerpts. Always include main.log for backend issues.
+      render: shell
+
+  - type: textarea
+    id: browser-logs
+    attributes:
+      label: Browser Console Logs (for UI issues)
+      description: Open DevTools (F12) > Console tab, reproduce the issue, then paste any errors here
       render: shell
 
   - type: textarea
