@@ -188,7 +188,7 @@
 							bind:value={category}
 							disabled={isReadonly}
 						>
-							{#each FORMAT_CATEGORY_ORDER as cat}
+							{#each FORMAT_CATEGORY_ORDER as cat (cat)}
 								<option value={cat}>{FORMAT_CATEGORY_LABELS[cat]}</option>
 							{/each}
 						</select>

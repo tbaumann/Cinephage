@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronDown, Loader2, X, Search, Plus } from 'lucide-svelte';
+	import { Loader2, X, Plus } from 'lucide-svelte';
 	import type { SmartListFilters } from '$lib/server/db/schema.js';
 
 	interface Props {

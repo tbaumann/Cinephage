@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SvelteSet } from 'svelte/reactivity';
+	import { SvelteSet, SvelteMap } from 'svelte/reactivity';
 	import type { UICustomFormat, FormatCategory } from '$lib/types/format';
 	import { FORMAT_CATEGORY_LABELS, FORMAT_CATEGORY_ORDER } from '$lib/types/format';
 	import {
@@ -71,7 +71,7 @@
 
 	// Group formats by category
 	const groupedFormats = $derived(() => {
-		const groups = new Map<FormatCategory, UICustomFormat[]>();
+		const groups = new SvelteMap<FormatCategory, UICustomFormat[]>();
 
 		for (const format of filteredFormats()) {
 			const existing = groups.get(format.category) || [];
@@ -131,7 +131,7 @@
 		<!-- Category filter -->
 		<select class="select-bordered select select-sm" bind:value={filterCategory}>
 			<option value="all">All Categories</option>
-			{#each FORMAT_CATEGORY_ORDER as cat}
+			{#each FORMAT_CATEGORY_ORDER as cat (cat)}
 				<option value={cat}>{FORMAT_CATEGORY_LABELS[cat]}</option>
 			{/each}
 		</select>
@@ -161,7 +161,7 @@
 
 	<!-- Format list by category -->
 	<div class="space-y-2">
-		{#each FORMAT_CATEGORY_ORDER as category}
+		{#each FORMAT_CATEGORY_ORDER as category (category)}
 			{@const categoryFormats = groupedFormats().get(category) || []}
 			{#if categoryFormats.length > 0}
 				<div class="rounded-lg border border-base-300 bg-base-100">

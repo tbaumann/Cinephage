@@ -1,4 +1,5 @@
 #!/usr/bin/env npx tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Naming System Dry-Run Test Script
  *

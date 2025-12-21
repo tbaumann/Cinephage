@@ -1,4 +1,5 @@
 #!/usr/bin/env npx tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * YAML Indexer Test Suite
  *

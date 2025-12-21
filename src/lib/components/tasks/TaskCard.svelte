@@ -9,7 +9,6 @@
 		ChevronUp,
 		CheckCircle,
 		XCircle,
-		AlertCircle,
 		Square
 	} from 'lucide-svelte';
 	import type { UnifiedTask } from '$lib/server/tasks/UnifiedTaskRegistry';
@@ -274,11 +273,7 @@
 			<!-- Run/Cancel Buttons -->
 			<div class="flex gap-2">
 				{#if isRunning}
-					<button
-						class="btn gap-1 btn-sm btn-error"
-						onclick={cancelTask}
-						disabled={isCancelling}
-					>
+					<button class="btn gap-1 btn-sm btn-error" onclick={cancelTask} disabled={isCancelling}>
 						{#if isCancelling}
 							<span class="loading loading-xs loading-spinner"></span>
 							Cancelling...

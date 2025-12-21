@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SvelteSet, SvelteMap } from 'svelte/reactivity';
 	import {
 		CheckCircle,
 		XCircle,
@@ -43,26 +44,22 @@
 	let { history, loading = false, showActivity = true }: Props = $props();
 
 	// Track which entries are expanded
-	let expandedEntries = $state<Set<string>>(new Set());
+	let expandedEntries = new SvelteSet<string>();
 
 	// Track loading state for each entry's activity
-	let activityLoading = $state<Set<string>>(new Set());
+	let activityLoading = new SvelteSet<string>();
 
 	// Cache loaded activity
-	let activityCache = $state<Map<string, ActivityItem[]>>(new Map());
+	let activityCache = new SvelteMap<string, ActivityItem[]>();
 
 	/**
 	 * Toggle activity expansion for an entry
 	 */
 	async function toggleActivity(entryId: string) {
 		if (expandedEntries.has(entryId)) {
-			const newExpanded = new Set(expandedEntries);
-			newExpanded.delete(entryId);
-			expandedEntries = newExpanded;
+			expandedEntries.delete(entryId);
 		} else {
-			const newExpanded = new Set(expandedEntries);
-			newExpanded.add(entryId);
-			expandedEntries = newExpanded;
+			expandedEntries.add(entryId);
 
 			// Load activity if not cached
 			if (!activityCache.has(entryId)) {
@@ -75,24 +72,18 @@
 	 * Load activity for an entry
 	 */
 	async function loadActivity(entryId: string) {
-		const newLoading = new Set(activityLoading);
-		newLoading.add(entryId);
-		activityLoading = newLoading;
+		activityLoading.add(entryId);
 
 		try {
 			const response = await fetch(`/api/tasks/history/${entryId}/activity`);
 			if (response.ok) {
 				const data = await response.json();
-				const newCache = new Map(activityCache);
-				newCache.set(entryId, data.activity ?? []);
-				activityCache = newCache;
+				activityCache.set(entryId, data.activity ?? []);
 			}
 		} catch (error) {
 			console.error('Failed to load activity:', error);
 		} finally {
-			const newLoading = new Set(activityLoading);
-			newLoading.delete(entryId);
-			activityLoading = newLoading;
+			activityLoading.delete(entryId);
 		}
 	}
 

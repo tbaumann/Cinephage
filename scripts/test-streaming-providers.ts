@@ -252,7 +252,9 @@ async function validateHlsPlaylist(
 // ============================================================================
 
 async function testProvider(
-	provider: Awaited<ReturnType<typeof import('../src/lib/server/streaming/providers').getAvailableProviders>>[0],
+	provider: Awaited<
+		ReturnType<typeof import('../src/lib/server/streaming/providers').getAvailableProviders>
+	>[0],
 	contentType: 'movie' | 'tv' | 'anime' | 'asiandrama',
 	expectedDown: string[]
 ): Promise<ProviderTestResult> {
@@ -336,7 +338,9 @@ async function testProvider(
 
 		for (let i = 0; i < result.streams.length; i++) {
 			const stream = result.streams[i];
-			console.log(`[${i + 1}] ${stream.quality || 'Auto'} - ${stream.server || stream.title || 'Unknown'}`);
+			console.log(
+				`[${i + 1}] ${stream.quality || 'Auto'} - ${stream.server || stream.title || 'Unknown'}`
+			);
 			console.log(`    URL: ${stream.url.substring(0, 80)}${stream.url.length > 80 ? '...' : ''}`);
 			console.log(`    Referer: ${stream.referer}`);
 			if (stream.language) {
@@ -415,13 +419,14 @@ async function main() {
 	console.log('#'.repeat(70));
 	console.log(`# Content Types: ${args.contentTypes.join(', ')}`);
 	console.log(`# Provider Filter: ${args.provider || 'all'}`);
-	console.log(`# Expected Down: ${args.expectedDown.length > 0 ? args.expectedDown.join(', ') : 'none'}`);
+	console.log(
+		`# Expected Down: ${args.expectedDown.length > 0 ? args.expectedDown.join(', ') : 'none'}`
+	);
 	console.log('#'.repeat(70));
 
 	// Import providers
-	const { getAvailableProviders, clearCaches } = await import(
-		'../src/lib/server/streaming/providers'
-	);
+	const { getAvailableProviders, clearCaches } =
+		await import('../src/lib/server/streaming/providers');
 
 	clearCaches();
 
@@ -508,7 +513,19 @@ async function main() {
 			'| KDrama'.padEnd(9) +
 			'| Status'
 	);
-	console.log('-'.repeat(15) + '|' + '-'.repeat(7) + '|' + '-'.repeat(7) + '|' + '-'.repeat(7) + '|' + '-'.repeat(8) + '|' + '-'.repeat(15));
+	console.log(
+		'-'.repeat(15) +
+			'|' +
+			'-'.repeat(7) +
+			'|' +
+			'-'.repeat(7) +
+			'|' +
+			'-'.repeat(7) +
+			'|' +
+			'-'.repeat(8) +
+			'|' +
+			'-'.repeat(15)
+	);
 
 	for (const summary of summaries.values()) {
 		const statusText =

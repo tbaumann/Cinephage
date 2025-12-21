@@ -97,7 +97,7 @@
 
 	<!-- Category accordions -->
 	<div class="space-y-2">
-		{#each FORMAT_CATEGORY_ORDER as category}
+		{#each FORMAT_CATEGORY_ORDER as category (category)}
 			{@const scores = filteredScores().get(category) || []}
 			{#if scores.length > 0}
 				{@const nonZeroCount = countNonZeroScores(scores)}

@@ -792,14 +792,12 @@ const SCHEMA_UPDATES: Record<number, (sqlite: Database.Database) => void> = {
 	// Version 4: Fix invalid scoring profile references and ensure default profile exists
 	4: (sqlite) => {
 		// Ensure a default profile exists (set 'compact' as default if none)
-		const hasDefault = sqlite
-			.prepare(`SELECT id FROM scoring_profiles WHERE is_default = 1`)
-			.get();
+		const hasDefault = sqlite.prepare(`SELECT id FROM scoring_profiles WHERE is_default = 1`).get();
 
 		if (!hasDefault) {
-			const validProfiles = sqlite
-				.prepare(`SELECT id FROM scoring_profiles`)
-				.all() as { id: string }[];
+			const validProfiles = sqlite.prepare(`SELECT id FROM scoring_profiles`).all() as {
+				id: string;
+			}[];
 			const validIds = new Set(validProfiles.map((p) => p.id));
 
 			if (validProfiles.length > 0) {
@@ -821,7 +819,9 @@ const SCHEMA_UPDATES: Record<number, (sqlite: Database.Database) => void> = {
 			.run();
 
 		if (invalidMovies.changes > 0) {
-			logger.info(`[SchemaSync] Cleared ${invalidMovies.changes} movies with invalid profile references`);
+			logger.info(
+				`[SchemaSync] Cleared ${invalidMovies.changes} movies with invalid profile references`
+			);
 		}
 
 		const invalidSeries = sqlite
@@ -834,7 +834,9 @@ const SCHEMA_UPDATES: Record<number, (sqlite: Database.Database) => void> = {
 			.run();
 
 		if (invalidSeries.changes > 0) {
-			logger.info(`[SchemaSync] Cleared ${invalidSeries.changes} series with invalid profile references`);
+			logger.info(
+				`[SchemaSync] Cleared ${invalidSeries.changes} series with invalid profile references`
+			);
 		}
 	}
 };

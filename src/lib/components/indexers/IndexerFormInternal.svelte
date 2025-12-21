@@ -20,7 +20,7 @@
 	}
 
 	let {
-		indexer,
+		indexer: _indexer,
 		url,
 		urlError,
 		priority,

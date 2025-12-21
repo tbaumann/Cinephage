@@ -194,7 +194,7 @@
 								onchange={(e) =>
 									updateCondition(index, { type: e.currentTarget.value as ConditionType })}
 							>
-								{#each conditionTypes as type}
+								{#each conditionTypes as type (type)}
 									<option value={type}>{CONDITION_TYPE_LABELS[type]}</option>
 								{/each}
 							</select>
@@ -217,7 +217,7 @@
 											resolution: e.currentTarget.value as typeof condition.resolution
 										})}
 								>
-									{#each AVAILABLE_RESOLUTIONS as res}
+									{#each AVAILABLE_RESOLUTIONS as res (res)}
 										<option value={res}>{RESOLUTION_LABELS[res]}</option>
 									{/each}
 								</select>
@@ -232,7 +232,7 @@
 											source: e.currentTarget.value as typeof condition.source
 										})}
 								>
-									{#each AVAILABLE_SOURCES as src}
+									{#each AVAILABLE_SOURCES as src (src)}
 										<option value={src}>{SOURCE_LABELS[src]}</option>
 									{/each}
 								</select>
@@ -247,7 +247,7 @@
 											codec: e.currentTarget.value as typeof condition.codec
 										})}
 								>
-									{#each AVAILABLE_CODECS as codec}
+									{#each AVAILABLE_CODECS as codec (codec)}
 										<option value={codec}>{CODEC_LABELS[codec]}</option>
 									{/each}
 								</select>
@@ -262,7 +262,7 @@
 											audio: e.currentTarget.value as typeof condition.audio
 										})}
 								>
-									{#each AVAILABLE_AUDIO as audio}
+									{#each AVAILABLE_AUDIO as audio (audio)}
 										<option value={audio}>{AUDIO_LABELS[audio]}</option>
 									{/each}
 								</select>
@@ -279,7 +279,7 @@
 										});
 									}}
 								>
-									{#each AVAILABLE_HDR as hdr}
+									{#each AVAILABLE_HDR as hdr (hdr ?? 'sdr')}
 										<option value={hdr ?? 'sdr'}>{HDR_LABELS[hdr ?? 'sdr']}</option>
 									{/each}
 								</select>
@@ -292,7 +292,7 @@
 									onchange={(e) =>
 										updateCondition(index, { streamingService: e.currentTarget.value })}
 								>
-									{#each AVAILABLE_STREAMING_SERVICES as service}
+									{#each AVAILABLE_STREAMING_SERVICES as service (service)}
 										<option value={service}>{STREAMING_SERVICE_LABELS[service]}</option>
 									{/each}
 								</select>
@@ -307,7 +307,7 @@
 											flag: e.currentTarget.value as typeof condition.flag
 										})}
 								>
-									{#each AVAILABLE_FLAGS as flag}
+									{#each AVAILABLE_FLAGS as flag (flag)}
 										<option value={flag} title={FLAG_DESCRIPTIONS[flag]}>{FLAG_LABELS[flag]}</option
 										>
 									{/each}

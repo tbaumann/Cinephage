@@ -5,7 +5,8 @@
 	import { formatDate } from '$lib/utils/format';
 
 	// Accept PersonDetails with or without combined_credits (for optimized loading)
-	type PersonBasic = Omit<PersonDetails, 'combined_credits'> & { combined_credits?: unknown };
+	// The combined_credits field is intentionally optional as this component works with both variants
+	type PersonBasic = Omit<PersonDetails, 'combined_credits'>;
 
 	let { person }: { person: PersonBasic } = $props();
 

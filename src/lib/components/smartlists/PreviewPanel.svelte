@@ -108,7 +108,7 @@
 				<div
 					class="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7"
 				>
-					{#each Array(12) as _}
+					{#each Array(12) as _, i (i)}
 						<div class="animate-pulse">
 							<div class="aspect-[2/3] rounded bg-base-300"></div>
 							<div class="mt-1 h-3 w-3/4 rounded bg-base-300"></div>

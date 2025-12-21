@@ -737,10 +737,13 @@ export class MonitoringScheduler extends EventEmitter implements BackgroundServi
 			ctx = await taskHistoryService.createExecutionContext(taskType);
 		} catch (historyError) {
 			// Log but don't fail the task if history recording fails
-			logger.warn(`[MonitoringScheduler] Failed to create execution context for manual ${taskType}`, {
-				taskType,
-				error: historyError
-			});
+			logger.warn(
+				`[MonitoringScheduler] Failed to create execution context for manual ${taskType}`,
+				{
+					taskType,
+					error: historyError
+				}
+			);
 		}
 
 		try {
