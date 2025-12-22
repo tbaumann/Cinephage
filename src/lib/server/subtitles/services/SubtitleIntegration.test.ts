@@ -38,9 +38,9 @@ const { SubtitleScoringService } = await import('./SubtitleScoringService');
 const { getSubtitleProviderFactory } = await import('../providers/SubtitleProviderFactory');
 
 describe('Subtitle System Integration', () => {
-	let providerManager: SubtitleProviderManager;
-	let searchService: SubtitleSearchService;
-	let scoringService: SubtitleScoringService;
+	let providerManager: ReturnType<typeof SubtitleProviderManager.getInstance>;
+	let searchService: ReturnType<typeof SubtitleSearchService.getInstance>;
+	let scoringService: ReturnType<typeof SubtitleScoringService.getInstance>;
 	let testProviderId: string | null = null;
 
 	beforeAll(async () => {
@@ -142,7 +142,7 @@ describe('Subtitle System Integration', () => {
 			expect(health).toBeInstanceOf(Array);
 
 			if (testProviderId) {
-				const testHealth = health.find((h) => h.providerId === testProviderId);
+				const testHealth = health.find((h: { providerId: string }) => h.providerId === testProviderId);
 				expect(testHealth).toBeDefined();
 				expect(testHealth!.isHealthy).toBe(true);
 				expect(testHealth!.consecutiveFailures).toBe(0);
@@ -151,7 +151,7 @@ describe('Subtitle System Integration', () => {
 
 		it('should not return disabled providers from getEnabledProviders', async () => {
 			const enabled = await providerManager.getEnabledProviders();
-			const hasTestProvider = enabled.some((p) => p.id === testProviderId);
+			const hasTestProvider = enabled.some((p: { id: string }) => p.id === testProviderId);
 			expect(hasTestProvider).toBe(false);
 		});
 	});

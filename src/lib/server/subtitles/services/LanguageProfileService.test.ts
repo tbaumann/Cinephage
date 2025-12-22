@@ -25,7 +25,7 @@ const { LanguageProfileService, getLanguageProfileService } =
 	await import('./LanguageProfileService');
 
 describe('LanguageProfileService', () => {
-	let profileService: LanguageProfileService;
+	let profileService: ReturnType<typeof LanguageProfileService.getInstance>;
 
 	beforeEach(() => {
 		profileService = LanguageProfileService.getInstance();
