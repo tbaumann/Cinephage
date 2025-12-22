@@ -31,9 +31,7 @@ export class NZBGetClient implements IDownloadClient {
 			host = host.split('@').pop() || host;
 		}
 
-		const url = `${protocol}://${host}:${this.config.port}/jsonrpc`;
-		logger.debug(`[NZBGet] Constructed Base URL: ${url}`);
-		return url;
+		return `${protocol}://${host}:${this.config.port}/jsonrpc`;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,7 +48,7 @@ export class NZBGetClient implements IDownloadClient {
 				headers['Authorization'] = `Basic ${auth}`;
 			}
 
-			logger.debug(`[NZBGet] Sending request to ${this.baseUrl} method: ${method}`);
+			logger.debug(`[NZBGet] Sending request`, { method });
 
 			const response = await fetch(this.baseUrl, {
 				method: 'POST',

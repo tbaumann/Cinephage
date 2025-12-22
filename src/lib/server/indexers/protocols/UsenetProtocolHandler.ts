@@ -6,6 +6,20 @@
  * - NZB URL generation
  * - Completion checking
  * - Age-based scoring
+ *
+ * SECURITY NOTE: API keys in URLs
+ * --------------------------------
+ * Usenet indexers (NZBgeek, DrunkenSlug, etc.) require API keys to be passed
+ * as URL query parameters. This is the standard authentication method for
+ * Newznab-based indexers and cannot be changed to header-based auth because:
+ * 1. Download clients (SABnzbd, NZBGet) fetch NZBs via direct URL download
+ * 2. These clients may not support custom Authorization headers for NZB fetches
+ * 3. The indexers themselves expect API keys in the query string
+ *
+ * To mitigate exposure risks:
+ * - URLs with API keys should be redacted when logging (use redactUrl())
+ * - URLs should not be displayed to users in full
+ * - Download queue entries should redact sensitive URLs in API responses
  */
 
 import {

@@ -14,6 +14,7 @@ import {
 	buildMagnetFromInfoHash
 } from '$lib/server/downloadClients/utils/torrentParser';
 import { createChildLogger } from '$lib/logging';
+import { redactUrl } from '$lib/server/utils/urlSecurity';
 
 const logger = createChildLogger({ module: 'DownloadResolutionService' });
 
@@ -109,7 +110,7 @@ class DownloadResolutionService {
 		if (downloadUrl) {
 			logger.warn('No indexer available, using downloadUrl as fallback', {
 				title,
-				downloadUrl: downloadUrl.substring(0, 100)
+				downloadUrl: redactUrl(downloadUrl)
 			});
 
 			// Check if downloadUrl is already a magnet
@@ -147,7 +148,7 @@ class DownloadResolutionService {
 	): Promise<ResolvedDownload> {
 		logger.debug('Fetching torrent through indexer', {
 			indexerId,
-			url: downloadUrl.substring(0, 100)
+			url: redactUrl(downloadUrl)
 		});
 
 		try {
@@ -229,7 +230,7 @@ class DownloadResolutionService {
 	 * Used as a fallback when indexer is unavailable.
 	 */
 	private async fetchDirectly(downloadUrl: string, title: string): Promise<ResolvedDownload> {
-		logger.debug('Fetching torrent directly', { url: downloadUrl.substring(0, 100) });
+		logger.debug('Fetching torrent directly', { url: redactUrl(downloadUrl) });
 
 		// Check if it's already a magnet
 		if (downloadUrl.startsWith('magnet:')) {

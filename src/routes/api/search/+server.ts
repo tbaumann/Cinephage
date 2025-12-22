@@ -10,6 +10,18 @@ import {
 } from '$lib/validation/schemas';
 import { qualityFilter, type EnrichmentOptions } from '$lib/server/quality';
 import { logger } from '$lib/logging';
+import { redactUrl } from '$lib/server/utils/urlSecurity';
+
+/**
+ * Redact sensitive URLs from release objects before returning in API responses.
+ * This prevents API keys from being exposed to clients.
+ */
+function redactReleaseUrls<T extends { downloadUrl?: string | null }>(releases: T[]): T[] {
+	return releases.map((release) => ({
+		...release,
+		downloadUrl: release.downloadUrl ? redactUrl(release.downloadUrl) : null
+	}));
+}
 
 /**
  * GET /api/search?q=query&searchType=movie&imdbId=tt1234567&categories=2000
@@ -147,7 +159,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		});
 
 		return json({
-			releases: searchResult.releases,
+			releases: redactReleaseUrls(searchResult.releases),
 			meta: {
 				totalResults: searchResult.totalResults,
 				rejectedCount: searchResult.rejectedCount,
@@ -176,7 +188,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	const searchResult = await manager.search(criteria, { searchSource: 'interactive' });
 
 	return json({
-		releases: searchResult.releases,
+		releases: redactReleaseUrls(searchResult.releases),
 		meta: {
 			totalResults: searchResult.totalResults,
 			searchTimeMs: searchResult.searchTimeMs,
@@ -283,7 +295,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		});
 
 		return json({
-			releases: searchResult.releases,
+			releases: redactReleaseUrls(searchResult.releases),
 			meta: {
 				totalResults: searchResult.totalResults,
 				rejectedCount: searchResult.rejectedCount,
@@ -308,7 +320,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	const searchResult = await manager.search(criteria, { searchSource: 'interactive' });
 
 	return json({
-		releases: searchResult.releases,
+		releases: redactReleaseUrls(searchResult.releases),
 		meta: {
 			totalResults: searchResult.totalResults,
 			searchTimeMs: searchResult.searchTimeMs,

@@ -10,6 +10,7 @@ import { downloadQueue, movies, series, downloadClients } from '$lib/server/db/s
 import { eq, not, inArray, and, isNull, isNotNull } from 'drizzle-orm';
 import { downloadMonitor } from '$lib/server/downloadClients/monitoring';
 import type { QueueItem, QueueItemWithMedia, QueueStatus } from '$lib/types/queue';
+import { redactUrl } from '$lib/server/utils/urlSecurity';
 
 /**
  * Terminal statuses (items that are done processing)
@@ -104,6 +105,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		const clientMap = new Map(clientsData.map((c) => [c.id, c]));
 
 		// Enrich queue items with media info using maps
+		// Note: downloadUrl is redacted to prevent API key exposure in responses
 		const items: QueueItemWithMedia[] = rows.map((row) => ({
 			id: row.id,
 			downloadClientId: row.downloadClientId,
@@ -111,7 +113,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			title: row.title,
 			indexerId: row.indexerId,
 			indexerName: row.indexerName,
-			downloadUrl: row.downloadUrl,
+			downloadUrl: row.downloadUrl ? redactUrl(row.downloadUrl) : null,
 			magnetUrl: row.magnetUrl,
 			protocol: row.protocol,
 			movieId: row.movieId,

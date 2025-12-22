@@ -5,6 +5,7 @@ import { downloadQueue, downloadClients } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { getDownloadClientManager } from '$lib/server/downloadClients/DownloadClientManager';
 import { logger } from '$lib/logging';
+import { redactUrl } from '$lib/server/utils/urlSecurity';
 
 /**
  * POST - Retry a failed download
@@ -89,10 +90,18 @@ export const POST: RequestHandler = async ({ params }) => {
 		// Get updated item
 		const updatedItem = await db.select().from(downloadQueue).where(eq(downloadQueue.id, id)).get();
 
+		// Redact sensitive URLs before returning
+		const safeItem = updatedItem
+			? {
+					...updatedItem,
+					downloadUrl: updatedItem.downloadUrl ? redactUrl(updatedItem.downloadUrl) : null
+				}
+			: null;
+
 		return json({
 			success: true,
 			message: 'Download retry initiated',
-			queueItem: updatedItem
+			queueItem: safeItem
 		});
 	} catch (err) {
 		if (err instanceof Error && 'status' in err) throw err;

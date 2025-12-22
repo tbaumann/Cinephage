@@ -514,14 +514,29 @@ export class TemplateEngine {
 	}
 
 	/**
+	 * Maximum iterations for logic function processing to prevent ReDoS attacks.
+	 */
+	private static readonly MAX_LOGIC_ITERATIONS = 1000;
+
+	/**
 	 * Process logic functions: and, or, eq, ne, lt, le, gt, ge, not.
 	 */
 	private processLogicFunctions(template: string): string {
 		let result = template;
 		let match;
+		let iterations = 0;
 
 		// Keep processing until no more matches (handles nested functions)
+		// Limit iterations to prevent ReDoS attacks from malicious templates
 		while ((match = TemplateEngine.LOGIC_FUNCTION_REGEX.exec(result)) !== null) {
+			if (++iterations > TemplateEngine.MAX_LOGIC_ITERATIONS) {
+				logger.warn('Template logic processing exceeded max iterations', {
+					iterations,
+					templateLength: template.length
+				});
+				break;
+			}
+
 			const fullMatch = match[0];
 			const functionName = match[1];
 			const startIndex = match.index;

@@ -23,6 +23,7 @@ import { eq, and, inArray } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { statSync } from 'node:fs';
 import { relative } from 'node:path';
+import { redactUrl } from '$lib/server/utils/urlSecurity';
 
 const parser = new ReleaseParser();
 
@@ -408,7 +409,7 @@ async function handleStreamingGrab(data: GrabRequest): Promise<Response> {
 
 	logger.info('[Grab] Handling streaming release', {
 		title,
-		downloadUrl
+		downloadUrl: downloadUrl ? redactUrl(downloadUrl) : null
 	});
 
 	// Parse the stream:// URL to get TMDB ID and episode info
