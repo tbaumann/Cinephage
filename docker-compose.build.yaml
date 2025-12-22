@@ -1,0 +1,12 @@
+# docker-compose.build.yaml
+# Use this file to build from source instead of using pre-built images
+#
+# Usage:
+#   docker compose -f docker-compose.yaml -f docker-compose.build.yaml up -d --build
+#
+# This will build the image locally from the Dockerfile
+
+services:
+  cinephage:
+    build: .
+    image: cinephage:local

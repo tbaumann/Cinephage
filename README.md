@@ -51,23 +51,20 @@ Search for movies and TV shows, grab them from your indexers, organize your libr
 
 ## Quick Start
 
-### Docker
+### Docker (Recommended)
+
+**Using Pre-built Image:**
 
 ```bash
-git clone https://github.com/MoldyTaint/cinephage.git
-cd cinephage
-```
-
-Create a `.env` file from the example (or use environment variables directly):
-
-```bash
+mkdir cinephage && cd cinephage
+curl -O https://raw.githubusercontent.com/MoldyTaint/cinephage/main/docker-compose.yaml
+curl -O https://raw.githubusercontent.com/MoldyTaint/cinephage/main/.env.docker.example
 cp .env.docker.example .env
 ```
 
-Edit `.env` to configure your settings (or edit `docker-compose.yaml` directly):
+Edit `.env` to configure your settings:
 
 ```bash
-# Example .env file
 CINEPHAGE_PORT=3000
 CINEPHAGE_MEDIA_PATH=/path/to/your/media
 CINEPHAGE_PUID=1000
@@ -75,10 +72,36 @@ CINEPHAGE_PGID=1000
 CINEPHAGE_ORIGIN=http://localhost:3000
 ```
 
-Then start it:
+Start Cinephage:
 
 ```bash
 docker compose up -d
+```
+
+**Using Docker Run:**
+
+```bash
+docker run -d \
+  --name cinephage \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -v ./data:/app/data \
+  -v ./logs:/app/logs \
+  -v /path/to/your/media:/media \
+  -e PUID=1000 \
+  -e PGID=1000 \
+  -e ORIGIN=http://localhost:3000 \
+  -e TZ=UTC \
+  ghcr.io/moldytaint/cinephage:latest
+```
+
+**Building from Source:**
+
+```bash
+git clone https://github.com/MoldyTaint/cinephage.git
+cd cinephage
+cp .env.docker.example .env
+docker compose -f docker-compose.yaml -f docker-compose.build.yaml up -d --build
 ```
 
 ### Manual

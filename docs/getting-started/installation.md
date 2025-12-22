@@ -45,7 +45,15 @@ This guide covers prerequisites and installation steps for Cinephage.
 
 ---
 
-## Installation Steps
+## Docker Installation (Recommended)
+
+Docker is the simplest way to run Cinephage. See the [README Quick Start](../../README.md#docker-recommended) for the fastest setup.
+
+For production deployments with reverse proxy and SSL, see [Production Deployment](../deployment/production.md#docker-deployment-recommended).
+
+---
+
+## Manual Installation
 
 ### 1. Clone the Repository
 

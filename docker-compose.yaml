@@ -1,7 +1,7 @@
 services:
   cinephage:
-    build: .
-    image: cinephage:latest
+    image: ghcr.io/moldytaint/cinephage:latest
+    # build: .  # Uncomment to build locally instead of using pre-built image
     container_name: ${CINEPHAGE_CONTAINER_NAME:-cinephage}
     restart: ${CINEPHAGE_RESTART_POLICY:-unless-stopped}
     init: true

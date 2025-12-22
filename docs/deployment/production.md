@@ -6,9 +6,11 @@ This guide covers deploying Cinephage in a production environment.
 
 ## Table of Contents
 
-- [Prerequisites](#prerequisites)
-- [Building for Production](#building-for-production)
-- [Systemd Service](#systemd-service)
+- [Docker Deployment (Recommended)](#docker-deployment-recommended)
+- [Manual Deployment](#manual-deployment)
+  - [Prerequisites](#prerequisites)
+  - [Building for Production](#building-for-production)
+  - [Systemd Service](#systemd-service)
 - [Reverse Proxy Configuration](#reverse-proxy-configuration)
 - [SSL/TLS Setup](#ssltls-setup)
 - [Environment Configuration](#environment-configuration)
@@ -18,7 +20,69 @@ This guide covers deploying Cinephage in a production environment.
 
 ---
 
-## Prerequisites
+## Docker Deployment (Recommended)
+
+For most users, Docker is the simplest deployment method.
+
+### Quick Start
+
+```bash
+mkdir -p /opt/cinephage && cd /opt/cinephage
+curl -O https://raw.githubusercontent.com/MoldyTaint/cinephage/main/docker-compose.yaml
+curl -O https://raw.githubusercontent.com/MoldyTaint/cinephage/main/.env.docker.example
+cp .env.docker.example .env
+```
+
+Edit `.env` to configure your deployment:
+
+```bash
+CINEPHAGE_MEDIA_PATH=/path/to/your/media
+CINEPHAGE_ORIGIN=https://cinephage.yourdomain.com
+CINEPHAGE_PUID=1000
+CINEPHAGE_PGID=1000
+```
+
+Start the container:
+
+```bash
+docker compose up -d
+```
+
+### Updating with Docker
+
+```bash
+cd /opt/cinephage
+docker compose pull
+docker compose up -d
+```
+
+### Docker with Reverse Proxy
+
+When running behind a reverse proxy (nginx, Caddy, Traefik):
+
+1. Set `CINEPHAGE_ORIGIN` to your public URL (e.g., `https://cinephage.yourdomain.com`)
+2. The container exposes port 3000 internally
+3. See [Reverse Proxy Configuration](#reverse-proxy-configuration) for nginx/Caddy examples
+
+### Docker Resource Limits
+
+Uncomment the `deploy` section in docker-compose.yaml to set resource limits:
+
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '2'
+      memory: 2G
+```
+
+---
+
+## Manual Deployment
+
+For installations without Docker, follow the steps below.
+
+### Prerequisites
 
 - Node.js 20 or higher
 - npm 10 or higher
@@ -332,6 +396,16 @@ npm run db:push
 ---
 
 ## Updating Cinephage
+
+### Docker Update
+
+```bash
+cd /opt/cinephage
+docker compose pull
+docker compose up -d
+```
+
+### Manual Update
 
 1. **Stop the service**
 
