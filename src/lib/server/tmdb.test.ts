@@ -8,16 +8,6 @@ import type { CastMember } from '$lib/types/tmdb';
 
 type TmdbResponse = any;
 
-// Check if we can actually run these tests (API key is configured)
-const canRunTests = async () => {
-	try {
-		const config = await tmdb.fetch('/configuration');
-		return config !== null;
-	} catch {
-		return false;
-	}
-};
-
 describe.skipIf(process.env.CI)('TMDB Integration', () => {
 	it('should fetch configuration', async () => {
 		const config = (await tmdb.fetch('/configuration')) as TmdbResponse;
