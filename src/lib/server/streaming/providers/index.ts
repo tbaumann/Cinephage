@@ -341,7 +341,8 @@ function toStreamSource(result: StreamResult, providerId: StreamingProviderId): 
 		server: result.server,
 		language: result.language,
 		headers: result.headers,
-		provider: providerId
+		provider: providerId,
+		subtitles: result.subtitles
 	};
 }
 

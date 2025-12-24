@@ -19,6 +19,23 @@ export type StreamType = 'hls' | 'm3u8' | 'mp4';
 export type StreamStatus = 'working' | 'down' | 'unknown' | 'validating';
 
 /**
+ * Subtitle track associated with a stream
+ */
+export interface StreamSubtitle {
+	/** Direct URL to subtitle file (VTT/SRT) */
+	url: string;
+
+	/** Human-readable label (e.g., "English", "Spanish (SDH)") */
+	label: string;
+
+	/** ISO 639-1 language code (e.g., "en", "es") */
+	language: string;
+
+	/** Whether this is the default subtitle track */
+	isDefault?: boolean;
+}
+
+/**
  * A stream source returned from a provider
  */
 export interface StreamSource {
@@ -54,6 +71,9 @@ export interface StreamSource {
 
 	/** Provider ID that returned this stream */
 	provider?: string;
+
+	/** Subtitle tracks associated with this stream */
+	subtitles?: StreamSubtitle[];
 }
 
 // ============================================================================
@@ -90,6 +110,9 @@ export interface StreamResult {
 
 	/** Provider ID that returned this stream */
 	provider?: string;
+
+	/** Subtitle tracks associated with this stream */
+	subtitles?: StreamSubtitle[];
 }
 
 // ============================================================================

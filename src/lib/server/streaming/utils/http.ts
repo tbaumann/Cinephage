@@ -9,6 +9,8 @@ import {
 	DEFAULT_USER_AGENT,
 	AVAILABILITY_CHECK_TIMEOUT_MS
 } from '../constants';
+import type { StreamSubtitle } from '../types/stream';
+import { injectSubtitles, isMasterPlaylist } from './subtitle-injection';
 
 export interface FetchOptions {
 	/** Request timeout in milliseconds */
@@ -319,12 +321,14 @@ export function ensureVodPlaylist(playlist: string): string {
  * @param playlistUrl - The raw stream URL to fetch
  * @param referer - Referer header for the request
  * @param proxyBaseUrl - Our server's base URL for proxy URLs
+ * @param subtitles - Optional subtitle tracks to inject into master playlists
  * @returns Response with rewritten playlist content
  */
 export async function fetchAndRewritePlaylist(
 	playlistUrl: string,
 	referer: string,
-	proxyBaseUrl: string
+	proxyBaseUrl: string,
+	subtitles?: StreamSubtitle[]
 ): Promise<Response> {
 	// Fetch the playlist directly with proper headers
 	// Note: Don't send Origin header - some CDNs reject it
@@ -349,6 +353,11 @@ export async function fetchAndRewritePlaylist(
 
 	// Rewrite URLs to use our proxy
 	content = rewritePlaylistUrls(content, playlistUrl, proxyBaseUrl, referer);
+
+	// Inject subtitles into master playlists
+	if (subtitles?.length && isMasterPlaylist(content)) {
+		content = injectSubtitles(content, subtitles, proxyBaseUrl, referer);
+	}
 
 	// Ensure VOD markers for media playlists
 	content = ensureVodPlaylist(content);

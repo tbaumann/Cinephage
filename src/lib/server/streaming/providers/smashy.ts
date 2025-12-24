@@ -17,6 +17,7 @@
 import { logger } from '$lib/logging';
 import { BaseProvider } from './base';
 import type { ProviderConfig, SearchParams, StreamResult } from './types';
+import type { StreamSubtitle } from '../types/stream';
 
 const streamLog = { logCategory: 'streams' as const };
 
@@ -185,6 +186,17 @@ export class SmashyProvider extends BaseProvider {
 
 				const file = response.data.sources[0].file;
 
+				// Parse tracks/subtitles if available
+				const subtitles = this.parseSmashyTracks(response.data.tracks);
+				if (subtitles.length > 0) {
+					logger.debug('Smashy tracks found', {
+						server,
+						count: subtitles.length,
+						languages: subtitles.map((s) => s.language),
+						...streamLog
+					});
+				}
+
 				// Decrypt - matches reference: decrypt('vidstack', { text: file, type: '2' })
 				const decrypted = await this.encDec.decryptVidstack<string>({
 					text: file,
@@ -198,7 +210,8 @@ export class SmashyProvider extends BaseProvider {
 				return this.createStreamResult(streamUrl, {
 					quality: 'Auto',
 					title: `Smashystream - ${server}`,
-					server
+					server,
+					subtitles: subtitles.length > 0 ? subtitles : undefined
 				});
 			} catch (error) {
 				logger.debug('Smashy Type 2 server failed', {
@@ -263,5 +276,45 @@ export class SmashyProvider extends BaseProvider {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Parse Smashy tracks string into StreamSubtitle array
+	 * Format: "[en]https://example.com/en.vtt, [es]https://example.com/es.vtt"
+	 * or just comma-separated URLs without language tags
+	 */
+	private parseSmashyTracks(tracks?: string): StreamSubtitle[] {
+		if (!tracks || typeof tracks !== 'string') return [];
+
+		const results: StreamSubtitle[] = [];
+		const items = tracks
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
+
+		for (const item of items) {
+			// Try to match [lang]url format
+			const match = item.match(/^\[([^\]]+)\](.+)$/);
+			if (match) {
+				const lang = match[1].trim().toLowerCase();
+				const url = match[2].trim();
+				if (url.startsWith('http')) {
+					results.push({
+						url,
+						label: lang.toUpperCase(),
+						language: lang
+					});
+				}
+			} else if (item.startsWith('http')) {
+				// Plain URL without language tag
+				results.push({
+					url: item,
+					label: 'Unknown',
+					language: 'und'
+				});
+			}
+		}
+
+		return results;
 	}
 }

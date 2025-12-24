@@ -14,3 +14,7 @@ export {
 	ensureVodPlaylist,
 	type FetchOptions
 } from './http';
+
+export { convertSrtToVtt, isSrtFormat, isVttFormat, ensureVttFormat } from './srt-to-vtt';
+
+export { injectSubtitles, isMasterPlaylist } from './subtitle-injection';

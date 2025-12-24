@@ -256,6 +256,7 @@ export abstract class BaseProvider implements IStreamProvider {
 			streamType?: 'hls' | 'm3u8' | 'mp4';
 			headers?: Record<string, string>;
 			referer?: string;
+			subtitles?: StreamResult['subtitles'];
 		} = {}
 	): StreamResult {
 		return {
@@ -266,7 +267,8 @@ export abstract class BaseProvider implements IStreamProvider {
 			referer: options.referer ?? this.config.referer,
 			server: options.server,
 			language: options.language,
-			headers: options.headers
+			headers: options.headers,
+			subtitles: options.subtitles
 		};
 	}
 
@@ -346,20 +348,40 @@ export abstract class BaseProvider implements IStreamProvider {
 			return [];
 		}
 
+		// Convert hoster subtitles to StreamResult format
+		const subtitles = result.subtitles?.map((sub) => ({
+			url: sub.url,
+			label: sub.label,
+			language: sub.language || 'und',
+			isDefault: sub.isDefault
+		}));
+
+		if (subtitles && subtitles.length > 0) {
+			logger.info('Subtitles extracted from hoster', {
+				provider: this.config.id,
+				hoster: result.hoster,
+				count: subtitles.length,
+				languages: subtitles.map((s) => s.language),
+				...streamLog
+			});
+		}
+
 		logger.debug('Embed resolution successful', {
 			provider: this.config.id,
 			hoster: result.hoster,
 			sourceCount: result.sources.length,
+			subtitleCount: subtitles?.length ?? 0,
 			durationMs: result.durationMs,
 			...streamLog
 		});
 
-		// Convert hoster sources to StreamResults
+		// Convert hoster sources to StreamResults, preserving subtitles
 		return result.sources.map((source) =>
 			this.createStreamResult(source.url, {
 				quality: source.quality,
 				title: `${this.config.name} Stream`,
-				streamType: source.type === 'mp4' ? 'mp4' : 'hls'
+				streamType: source.type === 'mp4' ? 'mp4' : 'hls',
+				subtitles
 			})
 		);
 	}

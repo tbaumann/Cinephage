@@ -12,6 +12,14 @@ import { StreamWorker, streamWorkerRegistry, workerManager } from '$lib/server/w
 import { getPreferredLanguagesForSeries } from '$lib/server/streaming/language-profile-helper';
 import { filterStreamsByLanguage } from '$lib/server/streaming/providers/language-utils';
 import { logger } from '$lib/logging';
+import type { StreamSubtitle } from '$lib/server/streaming/types/stream';
+
+/** Cached stream data including subtitles */
+interface CachedStream {
+	rawUrl: string;
+	referer: string;
+	subtitles?: StreamSubtitle[];
+}
 
 const streamLog = { logCategory: 'streams' as const };
 
@@ -79,10 +87,15 @@ export const GET: RequestHandler = async ({ params, request }) => {
 
 		if (cachedJson) {
 			try {
-				const cached = JSON.parse(cachedJson) as { rawUrl: string; referer: string };
+				const cached = JSON.parse(cachedJson) as CachedStream;
 				worker?.cacheHit();
-				// Fetch the playlist directly and rewrite URLs for proxy
-				return await fetchAndRewritePlaylist(cached.rawUrl, cached.referer, baseUrl);
+				// Fetch the playlist directly and rewrite URLs for proxy, with subtitles if available
+				return await fetchAndRewritePlaylist(
+					cached.rawUrl,
+					cached.referer,
+					baseUrl,
+					cached.subtitles
+				);
 			} catch {
 				// Invalid cache entry, continue with extraction
 			}
@@ -166,7 +179,24 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			try {
 				const bestResult = await getBestQualityStreamUrl(source.url, source.referer);
 
-				const response = await fetchAndRewritePlaylist(bestResult.rawUrl, source.referer, baseUrl);
+				// Fetch playlist with subtitles injected if available
+				const response = await fetchAndRewritePlaylist(
+					bestResult.rawUrl,
+					source.referer,
+					baseUrl,
+					source.subtitles
+				);
+
+				// Log subtitle availability
+				if (source.subtitles?.length) {
+					logger.info('Stream has subtitles', {
+						provider: source.provider,
+						subtitleCount: source.subtitles.length,
+						languages: source.subtitles.map((s) => s.language),
+						labels: source.subtitles.map((s) => s.label),
+						...streamLog
+					});
+				}
 
 				// Success with preferred language
 				logger.info('Using stream source', {
@@ -175,13 +205,18 @@ export const GET: RequestHandler = async ({ params, request }) => {
 					language: source.language,
 					quality: source.quality,
 					title: source.title,
+					hasSubtitles: (source.subtitles?.length ?? 0) > 0,
 					...streamLog
 				});
 				worker?.extractionSucceeded(source.provider || 'unknown', source.quality);
-				streamCache.set(
-					cacheKey,
-					JSON.stringify({ rawUrl: bestResult.rawUrl, referer: source.referer })
-				);
+
+				// Cache stream URL with subtitles
+				const cacheData: CachedStream = {
+					rawUrl: bestResult.rawUrl,
+					referer: source.referer,
+					subtitles: source.subtitles
+				};
+				streamCache.set(cacheKey, JSON.stringify(cacheData));
 				return response;
 			} catch (error) {
 				const msg = error instanceof Error ? error.message : String(error);
@@ -205,11 +240,24 @@ export const GET: RequestHandler = async ({ params, request }) => {
 				try {
 					const bestResult = await getBestQualityStreamUrl(source.url, source.referer);
 
+					// Fetch playlist with subtitles injected if available
 					const response = await fetchAndRewritePlaylist(
 						bestResult.rawUrl,
 						source.referer,
-						baseUrl
+						baseUrl,
+						source.subtitles
 					);
+
+					// Log subtitle availability
+					if (source.subtitles?.length) {
+						logger.info('Stream has subtitles', {
+							provider: source.provider,
+							subtitleCount: source.subtitles.length,
+							languages: source.subtitles.map((s) => s.language),
+							labels: source.subtitles.map((s) => s.label),
+							...streamLog
+						});
+					}
 
 					// Success with fallback language
 					logger.info('Using fallback language stream', {
@@ -217,13 +265,18 @@ export const GET: RequestHandler = async ({ params, request }) => {
 						language: source.language || 'unknown',
 						preferredLanguages,
 						provider: source.provider,
+						hasSubtitles: (source.subtitles?.length ?? 0) > 0,
 						...streamLog
 					});
 					worker?.extractionSucceeded(source.provider || 'unknown', source.quality);
-					streamCache.set(
-						cacheKey,
-						JSON.stringify({ rawUrl: bestResult.rawUrl, referer: source.referer })
-					);
+
+					// Cache stream URL with subtitles
+					const cacheData: CachedStream = {
+						rawUrl: bestResult.rawUrl,
+						referer: source.referer,
+						subtitles: source.subtitles
+					};
+					streamCache.set(cacheKey, JSON.stringify(cacheData));
 					return response;
 				} catch (error) {
 					const msg = error instanceof Error ? error.message : String(error);
