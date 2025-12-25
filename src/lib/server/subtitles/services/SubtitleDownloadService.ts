@@ -141,7 +141,8 @@ export class SubtitleDownloadService {
 		}
 
 		const rootPath = rootFolder?.[0]?.path || '';
-		const mediaPath = join(rootPath, seriesData[0].path, dirname(file.relativePath));
+		// file.relativePath is already relative to the root folder (includes series folder)
+		const mediaPath = join(rootPath, dirname(file.relativePath));
 
 		// Download and save
 		return this.downloadAndSave(result, {
@@ -474,7 +475,23 @@ export class SubtitleDownloadService {
 				: null;
 
 			const rootPath = rootFolder?.[0]?.path || '';
-			// For episodes, subtitle is typically in the season folder
+
+			// Find the episode file to get the correct directory (includes season folder)
+			const files = await db
+				.select()
+				.from(episodeFiles)
+				.where(eq(episodeFiles.seriesId, episode[0].seriesId));
+			const file = files.find((f) => {
+				const ids = f.episodeIds as string[] | null;
+				return ids?.includes(subtitle.episodeId!);
+			});
+
+			if (file) {
+				// Use the episode file's directory path
+				return join(rootPath, dirname(file.relativePath), subtitle.relativePath);
+			}
+
+			// Fallback: use series path if no file found
 			return join(rootPath, seriesData[0].path, subtitle.relativePath);
 		}
 
