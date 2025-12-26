@@ -1,9 +1,18 @@
 import { db } from '$lib/server/db/index.js';
-import { series, rootFolders } from '$lib/server/db/schema.js';
+import { series, rootFolders, scoringProfiles } from '$lib/server/db/schema.js';
 import { eq } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import type { LibrarySeries } from '$lib/types/library';
 import { logger } from '$lib/logging';
+import { DEFAULT_PROFILES } from '$lib/server/scoring/profiles.js';
+
+export interface QualityProfileSummary {
+	id: string;
+	name: string;
+	description: string;
+	isBuiltIn: boolean;
+	isDefault: boolean;
+}
 
 export const load: PageServerLoad = async ({ url }) => {
 	// Parse URL params for sorting and filtering
@@ -112,6 +121,37 @@ export const load: PageServerLoad = async ({ url }) => {
 			return sortDir === 'desc' ? -comparison : comparison;
 		});
 
+		// Fetch quality profiles
+		const dbProfiles = await db
+			.select({
+				id: scoringProfiles.id,
+				name: scoringProfiles.name,
+				description: scoringProfiles.description,
+				isDefault: scoringProfiles.isDefault
+			})
+			.from(scoringProfiles);
+
+		const BUILT_IN_IDS = DEFAULT_PROFILES.map((p) => p.id);
+		const dbIds = new Set(dbProfiles.map((p) => p.id));
+		const hasDbDefault = dbProfiles.some((p) => Boolean(p.isDefault));
+
+		const qualityProfiles: QualityProfileSummary[] = [
+			...DEFAULT_PROFILES.filter((p) => !dbIds.has(p.id)).map((p) => ({
+				id: p.id,
+				name: p.name,
+				description: p.description,
+				isBuiltIn: true,
+				isDefault: !hasDbDefault && p.id === 'efficient'
+			})),
+			...dbProfiles.map((p) => ({
+				id: p.id,
+				name: p.name,
+				description: p.description ?? '',
+				isBuiltIn: BUILT_IN_IDS.includes(p.id),
+				isDefault: Boolean(p.isDefault)
+			}))
+		];
+
 		return {
 			series: filteredSeries,
 			total: filteredSeries.length,
@@ -121,7 +161,8 @@ export const load: PageServerLoad = async ({ url }) => {
 				monitored,
 				status,
 				progress
-			}
+			},
+			qualityProfiles
 		};
 	} catch (error) {
 		logger.error('[TV Page] Error loading series', error instanceof Error ? error : undefined);
@@ -135,6 +176,7 @@ export const load: PageServerLoad = async ({ url }) => {
 				status,
 				progress
 			},
+			qualityProfiles: [],
 			error: 'Failed to load TV shows'
 		};
 	}

@@ -3,11 +3,163 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { resolvePath } from '$lib/utils/routing';
+	import { SvelteSet } from 'svelte/reactivity';
 	import LibraryMediaCard from '$lib/components/library/LibraryMediaCard.svelte';
 	import LibraryControls from '$lib/components/library/LibraryControls.svelte';
-	import { Tv } from 'lucide-svelte';
+	import LibraryBulkActionBar from '$lib/components/library/LibraryBulkActionBar.svelte';
+	import BulkQualityProfileModal from '$lib/components/library/BulkQualityProfileModal.svelte';
+	import BulkDeleteModal from '$lib/components/library/BulkDeleteModal.svelte';
+	import { Tv, CheckSquare, X } from 'lucide-svelte';
+	import { toasts } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
+
+	// Selection state
+	let selectedSeries = new SvelteSet<string>();
+	let showCheckboxes = $state(false);
+	let bulkLoading = $state(false);
+	let currentBulkAction = $state<'monitor' | 'unmonitor' | 'quality' | 'delete' | null>(null);
+	let isQualityModalOpen = $state(false);
+	let isDeleteModalOpen = $state(false);
+
+	const selectedCount = $derived(selectedSeries.size);
+
+	function toggleSelectionMode() {
+		showCheckboxes = !showCheckboxes;
+		if (!showCheckboxes) {
+			selectedSeries.clear();
+		}
+	}
+
+	function handleItemSelectChange(id: string, selected: boolean) {
+		if (selected) {
+			selectedSeries.add(id);
+		} else {
+			selectedSeries.delete(id);
+		}
+	}
+
+	function selectAll() {
+		for (const show of data.series) {
+			selectedSeries.add(show.id);
+		}
+	}
+
+	function clearSelection() {
+		selectedSeries.clear();
+	}
+
+	async function handleBulkMonitor(monitored: boolean) {
+		bulkLoading = true;
+		currentBulkAction = monitored ? 'monitor' : 'unmonitor';
+		try {
+			const response = await fetch('/api/library/series/batch', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					seriesIds: [...selectedSeries],
+					updates: { monitored }
+				})
+			});
+			const result = await response.json();
+			if (result.success) {
+				// Update local data
+				for (const show of data.series) {
+					if (selectedSeries.has(show.id)) {
+						show.monitored = monitored;
+					}
+				}
+				toasts.success(`${monitored ? 'Monitoring' : 'Unmonitored'} ${result.updatedCount} series`);
+				selectedSeries.clear();
+				showCheckboxes = false;
+			} else {
+				toasts.error(result.error || 'Failed to update series');
+			}
+		} catch {
+			toasts.error('Failed to update series');
+		} finally {
+			bulkLoading = false;
+			currentBulkAction = null;
+		}
+	}
+
+	async function handleBulkQualityChange(profileId: string | null) {
+		bulkLoading = true;
+		currentBulkAction = 'quality';
+		try {
+			const response = await fetch('/api/library/series/batch', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					seriesIds: [...selectedSeries],
+					updates: { scoringProfileId: profileId }
+				})
+			});
+			const result = await response.json();
+			if (result.success) {
+				// Update local data
+				for (const show of data.series) {
+					if (selectedSeries.has(show.id)) {
+						show.scoringProfileId = profileId;
+					}
+				}
+				toasts.success(`Updated quality profile for ${result.updatedCount} series`);
+				selectedSeries.clear();
+				showCheckboxes = false;
+				isQualityModalOpen = false;
+			} else {
+				toasts.error(result.error || 'Failed to update series');
+			}
+		} catch {
+			toasts.error('Failed to update series');
+		} finally {
+			bulkLoading = false;
+			currentBulkAction = null;
+		}
+	}
+
+	async function handleBulkDelete(deleteFiles: boolean) {
+		bulkLoading = true;
+		currentBulkAction = 'delete';
+		try {
+			const response = await fetch('/api/library/series/batch', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					seriesIds: [...selectedSeries],
+					deleteFiles
+				})
+			});
+			const result = await response.json();
+			if (result.success || result.deletedCount > 0) {
+				// Update local data - mark as having no files
+				for (const show of data.series) {
+					if (selectedSeries.has(show.id)) {
+						show.episodeFileCount = 0;
+						show.percentComplete = 0;
+					}
+				}
+				toasts.success(`Deleted files for ${result.deletedCount} series`);
+				selectedSeries.clear();
+				showCheckboxes = false;
+				isDeleteModalOpen = false;
+			} else {
+				toasts.error(result.error || 'Failed to delete files');
+			}
+		} catch {
+			toasts.error('Failed to delete files');
+		} finally {
+			bulkLoading = false;
+			currentBulkAction = null;
+		}
+	}
+
+	// Escape key to exit selection mode
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && showCheckboxes) {
+			toggleSelectionMode();
+		}
+	}
 
 	const sortOptions = [
 		{ value: 'title-asc', label: 'Title (A-Z)' },
@@ -75,6 +227,8 @@
 	import { ChevronDown } from 'lucide-svelte';
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 <div class="min-h-screen bg-base-100 pb-20">
 	<!-- Header -->
 	<div class="sticky top-0 z-30 border-b border-base-200 bg-base-100/80 backdrop-blur-md">
@@ -92,30 +246,43 @@
 			</div>
 
 			<div class="flex items-center gap-2">
-				<div class="dropdown dropdown-end">
-					<div tabindex="0" role="button" class="btn gap-2 btn-ghost">
-						Actions
-						<ChevronDown class="h-4 w-4" />
+				{#if showCheckboxes}
+					<button class="btn gap-1.5 btn-ghost btn-sm" onclick={selectAll}> Select All </button>
+					<button class="btn gap-1.5 btn-ghost btn-sm" onclick={toggleSelectionMode}>
+						<X class="h-4 w-4" />
+						Done
+					</button>
+				{:else}
+					<button class="btn gap-1.5 btn-ghost btn-sm" onclick={toggleSelectionMode}>
+						<CheckSquare class="h-4 w-4" />
+						Select
+					</button>
+
+					<div class="dropdown dropdown-end">
+						<div tabindex="0" role="button" class="btn gap-2 btn-ghost">
+							Actions
+							<ChevronDown class="h-4 w-4" />
+						</div>
+						<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+						<ul
+							tabindex="0"
+							class="dropdown-content menu z-[2] w-52 rounded-box border border-base-content/10 bg-base-200 p-2 shadow-lg"
+						>
+							<li>
+								<form action="?/toggleAllMonitored" method="POST" use:enhance>
+									<input type="hidden" name="monitored" value="true" />
+									<button type="submit" class="w-full text-left">Monitor All</button>
+								</form>
+							</li>
+							<li>
+								<form action="?/toggleAllMonitored" method="POST" use:enhance>
+									<input type="hidden" name="monitored" value="false" />
+									<button type="submit" class="w-full text-left">Unmonitor All</button>
+								</form>
+							</li>
+						</ul>
 					</div>
-					<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-					<ul
-						tabindex="0"
-						class="dropdown-content menu z-[2] w-52 rounded-box border border-base-content/10 bg-base-200 p-2 shadow-lg"
-					>
-						<li>
-							<form action="?/toggleAllMonitored" method="POST" use:enhance>
-								<input type="hidden" name="monitored" value="true" />
-								<button type="submit" class="w-full text-left">Monitor All</button>
-							</form>
-						</li>
-						<li>
-							<form action="?/toggleAllMonitored" method="POST" use:enhance>
-								<input type="hidden" name="monitored" value="false" />
-								<button type="submit" class="w-full text-left">Unmonitor All</button>
-							</form>
-						</li>
-					</ul>
-				</div>
+				{/if}
 
 				<LibraryControls
 					{sortOptions}
@@ -172,10 +339,49 @@
 					class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-9"
 				>
 					{#each data.series as show (show.id)}
-						<LibraryMediaCard item={show} />
+						<LibraryMediaCard
+							item={show}
+							selectable={showCheckboxes}
+							selected={selectedSeries.has(show.id)}
+							onSelectChange={handleItemSelectChange}
+						/>
 					{/each}
 				</div>
 			</div>
 		{/if}
 	</main>
 </div>
+
+<!-- Bulk Action Bar -->
+<LibraryBulkActionBar
+	{selectedCount}
+	loading={bulkLoading}
+	currentAction={currentBulkAction}
+	mediaType="series"
+	onMonitor={() => handleBulkMonitor(true)}
+	onUnmonitor={() => handleBulkMonitor(false)}
+	onChangeQuality={() => (isQualityModalOpen = true)}
+	onDelete={() => (isDeleteModalOpen = true)}
+	onClear={clearSelection}
+/>
+
+<!-- Bulk Quality Profile Modal -->
+<BulkQualityProfileModal
+	open={isQualityModalOpen}
+	{selectedCount}
+	qualityProfiles={data.qualityProfiles}
+	saving={bulkLoading && currentBulkAction === 'quality'}
+	mediaType="series"
+	onSave={handleBulkQualityChange}
+	onCancel={() => (isQualityModalOpen = false)}
+/>
+
+<!-- Bulk Delete Modal -->
+<BulkDeleteModal
+	open={isDeleteModalOpen}
+	{selectedCount}
+	mediaType="series"
+	loading={bulkLoading && currentBulkAction === 'delete'}
+	onConfirm={handleBulkDelete}
+	onCancel={() => (isDeleteModalOpen = false)}
+/>

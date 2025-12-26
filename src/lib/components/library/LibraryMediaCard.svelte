@@ -7,7 +7,27 @@
 
 	type LibraryItem = LibraryMovie | LibrarySeries;
 
-	let { item }: { item: LibraryItem } = $props();
+	interface Props {
+		item: LibraryItem;
+		selectable?: boolean;
+		selected?: boolean;
+		onSelectChange?: (id: string, selected: boolean) => void;
+	}
+
+	let { item, selectable = false, selected = false, onSelectChange }: Props = $props();
+
+	function handleCheckboxClick(e: MouseEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		onSelectChange?.(item.id, !selected);
+	}
+
+	function handleCardClick(e: MouseEvent) {
+		if (selectable) {
+			e.preventDefault();
+			onSelectChange?.(item.id, !selected);
+		}
+	}
 
 	const isMovie = $derived(isLibraryMovie(item));
 	// Link to library management pages using library database ID
@@ -35,8 +55,11 @@
 </script>
 
 <a
-	href={resolvePath(link)}
-	class="group relative block aspect-[2/3] w-full overflow-hidden rounded-lg bg-base-300 shadow-sm transition-all hover:shadow-md hover:ring-2 hover:ring-primary/50"
+	href={selectable ? undefined : resolvePath(link)}
+	onclick={handleCardClick}
+	class="group relative block aspect-[2/3] w-full overflow-hidden rounded-lg bg-base-300 shadow-sm transition-all hover:shadow-md {selected
+		? 'ring-2 ring-primary ring-offset-2 ring-offset-base-100'
+		: 'hover:ring-2 hover:ring-primary/50'} {selectable ? 'cursor-pointer' : ''}"
 >
 	<TmdbImage
 		path={item.posterPath}
@@ -44,6 +67,23 @@
 		alt={item.title}
 		class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
 	/>
+
+	<!-- Selection checkbox -->
+	{#if selectable}
+		<div class="absolute top-2 left-2 z-20">
+			<button
+				type="button"
+				class="flex h-6 w-6 items-center justify-center rounded-md border-2 bg-base-100/90 shadow-sm backdrop-blur-sm transition-colors {selected
+					? 'border-primary bg-primary'
+					: 'border-base-content/30 hover:border-primary'}"
+				onclick={handleCheckboxClick}
+			>
+				{#if selected}
+					<Check class="h-4 w-4 text-primary-content" />
+				{/if}
+			</button>
+		</div>
+	{/if}
 
 	<!-- Top-right badges: Monitored + Type -->
 	<div class="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
@@ -72,7 +112,7 @@
 	</div>
 
 	<!-- Top-left: File status (movies) or Progress indicator (series) -->
-	<div class="absolute top-2 left-2 z-10 flex flex-col gap-1">
+	<div class="absolute left-2 z-10 flex flex-col gap-1 {selectable ? 'top-10' : 'top-2'}">
 		{#if isMovie}
 			<!-- File status for movies -->
 			<div

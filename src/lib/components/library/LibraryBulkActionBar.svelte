@@ -1,0 +1,121 @@
+<script lang="ts">
+	import { X, Eye, EyeOff, Sliders, Trash2, Loader2 } from 'lucide-svelte';
+
+	interface Props {
+		selectedCount: number;
+		loading: boolean;
+		currentAction: 'monitor' | 'unmonitor' | 'quality' | 'delete' | null;
+		mediaType: 'movie' | 'series';
+		onMonitor: () => void;
+		onUnmonitor: () => void;
+		onChangeQuality: () => void;
+		onDelete: () => void;
+		onClear: () => void;
+	}
+
+	let {
+		selectedCount,
+		loading,
+		currentAction,
+		mediaType,
+		onMonitor,
+		onUnmonitor,
+		onChangeQuality,
+		onDelete,
+		onClear
+	}: Props = $props();
+
+	const itemLabel = $derived(
+		mediaType === 'movie'
+			? selectedCount === 1
+				? 'movie'
+				: 'movies'
+			: selectedCount === 1
+				? 'series'
+				: 'series'
+	);
+</script>
+
+{#if selectedCount > 0}
+	<div class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
+		<div
+			class="flex items-center gap-3 rounded-full border border-base-content/10 bg-base-300 px-4 py-2.5 shadow-xl"
+		>
+			<span class="text-sm font-medium">
+				{selectedCount}
+				{itemLabel} selected
+			</span>
+
+			<div class="h-4 w-px bg-base-content/20"></div>
+
+			<div class="flex items-center gap-1">
+				<button
+					class="btn gap-1.5 btn-ghost btn-sm"
+					onclick={onMonitor}
+					disabled={loading}
+					title="Monitor selected"
+				>
+					{#if loading && currentAction === 'monitor'}
+						<Loader2 size={16} class="animate-spin" />
+					{:else}
+						<Eye size={16} />
+					{/if}
+					<span class="hidden sm:inline">Monitor</span>
+				</button>
+
+				<button
+					class="btn gap-1.5 btn-ghost btn-sm"
+					onclick={onUnmonitor}
+					disabled={loading}
+					title="Unmonitor selected"
+				>
+					{#if loading && currentAction === 'unmonitor'}
+						<Loader2 size={16} class="animate-spin" />
+					{:else}
+						<EyeOff size={16} />
+					{/if}
+					<span class="hidden sm:inline">Unmonitor</span>
+				</button>
+
+				<button
+					class="btn gap-1.5 btn-ghost btn-sm"
+					onclick={onChangeQuality}
+					disabled={loading}
+					title="Change quality profile"
+				>
+					{#if loading && currentAction === 'quality'}
+						<Loader2 size={16} class="animate-spin" />
+					{:else}
+						<Sliders size={16} />
+					{/if}
+					<span class="hidden sm:inline">Quality</span>
+				</button>
+
+				<button
+					class="btn gap-1.5 text-error btn-ghost btn-sm hover:bg-error/10"
+					onclick={onDelete}
+					disabled={loading}
+					title="Delete files"
+				>
+					{#if loading && currentAction === 'delete'}
+						<Loader2 size={16} class="animate-spin" />
+					{:else}
+						<Trash2 size={16} />
+					{/if}
+					<span class="hidden sm:inline">Delete</span>
+				</button>
+			</div>
+
+			<div class="h-4 w-px bg-base-content/20"></div>
+
+			<button
+				class="btn btn-circle btn-ghost btn-sm"
+				onclick={onClear}
+				disabled={loading}
+				title="Clear selection"
+			>
+				<X size={16} />
+			</button>
+		</div>
+	</div>
+{/if}
