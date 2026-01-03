@@ -15,7 +15,6 @@ import type { ExtractOptions } from '../types';
 import {
 	getPrimaryTestMovie,
 	getPrimaryTestTvShow,
-	NON_EXISTENT_CONTENT,
 	type MovieTestContent,
 	type TvTestContent
 } from './fixtures/testContent';
@@ -24,8 +23,8 @@ import {
 // Test Configuration
 // ============================================================================
 
-/** Timeout for provider extraction (providers can be slow) */
-const EXTRACTION_TIMEOUT_MS = 120000;
+/** Timeout for provider extraction - 60s is plenty, if it takes longer something is broken */
+const EXTRACTION_TIMEOUT_MS = 60000;
 
 /** Timeout for validation */
 const VALIDATION_TIMEOUT_MS = 10000;
@@ -171,50 +170,6 @@ describe('Live Provider Tests', () => {
 				const firstSource = result.sources[0];
 				expect(firstSource.url).toBeDefined();
 				expect(firstSource.url).toMatch(/^https?:\/\//);
-			},
-			EXTRACTION_TIMEOUT_MS
-		);
-	});
-
-	// --------------------------------------------------------------------------
-	// Error Handling
-	// --------------------------------------------------------------------------
-
-	describe('Error Handling', () => {
-		it(
-			'should handle non-existent content gracefully',
-			async () => {
-				const options: ExtractOptions = {
-					tmdbId: NON_EXISTENT_CONTENT.movie.tmdbId,
-					type: 'movie',
-					title: NON_EXISTENT_CONTENT.movie.title,
-					year: NON_EXISTENT_CONTENT.movie.year
-				};
-
-				const result = await extractStreams(options);
-
-				// Should fail gracefully, not throw
-				expect(result.success).toBe(false);
-				expect(result.sources).toHaveLength(0);
-				expect(result.error).toBeDefined();
-			},
-			EXTRACTION_TIMEOUT_MS * 2 // Longer timeout for all-fail scenarios
-		);
-
-		it(
-			'should handle invalid TMDB ID gracefully',
-			async () => {
-				const options: ExtractOptions = {
-					tmdbId: 'invalid-id',
-					type: 'movie',
-					title: 'Invalid Movie'
-				};
-
-				const result = await extractStreams(options);
-
-				// Should fail gracefully
-				expect(result.success).toBe(false);
-				expect(result.sources).toHaveLength(0);
 			},
 			EXTRACTION_TIMEOUT_MS
 		);

@@ -152,8 +152,9 @@ export class VideasyProvider extends BaseProvider {
 			return results;
 		}
 
-		// Fallback: try remaining servers sequentially if top 4 failed
-		for (const server of availableServers.slice(4)) {
+		// Fallback: try a few more servers sequentially if top 4 failed
+		// Limit to 3 more - if 7 servers all fail, content probably doesn't exist
+		for (const server of availableServers.slice(4, 7)) {
 			try {
 				const stream = await this.extractFromServer(server, params, title, year);
 				if (stream) {
