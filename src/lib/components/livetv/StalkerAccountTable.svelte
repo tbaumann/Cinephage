@@ -6,8 +6,6 @@
 		ToggleRight,
 		Tv,
 		FlaskConical,
-		CheckCircle2,
-		XCircle,
 		Loader2,
 		RefreshCw
 	} from 'lucide-svelte';

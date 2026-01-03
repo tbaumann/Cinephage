@@ -9,7 +9,7 @@ import {
 	channelLineupItems,
 	type ChannelCategoryRecord
 } from '$lib/server/db/schema';
-import { eq, asc, inArray, sql } from 'drizzle-orm';
+import { eq, asc, sql } from 'drizzle-orm';
 import { logger } from '$lib/logging';
 import { randomUUID } from 'crypto';
 import type { ChannelCategory, ChannelCategoryFormData } from '$lib/types/livetv';

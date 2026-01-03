@@ -14,7 +14,6 @@ import { logger } from '$lib/logging';
 import { randomUUID } from 'crypto';
 import {
 	StalkerPortalClient,
-	type StalkerAccountInfo,
 	type StalkerCategory,
 	type StalkerChannel,
 	type StalkerTestResult

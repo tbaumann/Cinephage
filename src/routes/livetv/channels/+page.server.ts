@@ -4,7 +4,6 @@ import { getChannelLineupService } from '$lib/server/livetv/lineup/ChannelLineup
 import { getChannelCategoryService } from '$lib/server/livetv/categories/ChannelCategoryService';
 import type {
 	StalkerChannelWithAccount,
-	StalkerCategoryWithAccount,
 	StalkerAccount,
 	ChannelLineupItemWithAccount,
 	ChannelCategory

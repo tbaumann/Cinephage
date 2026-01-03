@@ -35,18 +35,18 @@ Search for movies and TV shows, grab them from your indexers, organize your libr
 
 ## Status
 
-| Feature            | Status       | Notes                                                |
-| ------------------ | ------------ | ---------------------------------------------------- |
-| Content Discovery  | Stable       | TMDB integration, trending, search                   |
-| Library Management | Stable       | File watching, scanning, TMDB matching               |
-| Quality Scoring    | Stable       | 4 built-in profiles + custom profile creation        |
-| Download Clients   | Stable       | qBittorrent, SABnzbd, NZBGet                         |
-| Indexers           | Stable       | 9 built-in definitions + Torznab/Newznab support     |
-| Subtitles          | Stable       | 8 providers, 80+ languages                           |
-| Streaming          | Stable       | 10 providers with circuit breaker failover           |
-| Monitoring         | Experimental | Automated searches, upgrades, new episode detection  |
-| Smart Lists        | Stable       | Dynamic TMDB queries with auto-add to library        |
-| Live TV/IPTV       | In Progress  | Stalker portal, EPG, channel lineup management       |
+| Feature            | Status       | Notes                                               |
+| ------------------ | ------------ | --------------------------------------------------- |
+| Content Discovery  | Stable       | TMDB integration, trending, search                  |
+| Library Management | Stable       | File watching, scanning, TMDB matching              |
+| Quality Scoring    | Stable       | 4 built-in profiles + custom profile creation       |
+| Download Clients   | Stable       | qBittorrent, SABnzbd, NZBGet                        |
+| Indexers           | Stable       | 9 built-in definitions + Torznab/Newznab support    |
+| Subtitles          | Stable       | 8 providers, 80+ languages                          |
+| Streaming          | Stable       | 10 providers with circuit breaker failover          |
+| Monitoring         | Experimental | Automated searches, upgrades, new episode detection |
+| Smart Lists        | Stable       | Dynamic TMDB queries with auto-add to library       |
+| Live TV/IPTV       | In Progress  | Stalker portal, EPG, channel lineup management      |
 
 ---
 

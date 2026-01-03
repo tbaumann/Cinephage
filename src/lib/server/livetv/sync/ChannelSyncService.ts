@@ -9,7 +9,7 @@ import {
 	stalkerPortalAccounts,
 	type ChannelLineupItemRecord
 } from '$lib/server/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { logger } from '$lib/logging';
 import { randomUUID } from 'crypto';
 import { getStalkerPortalManager } from '../stalker/StalkerPortalManager';
@@ -71,7 +71,6 @@ class ChannelSyncService {
 
 			// Build provider channel map by channel ID
 			const providerChannelMap = new Map(providerChannels.map((ch) => [ch.id, ch]));
-			const providerChannelIds = new Set(providerChannels.map((ch) => ch.id));
 
 			// Get existing lineup items for this account
 			const existingItems = await db

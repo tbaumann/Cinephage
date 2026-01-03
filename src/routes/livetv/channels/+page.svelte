@@ -1,17 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
-	import {
-		Search,
-		X,
-		Radio,
-		List,
-		Loader2,
-		ArrowUpDown,
-		Filter,
-		CheckSquare,
-		Square
-	} from 'lucide-svelte';
+	import { Search, X, Radio, List, ArrowUpDown, Filter, CheckSquare, Square } from 'lucide-svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import {
 		ChannelLineupGrouped,
@@ -45,7 +35,7 @@
 
 	// Loading states
 	let addingToLineup = $state(false);
-	let removingFromLineup = $state(false);
+	let _removingFromLineup = $state(false);
 
 	// Category management state
 	let categoryModalOpen = $state(false);
@@ -63,9 +53,8 @@
 	// Filter UI state
 	let sortDropdownOpen = $state(false);
 	let filterDropdownOpen = $state(false);
+	// eslint-disable-next-line svelte/prefer-writable-derived -- Two-way binding with URL sync
 	let searchInput = $state('');
-
-	// Sync searchInput with URL params
 	$effect(() => {
 		searchInput = data.filters.search;
 	});
@@ -288,15 +277,15 @@
 	async function handleAddToLineup() {
 		addingToLineup = true;
 		try {
-			// Build channels array from selected keys
-			const channelMap = new Map<string, (typeof data.channels)[0]>();
+			// Build channels lookup from selected keys
+			const channelMap: Record<string, (typeof data.channels)[0]> = {};
 			for (const channel of data.channels) {
 				const key = `${channel.accountId}:${channel.id}`;
-				channelMap.set(key, channel);
+				channelMap[key] = channel;
 			}
 
 			const channelsToAdd = Array.from(selectedBrowseKeys)
-				.map((key) => channelMap.get(key))
+				.map((key) => channelMap[key])
 				.filter((c) => c !== undefined)
 				.map((c) => ({
 					accountId: c.accountId,
@@ -564,7 +553,7 @@
 							<ul
 								class="dropdown-content menu z-50 mt-1 w-56 rounded-box bg-base-100 p-2 shadow-lg"
 							>
-								{#each sortOptions as option}
+								{#each sortOptions as option (option.value)}
 									<li>
 										<button
 											class={data.filters.sort === option.value ? 'active' : ''}
@@ -606,7 +595,7 @@
 										onchange={(e) => updateFilter('account', e.currentTarget.value)}
 									>
 										<option value="all">All Accounts</option>
-										{#each enabledAccounts as account}
+										{#each enabledAccounts as account (account.id)}
 											<option value={account.id}>{account.name}</option>
 										{/each}
 									</select>
@@ -623,7 +612,7 @@
 										onchange={(e) => updateFilter('category', e.currentTarget.value)}
 									>
 										<option value="all">All Categories</option>
-										{#each data.portalCategories as cat}
+										{#each data.portalCategories as cat (cat.id)}
 											<option value={cat.id}>{cat.title}</option>
 										{/each}
 									</select>
@@ -639,7 +628,7 @@
 										value={data.filters.lineupStatus}
 										onchange={(e) => updateFilter('lineupStatus', e.currentTarget.value)}
 									>
-										{#each lineupStatusOptions as option}
+										{#each lineupStatusOptions as option (option.value)}
 											<option value={option.value}>{option.label}</option>
 										{/each}
 									</select>
@@ -679,7 +668,7 @@
 			<!-- Active filter badges row -->
 			{#if hasActiveFilters}
 				<div class="flex items-center gap-2 border-t border-base-200/50 px-4 py-2 lg:px-8">
-					{#each activeFilterLabels() as label}
+					{#each activeFilterLabels() as label (label)}
 						<span class="badge badge-outline badge-sm">{label}</span>
 					{/each}
 					<button class="btn btn-ghost btn-xs" onclick={clearFilters}>

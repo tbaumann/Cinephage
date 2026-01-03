@@ -231,7 +231,7 @@
 							bind:value={categoryId}
 						>
 							<option value={null}>Uncategorized</option>
-							{#each categories as cat}
+							{#each categories as cat (cat.id)}
 								<option value={cat.id}>
 									{cat.name}
 								</option>

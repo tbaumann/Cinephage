@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { X, Loader2, XCircle, CheckCircle2 } from 'lucide-svelte';
-	import { SectionHeader, TestResult } from '$lib/components/ui/modal';
+	import { SectionHeader } from '$lib/components/ui/modal';
 	import type { StalkerAccount, StalkerAccountTestResult } from '$lib/types/livetv';
 
 	interface FormData {

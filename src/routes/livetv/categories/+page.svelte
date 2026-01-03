@@ -6,17 +6,17 @@
 
 	// Group categories by account
 	const categoriesByAccount = $derived(() => {
-		const grouped = new Map<string, { accountName: string; categories: typeof data.categories }>();
+		const grouped: Record<string, { accountName: string; categories: typeof data.categories }> = {};
 		for (const category of data.categories) {
-			if (!grouped.has(category.accountId)) {
-				grouped.set(category.accountId, {
+			if (!grouped[category.accountId]) {
+				grouped[category.accountId] = {
 					accountName: category.accountName,
 					categories: []
-				});
+				};
 			}
-			grouped.get(category.accountId)!.categories.push(category);
+			grouped[category.accountId].categories.push(category);
 		}
-		return Array.from(grouped.entries());
+		return Object.entries(grouped);
 	});
 </script>
 

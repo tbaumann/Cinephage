@@ -49,22 +49,21 @@
 	const tableRows = $derived(() => {
 		const rows: TableRow[] = [];
 
-		// Group channels by categoryId
-		const channelsByCategory = new Map<string | null, ChannelLineupItemWithAccount[]>();
-		channelsByCategory.set(null, []);
+		// Group channels by categoryId (using 'null' string key for uncategorized)
+		const channelsByCategory: Record<string, ChannelLineupItemWithAccount[]> = { null: [] };
 		for (const cat of categories) {
-			channelsByCategory.set(cat.id, []);
+			channelsByCategory[cat.id] = [];
 		}
 		for (const item of items) {
-			const catId = item.categoryId;
-			if (!channelsByCategory.has(catId)) {
-				channelsByCategory.set(catId, []);
+			const catId = item.categoryId ?? 'null';
+			if (!channelsByCategory[catId]) {
+				channelsByCategory[catId] = [];
 			}
-			channelsByCategory.get(catId)!.push(item);
+			channelsByCategory[catId].push(item);
 		}
 
 		// Add uncategorized channels first (no header)
-		const uncategorized = channelsByCategory.get(null) || [];
+		const uncategorized = channelsByCategory['null'] || [];
 		for (const ch of uncategorized) {
 			rows.push({ type: 'channel', channel: ch });
 		}
@@ -72,7 +71,7 @@
 		// Add each category and its channels
 		for (const cat of categories) {
 			rows.push({ type: 'category', category: cat });
-			const catChannels = channelsByCategory.get(cat.id) || [];
+			const catChannels = channelsByCategory[cat.id] || [];
 			for (const ch of catChannels) {
 				rows.push({ type: 'channel', channel: ch });
 			}

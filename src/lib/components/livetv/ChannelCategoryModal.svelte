@@ -112,7 +112,7 @@
 						<span class="label-text">Color</span>
 					</label>
 					<div class="flex flex-wrap gap-2">
-						{#each presetColors as presetColor}
+						{#each presetColors as presetColor (presetColor)}
 							<button
 								type="button"
 								class="h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 {color ===
