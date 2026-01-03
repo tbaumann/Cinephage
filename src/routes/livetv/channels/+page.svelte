@@ -35,8 +35,6 @@
 
 	// Loading states
 	let addingToLineup = $state(false);
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Reserved for loading UI
-	let removingFromLineup = $state(false);
 
 	// Category management state
 	let categoryModalOpen = $state(false);
@@ -54,8 +52,9 @@
 	// Filter UI state
 	let sortDropdownOpen = $state(false);
 	let filterDropdownOpen = $state(false);
-	// eslint-disable-next-line svelte/prefer-writable-derived -- Two-way binding with URL sync
 	let searchInput = $state('');
+
+	// Sync searchInput with URL params on navigation
 	$effect(() => {
 		searchInput = data.filters.search;
 	});
@@ -212,7 +211,6 @@
 	}
 
 	async function handleRemoveFromLineup(itemIds: string[]) {
-		removingFromLineup = true;
 		try {
 			const response = await fetch('/api/livetv/lineup/remove', {
 				method: 'POST',
@@ -234,8 +232,6 @@
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Unknown error';
 			toasts.error(`Failed to remove: ${message}`);
-		} finally {
-			removingFromLineup = false;
 		}
 	}
 

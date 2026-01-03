@@ -126,7 +126,6 @@
 	}: Props = $props();
 
 	// Track accordion open state - sync when defaultOpen prop changes
-	// eslint-disable-next-line svelte/prefer-writable-derived -- needs to be writable for user toggling
 	let isOpen = $state(false);
 	$effect(() => {
 		isOpen = defaultOpen;

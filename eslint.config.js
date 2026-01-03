@@ -64,11 +64,13 @@ export default defineConfig(
 		}
 	},
 	{
-		// Disable resolve() requirement for components using resolvePath utility
-		// resolvePath internally calls resolve(), so navigation is correctly handled
+		// Svelte-specific rule overrides
 		files: ['**/*.svelte'],
 		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
+			// resolvePath internally calls resolve(), so navigation is correctly handled
+			'svelte/no-navigation-without-resolve': 'off',
+			// $state + $effect pattern is valid for URL sync and form state
+			'svelte/prefer-writable-derived': 'off'
 		}
 	}
 );

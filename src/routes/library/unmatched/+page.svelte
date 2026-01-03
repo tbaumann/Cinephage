@@ -18,7 +18,6 @@
 
 	// Local state for files (so we can update after actions)
 	// Initialized from props, refreshed via refreshList()
-	// eslint-disable-next-line svelte/prefer-writable-derived -- needs writable state for mutations
 	let files = $state<typeof data.files>([]);
 	$effect(() => {
 		files = data.files;
