@@ -10,73 +10,8 @@
 import type { RequestHandler } from './$types';
 import { getStalkerStreamService } from '$lib/server/livetv/streaming';
 import { getBaseUrlAsync } from '$lib/server/streaming/url';
-import { isUrlSafe, fetchWithTimeout } from '$lib/server/http/ssrf-protection';
+import { isUrlSafe } from '$lib/server/http/ssrf-protection';
 import { logger } from '$lib/logging';
-import {
-	LIVETV_MANIFEST_FETCH_TIMEOUT_MS,
-	LIVETV_MAX_RETRIES,
-	LIVETV_RETRY_BASE_DELAY_MS,
-	LIVETV_PROXY_USER_AGENT
-} from '$lib/server/livetv/streaming/constants';
-
-/**
- * Fetch with retry logic for transient errors
- */
-async function fetchWithRetry(
-	url: string,
-	options: RequestInit,
-	maxRetries: number = LIVETV_MAX_RETRIES
-): Promise<Response> {
-	let lastError: Error | null = null;
-
-	for (let attempt = 0; attempt <= maxRetries; attempt++) {
-		try {
-			const response = await fetchWithTimeout(url, options, LIVETV_MANIFEST_FETCH_TIMEOUT_MS);
-
-			// Only retry on 5xx server errors
-			if (response.status >= 500 && attempt < maxRetries) {
-				logger.debug('[LiveTV Stream] Retrying after 5xx', {
-					url: url.substring(0, 100),
-					status: response.status,
-					attempt: attempt + 1
-				});
-				await new Promise((r) => setTimeout(r, LIVETV_RETRY_BASE_DELAY_MS * Math.pow(2, attempt)));
-				continue;
-			}
-
-			return response;
-		} catch (error) {
-			lastError = error instanceof Error ? error : new Error(String(error));
-
-			// Don't retry on abort (timeout)
-			if (lastError.name === 'AbortError') {
-				throw new Error(`Stream fetch timeout after ${LIVETV_MANIFEST_FETCH_TIMEOUT_MS}ms`);
-			}
-
-			if (attempt < maxRetries) {
-				logger.debug('[LiveTV Stream] Retrying after error', {
-					url: url.substring(0, 100),
-					error: lastError.message,
-					attempt: attempt + 1
-				});
-				await new Promise((r) => setTimeout(r, LIVETV_RETRY_BASE_DELAY_MS * Math.pow(2, attempt)));
-			}
-		}
-	}
-
-	throw lastError ?? new Error('Fetch failed after retries');
-}
-
-/**
- * Get headers for upstream requests
- */
-function getStreamHeaders(): HeadersInit {
-	return {
-		'User-Agent': LIVETV_PROXY_USER_AGENT,
-		Accept: '*/*',
-		'Accept-Encoding': 'identity'
-	};
-}
 
 /**
  * Detect if content is an HLS playlist
@@ -217,46 +152,23 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		const baseUrl = await getBaseUrlAsync(request);
 		const streamService = getStalkerStreamService();
 
-		// Get stream URL (handles caching, auth, failover)
-		const stream = await streamService.getStreamUrl(lineupId);
+		// Fetch stream directly - gets fresh token and immediately fetches
+		// This eliminates delay between token generation and fetch
+		const stream = await streamService.fetchStream(lineupId);
+		const response = stream.response;
 
-		logger.debug('[LiveTV Stream] Resolved stream', {
+		logger.debug('[LiveTV Stream] Stream fetched', {
 			lineupId,
 			type: stream.type,
-			fromCache: stream.fromCache,
 			accountId: stream.accountId
 		});
 
-		// SSRF protection
+		// SSRF protection check (for logging only - already fetched)
 		const safetyCheck = isUrlSafe(stream.url);
 		if (!safetyCheck.safe) {
-			logger.warn('[LiveTV Stream] Blocked unsafe stream URL', {
+			logger.warn('[LiveTV Stream] Stream URL was not safe', {
 				lineupId,
 				reason: safetyCheck.reason
-			});
-			return new Response(JSON.stringify({ error: 'Stream URL not allowed' }), {
-				status: 403,
-				headers: { 'Content-Type': 'application/json' }
-			});
-		}
-
-		// Fetch the stream
-		const response = await fetchWithRetry(stream.url, {
-			headers: getStreamHeaders(),
-			redirect: 'follow'
-		});
-
-		if (!response.ok) {
-			logger.error('[LiveTV Stream] Upstream error', {
-				lineupId,
-				status: response.status,
-				statusText: response.statusText,
-				streamUrl: stream.url.substring(0, 100),
-				streamType: stream.type
-			});
-			return new Response(JSON.stringify({ error: `Upstream error: ${response.status}` }), {
-				status: response.status,
-				headers: { 'Content-Type': 'application/json' }
 			});
 		}
 
@@ -290,7 +202,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 					'Access-Control-Allow-Origin': '*',
 					'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
 					'Access-Control-Allow-Headers': 'Range, Content-Type',
-					'Cache-Control': 'no-cache',
+					'Cache-Control': 'public, max-age=2, stale-while-revalidate=5',
 					'X-Content-Type-Options': 'nosniff'
 				}
 			});
@@ -339,10 +251,11 @@ export const HEAD: RequestHandler = async ({ params }) => {
 
 	// Return expected headers immediately without resolving the stream.
 	// This is critical for Jellyfin/Plex which probe streams with HEAD before playing.
+	// Most live TV streams are HLS, so return the HLS content type to match what GET returns.
 	return new Response(null, {
 		status: 200,
 		headers: {
-			'Content-Type': 'video/mp2t',
+			'Content-Type': 'application/vnd.apple.mpegurl',
 			'Accept-Ranges': 'none',
 			'Access-Control-Allow-Origin': '*',
 			'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',

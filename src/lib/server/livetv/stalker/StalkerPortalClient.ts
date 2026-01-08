@@ -2,7 +2,12 @@
  * Stalker Portal Client
  *
  * Client for communicating with Stalker/Ministra protocol IPTV portals.
- * Handles authentication via MAC address and token management.
+ * Implements the STB emulation protocol based on stalkerhek reference.
+ *
+ * Protocol flow:
+ * 1. Handshake - reserve/obtain token
+ * 2. Authenticate - either with credentials or device IDs
+ * 3. API calls - all require proper headers with token
  */
 
 import { logger } from '$lib/logging';
@@ -14,17 +19,41 @@ import type {
 	EpgProgramRaw
 } from '$lib/types/livetv';
 
-const REQUEST_TIMEOUT = 10000; // 10 seconds
-const USER_AGENT =
-	'Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3';
+const REQUEST_TIMEOUT = 30000; // 30 seconds (increased for slow portals)
+
+// STB User-Agent string (mimics MAG200 set-top box)
+const STB_USER_AGENT =
+	'Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 4 rev: 2116 Mobile Safari/533.3';
+
+/**
+ * Configuration for Stalker Portal client
+ */
+export interface StalkerPortalConfig {
+	portalUrl: string;
+	macAddress: string;
+	serialNumber: string;
+	deviceId: string;
+	deviceId2: string;
+	model: string;
+	timezone: string;
+	token?: string;
+	username?: string;
+	password?: string;
+}
 
 interface StalkerResponse<T> {
 	js: T;
+	text?: string;
 }
 
 interface HandshakeResponse {
-	token: string;
-	random: string;
+	token?: string;
+	random?: string;
+}
+
+interface ProfileAuthResponse {
+	id?: string;
+	fname?: string;
 }
 
 interface GenresResponse {
@@ -43,6 +72,7 @@ interface ChannelData {
 	cmd: string;
 	tv_archive: string;
 	tv_archive_duration: string;
+	cmds?: Array<{ id: string; ch_id: string }>;
 }
 
 interface ChannelsResponse {
@@ -53,6 +83,10 @@ interface ChannelsResponse {
 interface AccountInfoResponse {
 	mac: string;
 	phone: string;
+}
+
+interface CreateLinkResponse {
+	cmd: string;
 }
 
 interface EpgInfoResponse {
@@ -75,63 +109,184 @@ interface EpgProgramData {
 	mark_archive: number;
 }
 
-export class StalkerPortalClient {
-	protected portalUrl: string;
-	protected macAddress: string;
-	protected token: string | null = null;
+/**
+ * Retry configuration
+ */
+interface RetryConfig {
+	maxRetries: number;
+	baseDelay: number;
+	maxDelay: number;
+}
 
-	constructor(portalUrl: string, macAddress: string) {
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+	maxRetries: 3,
+	baseDelay: 1000,
+	maxDelay: 10000
+};
+
+/**
+ * Generate a random 32-character hex token
+ */
+function generateToken(): string {
+	const chars = 'ABCDEF0123456789';
+	let token = '';
+	for (let i = 0; i < 32; i++) {
+		token += chars[Math.floor(Math.random() * chars.length)];
+	}
+	return token;
+}
+
+/**
+ * Retry with exponential backoff
+ */
+async function retryWithBackoff<T>(
+	fn: () => Promise<T>,
+	config: RetryConfig = DEFAULT_RETRY_CONFIG
+): Promise<T> {
+	let lastError: Error | null = null;
+
+	for (let attempt = 0; attempt < config.maxRetries; attempt++) {
+		try {
+			return await fn();
+		} catch (error) {
+			lastError = error instanceof Error ? error : new Error(String(error));
+
+			if (attempt < config.maxRetries - 1) {
+				const delay = Math.min(config.baseDelay * Math.pow(2, attempt), config.maxDelay);
+				logger.debug(`[StalkerPortal] Attempt ${attempt + 1} failed, retrying in ${delay}ms`, {
+					error: lastError.message
+				});
+				await new Promise((resolve) => setTimeout(resolve, delay));
+			}
+		}
+	}
+
+	throw lastError;
+}
+
+export class StalkerPortalClient {
+	private config: StalkerPortalConfig;
+	private token: string;
+	private authenticated: boolean = false;
+
+	constructor(config: StalkerPortalConfig) {
 		// Normalize portal URL - ensure it doesn't end with slash
-		this.portalUrl = portalUrl.replace(/\/+$/, '');
-		this.macAddress = macAddress.toUpperCase();
+		this.config = {
+			...config,
+			portalUrl: config.portalUrl.replace(/\/+$/, ''),
+			macAddress: config.macAddress.toUpperCase()
+		};
+
+		// Generate token if not provided
+		this.token = config.token || generateToken();
 	}
 
 	/**
-	 * URL-encode MAC address for cookie use
+	 * Get the current token
 	 */
-	private encodeMAC(): string {
-		return encodeURIComponent(this.macAddress);
+	getToken(): string {
+		return this.token;
+	}
+
+	/**
+	 * Check if client is authenticated
+	 */
+	isAuthenticated(): boolean {
+		return this.authenticated;
 	}
 
 	/**
 	 * Get the portal.php endpoint URL
 	 */
 	private getPortalEndpoint(): string {
+		const url = this.config.portalUrl;
+
 		// Handle different portal URL formats
-		if (this.portalUrl.includes('/portal.php')) {
-			return this.portalUrl;
+		if (url.includes('/portal.php')) {
+			return url;
 		}
-		if (this.portalUrl.endsWith('/c') || this.portalUrl.endsWith('/c/')) {
-			return `${this.portalUrl.replace(/\/+$/, '')}/portal.php`;
+		if (url.endsWith('/c') || url.endsWith('/c/')) {
+			return `${url.replace(/\/+$/, '')}/portal.php`;
 		}
 		// Default: append /portal.php
-		return `${this.portalUrl}/portal.php`;
+		return `${url}/portal.php`;
 	}
 
 	/**
-	 * Build request headers
+	 * Build cookie string for requests
 	 */
-	private getHeaders(includeAuth: boolean = true): HeadersInit {
-		const headers: HeadersInit = {
-			'User-Agent': USER_AGENT,
-			Cookie: `mac=${this.encodeMAC()}; stb_lang=en; timezone=UTC`
+	private getCookie(): string {
+		const parts = [
+			'PHPSESSID=null',
+			`sn=${encodeURIComponent(this.config.serialNumber)}`,
+			`mac=${encodeURIComponent(this.config.macAddress)}`,
+			'stb_lang=en',
+			`timezone=${encodeURIComponent(this.config.timezone)}`
+		];
+		return parts.join('; ') + ';';
+	}
+
+	/**
+	 * Build request headers for handshake (no Authorization)
+	 */
+	private getHandshakeHeaders(): HeadersInit {
+		return {
+			'User-Agent': STB_USER_AGENT,
+			'X-User-Agent': `Model: ${this.config.model}; Link: Ethernet`,
+			Cookie: this.getCookie()
 		};
-
-		if (includeAuth && this.token) {
-			headers['Authorization'] = `Bearer ${this.token}`;
-		}
-
-		return headers;
 	}
 
 	/**
-	 * Make a request to the portal API
+	 * Build request headers for authenticated requests
 	 */
-	protected async request<T>(
+	private getHeaders(): HeadersInit {
+		return {
+			'User-Agent': STB_USER_AGENT,
+			'X-User-Agent': `Model: ${this.config.model}; Link: Ethernet`,
+			Authorization: `Bearer ${this.token}`,
+			Cookie: this.getCookie()
+		};
+	}
+
+	/**
+	 * Make a raw HTTP request to the portal
+	 */
+	private async httpRequest(url: string, useAuth: boolean = true): Promise<string> {
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+		try {
+			const response = await fetch(url, {
+				method: 'GET',
+				headers: useAuth ? this.getHeaders() : this.getHandshakeHeaders(),
+				signal: controller.signal
+			});
+
+			clearTimeout(timeoutId);
+
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+			}
+
+			return await response.text();
+		} catch (error) {
+			clearTimeout(timeoutId);
+			if (error instanceof Error && error.name === 'AbortError') {
+				throw new Error('Request timed out');
+			}
+			throw error;
+		}
+	}
+
+	/**
+	 * Make a request to the portal API and parse JSON response
+	 */
+	private async request<T>(
 		type: string,
 		action: string,
 		params: Record<string, string> = {},
-		includeAuth: boolean = true
+		useAuth: boolean = true
 	): Promise<T> {
 		const endpoint = this.getPortalEndpoint();
 		const url = new URL(endpoint);
@@ -143,67 +298,196 @@ export class StalkerPortalClient {
 			url.searchParams.set(key, value);
 		}
 
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-
-		try {
-			const response = await fetch(url.toString(), {
-				method: 'GET',
-				headers: this.getHeaders(includeAuth),
-				signal: controller.signal
-			});
-
-			clearTimeout(timeoutId);
-
-			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-			}
-
-			const data = (await response.json()) as StalkerResponse<T>;
-			return data.js;
-		} catch (error) {
-			clearTimeout(timeoutId);
-			if (error instanceof Error && error.name === 'AbortError') {
-				throw new Error('Request timed out');
-			}
-			throw error;
+		if (action === 'create_link') {
+			logger.debug('[StalkerPortal] Request URL', { fullUrl: url.toString() });
 		}
+
+		const text = await this.httpRequest(url.toString(), useAuth);
+
+		if (action === 'create_link') {
+			logger.debug('[StalkerPortal] Raw response', { text: text.substring(0, 500) });
+		}
+
+		const data = JSON.parse(text) as StalkerResponse<T>;
+		return data.js;
 	}
 
 	/**
-	 * Perform handshake to obtain authentication token
+	 * Start the client - performs handshake and authentication
 	 */
-	async handshake(): Promise<string> {
+	async start(): Promise<void> {
+		// Step 1: Handshake
+		await this.handshake();
+
+		// Step 2: Authenticate
+		if (this.config.username && this.config.password) {
+			await this.authenticate();
+		} else {
+			await this.authenticateWithDeviceIds();
+		}
+
+		this.authenticated = true;
+	}
+
+	/**
+	 * Perform handshake to reserve/obtain token
+	 */
+	async handshake(): Promise<void> {
 		logger.debug('[StalkerPortal] Performing handshake', {
-			portalUrl: this.portalUrl,
-			mac: this.macAddress.substring(0, 8) + '...'
+			portalUrl: this.config.portalUrl,
+			mac: this.config.macAddress.substring(0, 8) + '...'
 		});
 
-		const result = await this.request<HandshakeResponse>('stb', 'handshake', {}, false);
+		const endpoint = this.getPortalEndpoint();
+		const url = new URL(endpoint);
+		url.searchParams.set('type', 'stb');
+		url.searchParams.set('action', 'handshake');
+		url.searchParams.set('token', this.token);
+		url.searchParams.set('JsHttpRequest', '1-xml');
 
-		if (!result?.token) {
-			throw new Error('Handshake failed: no token received');
+		const text = await this.httpRequest(url.toString(), false);
+		const data = JSON.parse(text) as StalkerResponse<HandshakeResponse>;
+
+		// If server provides a new token, use it
+		if (data.js?.token && data.js.token !== '') {
+			logger.debug('[StalkerPortal] Server provided new token');
+			this.token = data.js.token;
+		} else {
+			logger.debug('[StalkerPortal] Token accepted');
 		}
-
-		this.token = result.token;
-		logger.debug('[StalkerPortal] Handshake successful');
-		return this.token;
 	}
 
 	/**
-	 * Ensure we have a valid token
+	 * Authenticate with username/password credentials
 	 */
-	protected async ensureToken(): Promise<void> {
-		if (!this.token) {
-			await this.handshake();
+	async authenticate(): Promise<void> {
+		if (!this.config.username || !this.config.password) {
+			throw new Error('Username and password required for credential authentication');
 		}
+
+		logger.debug('[StalkerPortal] Authenticating with credentials');
+
+		const result = await this.request<boolean>(
+			'stb',
+			'do_auth',
+			{
+				login: this.config.username,
+				password: this.config.password,
+				device_id: this.config.deviceId,
+				device_id2: this.config.deviceId2
+			},
+			true
+		);
+
+		if (!result) {
+			throw new Error('Authentication failed: invalid credentials');
+		}
+
+		logger.debug('[StalkerPortal] Credential authentication successful');
+	}
+
+	/**
+	 * Authenticate using device IDs (alternative to username/password)
+	 */
+	async authenticateWithDeviceIds(): Promise<void> {
+		logger.debug('[StalkerPortal] Authenticating with device IDs');
+
+		const result = await this.request<ProfileAuthResponse>(
+			'stb',
+			'get_profile',
+			{
+				hd: '1',
+				sn: this.config.serialNumber,
+				stb_type: this.config.model,
+				device_id: this.config.deviceId,
+				device_id2: this.config.deviceId2,
+				auth_second_step: '1'
+			},
+			true
+		);
+
+		if (!result?.id) {
+			throw new Error('Authentication failed: device ID auth rejected');
+		}
+
+		logger.debug('[StalkerPortal] Device ID authentication successful', {
+			userId: result.id,
+			name: result.fname
+		});
+	}
+
+	/**
+	 * Ensure client is authenticated
+	 */
+	private async ensureAuthenticated(): Promise<void> {
+		if (!this.authenticated) {
+			await this.start();
+		}
+	}
+
+	/**
+	 * Create a stream link for a channel
+	 * This is the key method for getting playable stream URLs
+	 *
+	 * @param cmd - The channel CMD value (e.g., "ffmpeg http://...")
+	 * @param retry - Whether to retry with re-authentication on failure
+	 * @returns The playable stream URL
+	 */
+	async createLink(cmd: string, retry: boolean = true): Promise<string> {
+		await this.ensureAuthenticated();
+
+		logger.debug('[StalkerPortal] Creating link', { cmd });
+
+		const result = await retryWithBackoff(async () => {
+			return this.request<CreateLinkResponse>('itv', 'create_link', {
+				cmd: cmd
+			});
+		});
+
+		logger.debug('[StalkerPortal] create_link response', { result });
+
+		if (!result?.cmd) {
+			if (retry && (this.config.username || this.config.deviceId)) {
+				// Session may have expired, try re-authenticating
+				logger.debug('[StalkerPortal] create_link failed, attempting re-authentication');
+				this.authenticated = false;
+				await this.start();
+				return this.createLink(cmd, false);
+			}
+			throw new Error('create_link failed: empty response');
+		}
+
+		// Parse the URL from the response
+		// Response format: "ffmpeg http://actual-stream-url" or just the URL
+		const cmdStr = result.cmd.trim();
+		const parts = cmdStr.split(/\s+/);
+		const streamUrl = parts[parts.length - 1];
+
+		if (!streamUrl || (!streamUrl.startsWith('http://') && !streamUrl.startsWith('https://'))) {
+			throw new Error(`create_link returned invalid URL: ${cmdStr}`);
+		}
+
+		return streamUrl;
+	}
+
+	/**
+	 * Send watchdog keep-alive
+	 */
+	async watchdog(): Promise<void> {
+		await this.ensureAuthenticated();
+
+		await this.request<unknown>('watchdog', 'get_events', {
+			event_active_id: '0',
+			init: '0',
+			cur_play_type: '1'
+		});
 	}
 
 	/**
 	 * Get account profile information
 	 */
 	async getProfile(): Promise<StalkerRawProfile> {
-		await this.ensureToken();
+		await this.ensureAuthenticated();
 		return this.request<StalkerRawProfile>('stb', 'get_profile');
 	}
 
@@ -211,7 +495,7 @@ export class StalkerPortalClient {
 	 * Get account info (contains expiry in phone field for many providers)
 	 */
 	async getAccountInfo(): Promise<AccountInfoResponse | null> {
-		await this.ensureToken();
+		await this.ensureAuthenticated();
 		try {
 			return await this.request<AccountInfoResponse>('account_info', 'get_main_info');
 		} catch {
@@ -224,7 +508,7 @@ export class StalkerPortalClient {
 	 * Get channel categories/genres
 	 */
 	async getGenres(): Promise<StalkerCategory[]> {
-		await this.ensureToken();
+		await this.ensureAuthenticated();
 		const genres = await this.request<GenresResponse[]>('itv', 'get_genres');
 
 		return genres.map((g) => ({
@@ -239,7 +523,7 @@ export class StalkerPortalClient {
 	 * Get all channels
 	 */
 	async getChannels(): Promise<StalkerChannel[]> {
-		await this.ensureToken();
+		await this.ensureAuthenticated();
 		const result = await this.request<ChannelsResponse | ChannelData[]>('itv', 'get_all_channels');
 
 		// Some portals return an array directly, others return {data: [], total_items: N}
@@ -266,7 +550,7 @@ export class StalkerPortalClient {
 	 * Get channel count (more efficient than fetching all channels)
 	 */
 	async getChannelCount(): Promise<number> {
-		await this.ensureToken();
+		await this.ensureAuthenticated();
 		const result = await this.request<ChannelsResponse | ChannelData[]>('itv', 'get_all_channels');
 
 		// Some portals return an array directly, others return {data: [], total_items: N}
@@ -283,10 +567,10 @@ export class StalkerPortalClient {
 	 * @returns Map of channel ID to array of programs
 	 */
 	async getEpgInfo(period: number = 24): Promise<Map<string, EpgProgramRaw[]>> {
-		await this.ensureToken();
+		await this.ensureAuthenticated();
 
 		logger.debug('[StalkerPortal] Fetching EPG info', {
-			portalUrl: this.portalUrl,
+			portalUrl: this.config.portalUrl,
 			period
 		});
 
@@ -339,7 +623,7 @@ export class StalkerPortalClient {
 			return programMap;
 		} catch (error) {
 			logger.error('[StalkerPortal] EPG fetch failed', {
-				portalUrl: this.portalUrl,
+				portalUrl: this.config.portalUrl,
 				error: error instanceof Error ? error.message : 'Unknown error'
 			});
 			return new Map();
@@ -353,7 +637,7 @@ export class StalkerPortalClient {
 	 * @returns Array of programs (typically 1-2 items for current and next)
 	 */
 	async getShortEpg(channelId: string): Promise<EpgProgramRaw[]> {
-		await this.ensureToken();
+		await this.ensureAuthenticated();
 
 		try {
 			const result = await this.request<EpgProgramData[]>('itv', 'get_short_epg', {
@@ -474,8 +758,8 @@ export class StalkerPortalClient {
 	 */
 	async testConnection(): Promise<StalkerAccountTestResult> {
 		try {
-			// Step 1: Handshake
-			await this.handshake();
+			// Step 1: Start (handshake + auth)
+			await this.start();
 
 			// Step 2: Get profile
 			const profile = await this.getProfile();
@@ -514,7 +798,7 @@ export class StalkerPortalClient {
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Unknown error';
 			logger.error('[StalkerPortal] Connection test failed', {
-				portalUrl: this.portalUrl,
+				portalUrl: this.config.portalUrl,
 				error: message
 			});
 
@@ -529,6 +813,6 @@ export class StalkerPortalClient {
 /**
  * Create a new Stalker Portal client instance
  */
-export function createStalkerClient(portalUrl: string, macAddress: string): StalkerPortalClient {
-	return new StalkerPortalClient(portalUrl, macAddress);
+export function createStalkerClient(config: StalkerPortalConfig): StalkerPortalClient {
+	return new StalkerPortalClient(config);
 }

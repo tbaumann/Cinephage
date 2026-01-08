@@ -895,9 +895,7 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 			// SABnzbd generates new nzo_id when downloads are re-added,
 			// unlike torrent hashes which are persistent
 			if (!download && client.implementation === 'sabnzbd') {
-				download = downloads.find(
-					(d) => d.name.toLowerCase() === queueItem.title.toLowerCase()
-				);
+				download = downloads.find((d) => d.name.toLowerCase() === queueItem.title.toLowerCase());
 				if (download) matchedBy = 'title';
 			}
 

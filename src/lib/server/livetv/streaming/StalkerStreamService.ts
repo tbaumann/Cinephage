@@ -2,30 +2,76 @@
  * Stalker Stream Service
  *
  * Main orchestration service for Live TV streaming.
- * Handles stream URL resolution with caching, authentication, and failover.
+ * Handles stream URL resolution with failover support.
+ *
+ * Stream URLs from Stalker portals expire very quickly, so we don't cache them.
+ * Each stream request gets a fresh URL.
  */
 
 import { logger } from '$lib/logging';
 import { channelLineupService } from '$lib/server/livetv/lineup/ChannelLineupService';
-import { getStreamUrlCache } from './StreamUrlCache';
-import { getStalkerClientPool } from './StalkerClientPool';
-import type { StreamResult, StreamSource, StreamError, StreamErrorCode } from './types';
+import { getStalkerAccountManager } from '$lib/server/livetv/stalker/StalkerAccountManager';
+import {
+	StalkerPortalClient,
+	type StalkerPortalConfig
+} from '$lib/server/livetv/stalker/StalkerPortalClient';
+import { db } from '$lib/server/db';
+import { stalkerAccounts, type StalkerAccountRecord } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
+
+/**
+ * Stream source info
+ */
+interface StreamSource {
+	accountId: string;
+	channelId: string;
+	cmd: string;
+	priority: number;
+}
+
+/**
+ * Result of fetching a stream (includes response and metadata)
+ */
+export interface FetchStreamResult {
+	response: Response;
+	url: string;
+	type: 'hls' | 'direct' | 'unknown';
+	accountId: string;
+	channelId: string;
+	lineupItemId: string;
+}
+
+/**
+ * Stream error with additional context
+ */
+export interface StreamError extends Error {
+	code:
+		| 'LINEUP_ITEM_NOT_FOUND'
+		| 'ACCOUNT_NOT_FOUND'
+		| 'ALL_SOURCES_FAILED'
+		| 'STREAM_FETCH_FAILED';
+	accountId?: string;
+	channelId?: string;
+	attempts?: number;
+}
+
+// User agent for proxying streams
+const PROXY_USER_AGENT =
+	'Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 4 rev: 2116 Mobile Safari/533.3';
 
 export class StalkerStreamService {
-	private urlCache = getStreamUrlCache();
-	private clientPool = getStalkerClientPool();
+	// Cache of authenticated clients per account
+	private clients: Map<string, StalkerPortalClient> = new Map();
 
 	// Metrics
 	private totalResolutions = 0;
-	private cacheHits = 0;
-	private cacheMisses = 0;
 	private failovers = 0;
 
 	/**
-	 * Get stream URL for a lineup item with failover support.
-	 * Tries primary source first, then backups in priority order.
+	 * Fetch stream directly - gets fresh URL and immediately fetches.
+	 * This is the main method used by the stream endpoint.
 	 */
-	async getStreamUrl(lineupItemId: string): Promise<StreamResult> {
+	async fetchStream(lineupItemId: string): Promise<FetchStreamResult> {
 		this.totalResolutions++;
 
 		// Get lineup item with backups
@@ -58,12 +104,7 @@ export class StalkerStreamService {
 
 		for (const source of sources) {
 			try {
-				const result = await this.resolveStreamWithRetry(
-					source.accountId,
-					source.channelId,
-					source.cmd,
-					lineupItemId
-				);
+				const result = await this.fetchFromSource(source, lineupItemId);
 
 				// If we used a backup, log it
 				if (source.priority > 0) {
@@ -89,6 +130,9 @@ export class StalkerStreamService {
 					error: err.message,
 					remainingSources: sources.length - errors.length
 				});
+
+				// Invalidate client on error so next attempt gets fresh auth
+				this.clients.delete(source.accountId);
 			}
 		}
 
@@ -104,121 +148,209 @@ export class StalkerStreamService {
 	}
 
 	/**
-	 * Resolve a stream with automatic retry on auth failure
+	 * Fetch stream from a single source
 	 */
-	private async resolveStreamWithRetry(
-		accountId: string,
-		channelId: string,
-		cmd: string,
-		lineupItemId: string,
-		isRetry: boolean = false
-	): Promise<StreamResult> {
-		try {
-			return await this.resolveStream(accountId, channelId, cmd, lineupItemId);
-		} catch (error) {
-			// On auth-like errors, retry once with fresh auth
-			if (!isRetry && this.isAuthError(error)) {
-				logger.info('[StalkerStreamService] Auth error, retrying with fresh auth', {
-					accountId,
-					channelId
-				});
-
-				// Invalidate client and cache for this account
-				this.clientPool.invalidate(accountId);
-				this.urlCache.invalidateAccount(accountId);
-
-				return this.resolveStreamWithRetry(accountId, channelId, cmd, lineupItemId, true);
-			}
-			throw error;
-		}
-	}
-
-	/**
-	 * Resolve a single stream source
-	 */
-	private async resolveStream(
-		accountId: string,
-		channelId: string,
-		cmd: string,
+	private async fetchFromSource(
+		source: StreamSource,
 		lineupItemId: string
-	): Promise<StreamResult> {
-		// Check cache first
-		const cached = this.urlCache.get(accountId, channelId);
-		if (cached) {
-			this.cacheHits++;
-			return {
-				url: cached.url,
-				type: cached.type,
-				accountId,
-				channelId,
-				lineupItemId,
-				fromCache: true
-			};
+	): Promise<FetchStreamResult> {
+		const { accountId, channelId, cmd } = source;
+
+		// Extract stream URL directly from cmd (skip broken create_link)
+		// The cmd format is "ffmpeg http://..." - we just need the URL part
+		const streamUrl = this.extractUrlFromCmd(cmd);
+		if (!streamUrl) {
+			throw new Error(`Invalid cmd format: ${cmd}`);
 		}
 
-		this.cacheMisses++;
+		// Determine stream type from URL
+		const type = this.detectStreamType(streamUrl);
 
-		// Get authenticated client
-		const client = await this.clientPool.getClient(accountId);
+		logger.info('[StalkerStreamService] Fetching stream', {
+			lineupItemId,
+			accountId,
+			streamUrl,
+			type
+		});
 
-		try {
-			// Resolve stream URL
-			const result = await client.createLink(cmd);
+		const fetchStart = Date.now();
 
-			// Cache the result
-			this.urlCache.set(accountId, channelId, result.url, result.type, result.expiresAt);
+		// Fetch the stream - try minimal headers first
+		// Some IPTV servers reject requests with STB-specific headers
+		const response = await fetch(streamUrl, {
+			headers: {
+				'User-Agent': PROXY_USER_AGENT,
+				Accept: '*/*'
+			},
+			redirect: 'follow'
+		});
 
-			logger.debug('[StalkerStreamService] Stream resolved', {
+		const fetchMs = Date.now() - fetchStart;
+
+		if (!response.ok) {
+			logger.error('[StalkerStreamService] Stream fetch failed', {
 				lineupItemId,
 				accountId,
-				channelId,
-				type: result.type,
-				fromCache: false
+				streamUrl,
+				status: response.status,
+				statusText: response.statusText,
+				fetchMs
 			});
-
-			return {
-				url: result.url,
-				type: result.type,
-				accountId,
-				channelId,
-				lineupItemId,
-				fromCache: false
-			};
-		} finally {
-			// Always release the client back to the pool
-			this.clientPool.release(accountId);
+			throw new Error(`Upstream error: ${response.status}`);
 		}
+
+		logger.debug('[StalkerStreamService] Stream fetched successfully', {
+			lineupItemId,
+			accountId,
+			type,
+			fetchMs
+		});
+
+		return {
+			response,
+			url: streamUrl,
+			type,
+			accountId,
+			channelId,
+			lineupItemId
+		};
 	}
 
 	/**
-	 * Check if an error is auth-related
+	 * Get or create an authenticated client for an account
 	 */
-	private isAuthError(error: unknown): boolean {
-		if (error instanceof Error) {
-			const msg = error.message.toLowerCase();
-			return (
-				msg.includes('token') ||
-				msg.includes('auth') ||
-				msg.includes('unauthorized') ||
-				msg.includes('forbidden') ||
-				msg.includes('403') ||
-				msg.includes('401')
-			);
+	private async getClient(accountId: string): Promise<StalkerPortalClient> {
+		// Check cache
+		const cached = this.clients.get(accountId);
+		if (cached && cached.isAuthenticated()) {
+			return cached;
 		}
-		return false;
+
+		// Get account from database (raw record to access all fields)
+		const account = db
+			.select()
+			.from(stalkerAccounts)
+			.where(eq(stalkerAccounts.id, accountId))
+			.get();
+
+		if (!account) {
+			throw this.createError('ACCOUNT_NOT_FOUND', `Account not found: ${accountId}`, accountId);
+		}
+
+		if (!account.enabled) {
+			throw this.createError('ACCOUNT_NOT_FOUND', `Account is disabled: ${accountId}`, accountId);
+		}
+
+		// Create and authenticate new client
+		const config = this.buildClientConfig(account);
+		const client = new StalkerPortalClient(config);
+
+		await client.start();
+
+		// Cache the authenticated client
+		this.clients.set(accountId, client);
+
+		// Save updated token to database if it changed
+		const newToken = client.getToken();
+		if (newToken !== account.token) {
+			await getStalkerAccountManager().updateAccountToken(accountId, newToken);
+		}
+
+		return client;
+	}
+
+	/**
+	 * Build client config from account record
+	 */
+	private buildClientConfig(account: StalkerAccountRecord): StalkerPortalConfig {
+		return {
+			portalUrl: account.portalUrl,
+			macAddress: account.macAddress,
+			serialNumber: account.serialNumber || this.generateSerialNumber(),
+			deviceId: account.deviceId || this.generateDeviceId(),
+			deviceId2: account.deviceId2 || this.generateDeviceId(),
+			model: account.model || 'MAG254',
+			timezone: account.timezone || 'Europe/London',
+			token: account.token || undefined,
+			username: account.username || undefined,
+			password: account.password || undefined
+		};
+	}
+
+	/**
+	 * Generate a random serial number (like MAG devices use)
+	 */
+	private generateSerialNumber(): string {
+		const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+		let sn = '';
+		for (let i = 0; i < 12; i++) {
+			sn += chars[Math.floor(Math.random() * chars.length)];
+		}
+		return sn;
+	}
+
+	/**
+	 * Generate a random device ID (like MAG devices use)
+	 */
+	private generateDeviceId(): string {
+		const chars = 'ABCDEF0123456789';
+		let id = '';
+		for (let i = 0; i < 32; i++) {
+			id += chars[Math.floor(Math.random() * chars.length)];
+		}
+		return id;
+	}
+
+	/**
+	 * Extract the playable URL from the channel cmd field.
+	 * The cmd format is typically "ffmpeg http://..." or just the URL.
+	 */
+	private extractUrlFromCmd(cmd: string): string | null {
+		if (!cmd) return null;
+
+		const trimmed = cmd.trim();
+
+		// If it starts with http, it's already a URL
+		if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+			return trimmed;
+		}
+
+		// Otherwise extract URL from "ffmpeg URL" or similar format
+		const parts = trimmed.split(/\s+/);
+		for (const part of parts) {
+			if (part.startsWith('http://') || part.startsWith('https://')) {
+				return part;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Detect stream type from URL
+	 */
+	private detectStreamType(url: string): 'hls' | 'direct' | 'unknown' {
+		const lowerUrl = url.toLowerCase();
+		if (lowerUrl.includes('.m3u8') || lowerUrl.includes('/hls/')) {
+			return 'hls';
+		}
+		if (lowerUrl.includes('.ts') || lowerUrl.includes('.mp4')) {
+			return 'direct';
+		}
+		return 'unknown';
 	}
 
 	/**
 	 * Create a typed stream error
 	 */
 	private createError(
-		code: StreamErrorCode,
+		code: StreamError['code'],
 		message: string,
 		accountId?: string,
 		channelId?: string,
 		attempts?: number
-	): StreamError & Error {
-		const error = new Error(message) as StreamError & Error;
+	): StreamError {
+		const error = new Error(message) as StreamError;
 		error.code = code;
 		error.accountId = accountId;
 		error.channelId = channelId;
@@ -227,18 +359,17 @@ export class StalkerStreamService {
 	}
 
 	/**
-	 * Invalidate cached URL for a specific channel
+	 * Invalidate cached client for an account
 	 */
-	invalidateChannel(accountId: string, channelId: string): void {
-		this.urlCache.invalidate(accountId, channelId);
+	invalidateAccount(accountId: string): void {
+		this.clients.delete(accountId);
 	}
 
 	/**
-	 * Invalidate all cached URLs for an account
+	 * Invalidate all cached clients
 	 */
-	invalidateAccount(accountId: string): void {
-		this.urlCache.invalidateAccount(accountId);
-		this.clientPool.invalidate(accountId);
+	invalidateAll(): void {
+		this.clients.clear();
 	}
 
 	/**
@@ -246,26 +377,13 @@ export class StalkerStreamService {
 	 */
 	getMetrics(): {
 		totalResolutions: number;
-		cacheHits: number;
-		cacheMisses: number;
-		cacheHitRate: number;
 		failovers: number;
-		cacheStats: { size: number; hits: number; misses: number; hitRate: number };
-		poolStats: {
-			pooledClients: number;
-			totalInUse: number;
-			accounts: Array<{ accountId: string; inUse: number; lastAuthAt: number }>;
-		};
+		cachedClients: number;
 	} {
-		const total = this.cacheHits + this.cacheMisses;
 		return {
 			totalResolutions: this.totalResolutions,
-			cacheHits: this.cacheHits,
-			cacheMisses: this.cacheMisses,
-			cacheHitRate: total > 0 ? this.cacheHits / total : 0,
 			failovers: this.failovers,
-			cacheStats: this.urlCache.getStats(),
-			poolStats: this.clientPool.getStats()
+			cachedClients: this.clients.size
 		};
 	}
 
@@ -273,8 +391,7 @@ export class StalkerStreamService {
 	 * Shutdown service - cleanup resources
 	 */
 	shutdown(): void {
-		this.urlCache.stop();
-		this.clientPool.invalidateAll();
+		this.clients.clear();
 		logger.info('[StalkerStreamService] Service shutdown');
 	}
 }

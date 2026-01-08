@@ -810,6 +810,11 @@ export type MediaBrowserServerTest = z.infer<typeof mediaBrowserServerTestSchema
 const MAC_ADDRESS_REGEX = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/;
 
 /**
+ * Timezone format regex (e.g., Europe/London, America/New_York)
+ */
+const TIMEZONE_REGEX = /^[a-zA-Z_]+\/[a-zA-Z_]+$/;
+
+/**
  * Schema for creating a Stalker Portal account.
  */
 export const stalkerAccountCreateSchema = z.object({
@@ -832,13 +837,47 @@ export const stalkerAccountCreateSchema = z.object({
 	macAddress: z.string().regex(MAC_ADDRESS_REGEX, {
 		message: 'Invalid MAC address format (expected XX:XX:XX:XX:XX:XX)'
 	}),
-	enabled: z.boolean().default(true)
+	enabled: z.boolean().default(true),
+	// Device parameters (optional - will be auto-generated if not provided)
+	serialNumber: z.string().max(50).optional(),
+	deviceId: z.string().max(50).optional(),
+	deviceId2: z.string().max(50).optional(),
+	model: z.string().max(50).default('MAG254'),
+	timezone: z
+		.string()
+		.regex(TIMEZONE_REGEX, { message: 'Invalid timezone format (expected Region/City)' })
+		.default('Europe/London'),
+	// Optional credentials
+	username: z.string().max(100).optional(),
+	password: z.string().max(100).optional()
 });
 
 /**
  * Schema for updating a Stalker Portal account.
  */
-export const stalkerAccountUpdateSchema = stalkerAccountCreateSchema.partial();
+export const stalkerAccountUpdateSchema = z.object({
+	name: z.string().min(1).max(100).optional(),
+	portalUrl: z.string().url().optional(),
+	macAddress: z
+		.string()
+		.regex(MAC_ADDRESS_REGEX, {
+			message: 'Invalid MAC address format (expected XX:XX:XX:XX:XX:XX)'
+		})
+		.optional(),
+	enabled: z.boolean().optional(),
+	// Device parameters
+	serialNumber: z.string().max(50).optional(),
+	deviceId: z.string().max(50).optional(),
+	deviceId2: z.string().max(50).optional(),
+	model: z.string().max(50).optional(),
+	timezone: z
+		.string()
+		.regex(TIMEZONE_REGEX, { message: 'Invalid timezone format (expected Region/City)' })
+		.optional(),
+	// Credentials
+	username: z.string().max(100).optional(),
+	password: z.string().max(100).optional()
+});
 
 /**
  * Schema for testing a Stalker Portal account connection.
@@ -847,7 +886,16 @@ export const stalkerAccountTestSchema = z.object({
 	portalUrl: z.string().url('Must be a valid URL'),
 	macAddress: z.string().regex(MAC_ADDRESS_REGEX, {
 		message: 'Invalid MAC address format (expected XX:XX:XX:XX:XX:XX)'
-	})
+	}),
+	// Device parameters (optional - will be auto-generated if not provided)
+	serialNumber: z.string().max(50).optional(),
+	deviceId: z.string().max(50).optional(),
+	deviceId2: z.string().max(50).optional(),
+	model: z.string().max(50).optional(),
+	timezone: z.string().optional(),
+	// Optional credentials
+	username: z.string().max(100).optional(),
+	password: z.string().max(100).optional()
 });
 
 // Stalker Account Type Exports

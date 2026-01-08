@@ -11,14 +11,15 @@ import type { RequestHandler } from './$types';
 import { getBaseUrlAsync } from '$lib/server/streaming/url';
 import { isUrlSafe, fetchWithTimeout } from '$lib/server/http/ssrf-protection';
 import { logger } from '$lib/logging';
-import {
-	LIVETV_SEGMENT_FETCH_TIMEOUT_MS,
-	LIVETV_SEGMENT_MAX_SIZE,
-	LIVETV_SEGMENT_CACHE_MAX_AGE,
-	LIVETV_MAX_RETRIES,
-	LIVETV_RETRY_BASE_DELAY_MS,
-	LIVETV_PROXY_USER_AGENT
-} from '$lib/server/livetv/streaming/constants';
+
+// Streaming constants
+const LIVETV_SEGMENT_FETCH_TIMEOUT_MS = 15000; // Fail faster for quicker retry/failover
+const LIVETV_SEGMENT_MAX_SIZE = 50 * 1024 * 1024; // 50MB
+const LIVETV_SEGMENT_CACHE_MAX_AGE = 60; // Segments are immutable once created
+const LIVETV_MAX_RETRIES = 3;
+const LIVETV_RETRY_BASE_DELAY_MS = 1000;
+const LIVETV_PROXY_USER_AGENT =
+	'Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 4 rev: 2116 Mobile Safari/533.3';
 
 /**
  * Fetch with retry logic for transient errors
@@ -65,7 +66,8 @@ function getStreamHeaders(): HeadersInit {
 	return {
 		'User-Agent': LIVETV_PROXY_USER_AGENT,
 		Accept: '*/*',
-		'Accept-Encoding': 'identity'
+		'Accept-Encoding': 'identity',
+		Connection: 'keep-alive'
 	};
 }
 

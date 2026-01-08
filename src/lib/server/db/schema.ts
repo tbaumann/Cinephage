@@ -2261,6 +2261,18 @@ export const stalkerAccounts = sqliteTable(
 		macAddress: text('mac_address').notNull(),
 		enabled: integer('enabled', { mode: 'boolean' }).default(true),
 
+		// Device parameters for STB emulation (required for Stalker protocol)
+		serialNumber: text('serial_number'),
+		deviceId: text('device_id'),
+		deviceId2: text('device_id2'),
+		model: text('model').default('MAG254'),
+		timezone: text('timezone').default('Europe/London'),
+		token: text('token'), // Cached session token
+
+		// Optional credentials (alternative to device ID auth)
+		username: text('username'),
+		password: text('password'),
+
 		// Metadata from portal (fetched on test/save)
 		playbackLimit: integer('playback_limit'),
 		channelCount: integer('channel_count'),

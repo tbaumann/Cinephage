@@ -15,7 +15,8 @@ import {
 	type StalkerChannelRecord
 } from '$lib/server/db/schema';
 import { logger } from '$lib/logging';
-import { createStalkerClient } from './StalkerPortalClient';
+import { StalkerPortalClient, type StalkerPortalConfig } from './StalkerPortalClient';
+import { getEpgService } from '../epg';
 import type { ChannelSyncResult, StalkerCategory, StalkerChannel } from '$lib/types/livetv';
 import { randomUUID } from 'crypto';
 
@@ -58,7 +59,22 @@ export class StalkerChannelSyncService {
 			.run();
 
 		try {
-			const client = createStalkerClient(account.portalUrl, account.macAddress);
+			// Build client config from account record
+			const config: StalkerPortalConfig = {
+				portalUrl: account.portalUrl,
+				macAddress: account.macAddress,
+				serialNumber: account.serialNumber || this.generateSerialNumber(),
+				deviceId: account.deviceId || this.generateDeviceId(),
+				deviceId2: account.deviceId2 || this.generateDeviceId(),
+				model: account.model || 'MAG254',
+				timezone: account.timezone || 'Europe/London',
+				token: account.token || undefined,
+				username: account.username || undefined,
+				password: account.password || undefined
+			};
+
+			const client = new StalkerPortalClient(config);
+			await client.start();
 
 			// Fetch categories
 			logger.info('[StalkerChannelSync] Fetching categories', { accountId, name: account.name });
@@ -119,6 +135,21 @@ export class StalkerChannelSyncService {
 				accountId,
 				name: account.name,
 				...result
+			});
+
+			// Trigger EPG sync for this account (fire-and-forget)
+			const epgService = getEpgService();
+			setImmediate(() => {
+				logger.info('[StalkerChannelSync] Triggering EPG sync after channel sync', {
+					accountId,
+					name: account.name
+				});
+				epgService.syncAccount(accountId).catch((err) => {
+					logger.error('[StalkerChannelSync] EPG sync failed', {
+						accountId,
+						error: err instanceof Error ? err.message : 'Unknown error'
+					});
+				});
 			});
 
 			return result;
@@ -456,6 +487,30 @@ export class StalkerChannelSyncService {
 			.all();
 
 		return accounts.map((a) => a.id);
+	}
+
+	/**
+	 * Generate a random serial number
+	 */
+	private generateSerialNumber(): string {
+		const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+		let sn = '';
+		for (let i = 0; i < 12; i++) {
+			sn += chars[Math.floor(Math.random() * chars.length)];
+		}
+		return sn;
+	}
+
+	/**
+	 * Generate a random device ID
+	 */
+	private generateDeviceId(): string {
+		const chars = 'ABCDEF0123456789';
+		let id = '';
+		for (let i = 0; i < 32; i++) {
+			id += chars[Math.floor(Math.random() * chars.length)];
+		}
+		return id;
 	}
 }
 

@@ -13,6 +13,16 @@ export interface StalkerAccount {
 	portalUrl: string;
 	macAddress: string;
 	enabled: boolean;
+	// Device parameters for STB emulation
+	serialNumber?: string;
+	deviceId?: string;
+	deviceId2?: string;
+	model: string;
+	timezone: string;
+	// Credentials (password not exposed)
+	username?: string;
+	hasPassword: boolean;
+	// Metadata from portal
 	playbackLimit: number | null;
 	channelCount: number | null;
 	categoryCount: number | null;
@@ -37,6 +47,15 @@ export interface StalkerAccountInput {
 	portalUrl: string;
 	macAddress: string;
 	enabled?: boolean;
+	// Device parameters (optional - will be auto-generated if not provided)
+	serialNumber?: string;
+	deviceId?: string;
+	deviceId2?: string;
+	model?: string;
+	timezone?: string;
+	// Optional credentials
+	username?: string;
+	password?: string;
 }
 
 /**
@@ -47,6 +66,15 @@ export interface StalkerAccountUpdate {
 	portalUrl?: string;
 	macAddress?: string;
 	enabled?: boolean;
+	// Device parameters
+	serialNumber?: string;
+	deviceId?: string;
+	deviceId2?: string;
+	model?: string;
+	timezone?: string;
+	// Credentials
+	username?: string;
+	password?: string;
 }
 
 /**
@@ -55,6 +83,15 @@ export interface StalkerAccountUpdate {
 export interface StalkerAccountTestConfig {
 	portalUrl: string;
 	macAddress: string;
+	// Device parameters (optional - will be auto-generated if not provided)
+	serialNumber?: string;
+	deviceId?: string;
+	deviceId2?: string;
+	model?: string;
+	timezone?: string;
+	// Optional credentials
+	username?: string;
+	password?: string;
 }
 
 /**

@@ -44,8 +44,9 @@ import { logger } from '$lib/logging';
  * Version 27: Added channel_lineup_backups table for backup channel sources
  * Version 28: Dropped old live_tv_settings table (replaced by EPG scheduler settings)
  * Version 29: Clean break migration - drops all orphaned Live TV tables from intermediate rewrites
+ * Version 30: Add device parameters to stalker_accounts for proper Stalker protocol support
  */
-export const CURRENT_SCHEMA_VERSION = 29;
+export const CURRENT_SCHEMA_VERSION = 30;
 
 /**
  * All table definitions with CREATE TABLE IF NOT EXISTS
@@ -776,6 +777,14 @@ const TABLE_DEFINITIONS: string[] = [
 		"portal_url" text NOT NULL,
 		"mac_address" text NOT NULL,
 		"enabled" integer DEFAULT 1,
+		"serial_number" text,
+		"device_id" text,
+		"device_id2" text,
+		"model" text DEFAULT 'MAG254',
+		"timezone" text DEFAULT 'Europe/London',
+		"token" text,
+		"username" text,
+		"password" text,
 		"playback_limit" integer,
 		"channel_count" integer,
 		"category_count" integer,
@@ -2302,6 +2311,43 @@ const SCHEMA_UPDATES: Record<number, (sqlite: Database.Database) => void> = {
 		if (droppedCount > 0) {
 			logger.info(`[SchemaSync] Dropped ${droppedCount} orphaned Live TV tables`);
 		}
+	},
+
+	// Version 30: Add device parameters to stalker_accounts for proper Stalker protocol support
+	30: (sqlite) => {
+		// Add device emulation parameters
+		if (!columnExists(sqlite, 'stalker_accounts', 'serial_number')) {
+			sqlite.prepare(`ALTER TABLE "stalker_accounts" ADD COLUMN "serial_number" text`).run();
+		}
+		if (!columnExists(sqlite, 'stalker_accounts', 'device_id')) {
+			sqlite.prepare(`ALTER TABLE "stalker_accounts" ADD COLUMN "device_id" text`).run();
+		}
+		if (!columnExists(sqlite, 'stalker_accounts', 'device_id2')) {
+			sqlite.prepare(`ALTER TABLE "stalker_accounts" ADD COLUMN "device_id2" text`).run();
+		}
+		if (!columnExists(sqlite, 'stalker_accounts', 'model')) {
+			sqlite
+				.prepare(`ALTER TABLE "stalker_accounts" ADD COLUMN "model" text DEFAULT 'MAG254'`)
+				.run();
+		}
+		if (!columnExists(sqlite, 'stalker_accounts', 'timezone')) {
+			sqlite
+				.prepare(
+					`ALTER TABLE "stalker_accounts" ADD COLUMN "timezone" text DEFAULT 'Europe/London'`
+				)
+				.run();
+		}
+		if (!columnExists(sqlite, 'stalker_accounts', 'token')) {
+			sqlite.prepare(`ALTER TABLE "stalker_accounts" ADD COLUMN "token" text`).run();
+		}
+		// Add optional credentials
+		if (!columnExists(sqlite, 'stalker_accounts', 'username')) {
+			sqlite.prepare(`ALTER TABLE "stalker_accounts" ADD COLUMN "username" text`).run();
+		}
+		if (!columnExists(sqlite, 'stalker_accounts', 'password')) {
+			sqlite.prepare(`ALTER TABLE "stalker_accounts" ADD COLUMN "password" text`).run();
+		}
+		logger.info('[SchemaSync] Added device parameters to stalker_accounts for Stalker protocol');
 	}
 };
 

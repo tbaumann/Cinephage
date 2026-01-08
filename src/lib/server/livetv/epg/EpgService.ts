@@ -15,7 +15,7 @@ import {
 	type EpgProgramRecord
 } from '$lib/server/db/schema';
 import { logger } from '$lib/logging';
-import { createStalkerClient } from '../stalker/StalkerPortalClient';
+import { StalkerPortalClient, type StalkerPortalConfig } from '../stalker/StalkerPortalClient';
 import type {
 	EpgProgram,
 	EpgProgramWithProgress,
@@ -71,7 +71,22 @@ export class EpgService {
 		try {
 			logger.info('[EpgService] Starting EPG sync', { accountId, name: account.name });
 
-			const client = createStalkerClient(account.portalUrl, account.macAddress);
+			// Build client config from account record
+			const config: StalkerPortalConfig = {
+				portalUrl: account.portalUrl,
+				macAddress: account.macAddress,
+				serialNumber: account.serialNumber || this.generateSerialNumber(),
+				deviceId: account.deviceId || this.generateDeviceId(),
+				deviceId2: account.deviceId2 || this.generateDeviceId(),
+				model: account.model || 'MAG254',
+				timezone: account.timezone || 'Europe/London',
+				token: account.token || undefined,
+				username: account.username || undefined,
+				password: account.password || undefined
+			};
+
+			const client = new StalkerPortalClient(config);
+			await client.start();
 
 			// Fetch EPG data from portal
 			const epgData = await client.getEpgInfo(DEFAULT_LOOKAHEAD_HOURS);
@@ -531,6 +546,30 @@ export class EpgService {
 			isLive: true,
 			remainingMinutes
 		};
+	}
+
+	/**
+	 * Generate a random serial number
+	 */
+	private generateSerialNumber(): string {
+		const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+		let sn = '';
+		for (let i = 0; i < 12; i++) {
+			sn += chars[Math.floor(Math.random() * chars.length)];
+		}
+		return sn;
+	}
+
+	/**
+	 * Generate a random device ID
+	 */
+	private generateDeviceId(): string {
+		const chars = 'ABCDEF0123456789';
+		let id = '';
+		for (let i = 0; i < 32; i++) {
+			id += chars[Math.floor(Math.random() * chars.length)];
+		}
+		return id;
 	}
 }
 
