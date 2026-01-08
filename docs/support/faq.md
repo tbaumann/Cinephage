@@ -10,6 +10,10 @@ Quick answers to common questions about Cinephage.
 
 Cinephage is a self-hosted media management application that combines the functionality of Radarr, Sonarr, Prowlarr, and Bazarr into a single app. It handles content discovery, searching, downloading, and subtitle management from one interface backed by a single database.
 
+### Does Cinephage host any content?
+
+No. Cinephage is purely a media manager and aggregator. It does not host, store, or distribute any media content. It simply helps you organize your existing library and search external indexers and sources that you configure. What you do with the software is your responsibility.
+
 ### What stage of development is it in?
 
 Cinephage is in **Alpha**. Core features work but may have bugs, and breaking changes may occur between updates.
@@ -235,6 +239,22 @@ sudo systemctl restart cinephage
 ### Will updates break my configuration?
 
 During alpha, breaking changes may occur. Always backup `data/cinephage.db` before updating.
+
+---
+
+## Live TV / IPTV
+
+### How does Live TV work?
+
+Cinephage can integrate with Stalker portals that you provide. It does not include or provide access to any IPTV services or content.
+
+### Why is Live TV support limited?
+
+IPTV/Stalker portal functionality depends entirely on external services that Cinephage has no control over. Since we don't host anything and these services vary widely, support is limited. We'll do our best to help, but issues with your portal or provider are outside our scope.
+
+### My portal isn't working. Can you help?
+
+We can help with Cinephage-specific issues (configuration, UI bugs, etc.), but we cannot troubleshoot your portal credentials, provider issues, or service availability. Those are between you and your provider.
 
 ---
 

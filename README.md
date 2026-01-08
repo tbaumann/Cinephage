@@ -61,7 +61,7 @@ Cinephage takes a unified approach to media management. Movies, TV shows, indexe
 | Smart Lists        | Stable       | Dynamic TMDB queries with auto-add to library        |
 | Monitoring         | Experimental | Automated searches, upgrades, new episode detection  |
 | Notifications      | Stable       | Jellyfin/Emby library update integration             |
-| Live TV/IPTV       | In Progress  | Stalker portal with scanner, EPG, channel management |
+| Live TV/IPTV       | Experimental | Stalker portal with scanner, EPG (limited support)   |
 
 ---
 
@@ -163,7 +163,7 @@ See [Setup Wizard](docs/getting-started/setup-wizard.md) for detailed configurat
 - **Monitoring** — 7 automated tasks for missing content, quality upgrades, and new episodes
 - **Smart Lists** — Dynamic TMDB queries (trending, genres, ratings) with auto-add to library
 - **Notifications** — Jellyfin/Emby library update integration
-- **Live TV** — Stalker portal integration with portal scanner, EPG, and channel management (in progress)
+- **Live TV** — Stalker portal integration with portal scanner, EPG, and channel management (experimental, limited support)
 
 See [Documentation](docs/INDEX.md) for full details.
 
@@ -224,6 +224,14 @@ Cinephage draws inspiration from the architecture of [Radarr](https://github.com
 ## AI Disclosure
 
 This project was built with and continues to use AI assistance. As a solo developer who's still learning, AI makes it possible to tackle a project of this scope — something that would otherwise require a team. It's a personal project, and AI is a tool that helps bridge the gap between ambition and experience. It's not perfect, but neither am I. We believe in being upfront about how this project is built.
+
+## Legal Notice
+
+Cinephage is a media management and aggregation tool. It does not host, store, or distribute any media content. Cinephage simply helps you organize your existing library and search external indexers and sources that you configure. What you do with this software is your responsibility.
+
+**Live TV / IPTV**: This feature integrates with Stalker portals that you provide. Cinephage does not provide access to any IPTV services or content. Support for this feature is limited as it depends entirely on external services outside our control.
+
+---
 
 ## License
 
