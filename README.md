@@ -229,7 +229,7 @@ This project was built with and continues to use AI assistance. As a solo develo
 
 Cinephage is a media management and aggregation tool. It does not host, store, or distribute any media content. Cinephage simply helps you organize your existing library and search external indexers and sources that you configure. What you do with this software is your responsibility.
 
-**Live TV / IPTV**: This feature integrates with Stalker portals that you provide. Cinephage does not provide access to any IPTV services or content. Support for this feature is limited as it depends entirely on external services outside our control.
+**Live TV / IPTV**: Cinephage can discover and integrate with Stalker portals, but does not host or control any IPTV content. All streams come from external services. Support for this feature is limited as functionality depends entirely on third-party services outside our control.
 
 ---
 

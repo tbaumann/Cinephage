@@ -246,7 +246,7 @@ During alpha, breaking changes may occur. Always backup `data/cinephage.db` befo
 
 ### How does Live TV work?
 
-Cinephage can integrate with Stalker portals that you provide. It does not include or provide access to any IPTV services or content.
+Cinephage can discover and integrate with Stalker portals. The portal scanner can find working accounts, but all content comes from external services that Cinephage does not host or control.
 
 ### Why is Live TV support limited?
 
