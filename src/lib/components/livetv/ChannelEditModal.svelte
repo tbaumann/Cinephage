@@ -19,7 +19,6 @@
 		UpdateChannelRequest,
 		ChannelBackupLink
 	} from '$lib/types/livetv';
-	import { SectionHeader } from '$lib/components/ui/modal';
 
 	interface Props {
 		open: boolean;
@@ -60,6 +59,10 @@
 	let loadingBackups = $state(false);
 	let backupError = $state<string | null>(null);
 	let backupSaving = $state(false);
+
+	// Collapse state
+	let technicalDetailsOpen = $state(false);
+	let backupsOpen = $state(false);
 
 	// Copy state for stream command
 	let copiedCmd = $state(false);
@@ -193,6 +196,8 @@
 			epgSourceChannelId = channel.epgSourceChannelId;
 			backupError = null;
 			copiedCmd = false;
+			technicalDetailsOpen = false;
+			backupsOpen = false;
 			loadBackups();
 		}
 	});
@@ -241,33 +246,33 @@
 
 {#if open && channel}
 	<div class="modal-open modal">
-		<div class="modal-box max-h-[90vh] max-w-3xl overflow-y-auto">
+		<div class="modal-box max-h-[90vh] max-w-xl overflow-y-auto">
 			<!-- Header -->
-			<div class="mb-6 flex items-center justify-between">
-				<h3 class="text-xl font-bold">Edit Channel</h3>
+			<div class="mb-4 flex items-center justify-between">
+				<h3 class="text-lg font-bold">Edit Channel</h3>
 				<button class="btn btn-circle btn-ghost btn-sm" onclick={onClose}>
 					<X class="h-4 w-4" />
 				</button>
 			</div>
 
 			<!-- Channel Info Banner -->
-			<div class="mb-6 flex items-center gap-4 rounded-lg bg-base-200 px-4 py-3">
+			<div class="mb-6 flex items-center gap-3 rounded-lg bg-base-200 p-3">
 				{#if channel.displayLogo}
 					<img
 						src={channel.displayLogo}
 						alt=""
-						class="h-14 w-14 rounded-lg bg-base-300 object-contain"
+						class="h-12 w-12 rounded-lg bg-base-300 object-contain"
 					/>
 				{:else}
-					<div class="flex h-14 w-14 items-center justify-center rounded-lg bg-base-300">
-						<Tv class="h-7 w-7 text-base-content/30" />
+					<div class="flex h-12 w-12 items-center justify-center rounded-lg bg-base-300">
+						<Tv class="h-6 w-6 text-base-content/30" />
 					</div>
 				{/if}
-				<div class="flex-1">
+				<div class="min-w-0 flex-1">
 					<div class="flex items-center gap-2">
-						<span class="font-semibold">{channel.channel.name}</span>
+						<span class="truncate font-medium">{channel.channel.name}</span>
 						{#if channel.channel.tvArchive}
-							<span class="badge gap-1 badge-sm badge-info">
+							<span class="badge gap-1 badge-xs badge-info">
 								<Archive class="h-3 w-3" />
 								Archive
 							</span>
@@ -279,7 +284,7 @@
 
 			<!-- Error -->
 			{#if error}
-				<div class="mb-6 alert alert-error">
+				<div class="mb-4 alert alert-error">
 					<AlertCircle class="h-5 w-5" />
 					<div>
 						<div class="font-medium">Failed to save</div>
@@ -288,189 +293,144 @@
 				</div>
 			{/if}
 
-			<!-- Display Settings Section -->
-			<div class="space-y-4">
-				<SectionHeader title="Display Settings" />
-
-				<div class="grid grid-cols-2 gap-6">
-					<!-- Channel Number -->
-					<div class="form-control">
-						<label class="label" for="channelNumber">
-							<span class="label-text font-medium">Channel Number</span>
-						</label>
-						<input
-							type="number"
-							id="channelNumber"
-							class="input-bordered input {channelNumberError ? 'input-error' : ''}"
-							bind:value={channelNumber}
-							placeholder={String(channel.position)}
-							min="1"
-						/>
-						<div class="label">
-							<span class="label-text-alt text-base-content/60">
-								{#if channelNumberError}
-									<span class="text-error">{channelNumberError}</span>
-								{:else}
-									Display number in your lineup
-								{/if}
-							</span>
-						</div>
-					</div>
-
-					<!-- Category -->
-					<div class="form-control">
-						<label class="label" for="category">
-							<span class="label-text font-medium">Category</span>
-						</label>
-						<select id="category" class="select-bordered select" bind:value={categoryId}>
-							<option value={null}>Uncategorized</option>
-							{#each categories as cat (cat.id)}
-								<option value={cat.id}>{cat.name}</option>
-							{/each}
-						</select>
-						<div class="label">
-							<span class="label-text-alt text-base-content/60">Group channels together</span>
-						</div>
-					</div>
-
-					<!-- Custom Name -->
-					<div class="form-control">
-						<label class="label" for="customName">
-							<span class="label-text font-medium">Custom Name</span>
-						</label>
-						<input
-							type="text"
-							id="customName"
-							class="input-bordered input"
-							bind:value={customName}
-							placeholder={channel.channel.name}
-						/>
-						<div class="label">
-							<span class="label-text-alt text-base-content/60">Override the channel name</span>
-						</div>
-					</div>
-
-					<!-- EPG ID -->
-					<div class="form-control">
-						<label class="label" for="epgId">
-							<span class="label-text font-medium">EPG ID</span>
-						</label>
-						<input
-							type="text"
-							id="epgId"
-							class="input-bordered input"
-							bind:value={epgId}
-							placeholder="XMLTV channel ID"
-						/>
-						<div class="label">
-							<span class="label-text-alt text-base-content/60">Match with EPG guide data</span>
-						</div>
-					</div>
+			<!-- Form -->
+			<div class="space-y-3">
+				<!-- Channel Number -->
+				<div>
+					<label class="mb-1 block text-sm text-base-content/70" for="channelNumber">
+						Channel Number
+					</label>
+					<input
+						type="number"
+						id="channelNumber"
+						class="input-bordered input input-sm w-full {channelNumberError ? 'input-error' : ''}"
+						bind:value={channelNumber}
+						placeholder={String(channel.position)}
+						min="1"
+					/>
+					{#if channelNumberError}
+						<p class="mt-1 text-xs text-error">{channelNumberError}</p>
+					{/if}
 				</div>
-			</div>
 
-			<!-- Logo Section -->
-			<div class="mt-6 space-y-4">
-				<SectionHeader title="Logo" />
+				<!-- Custom Name -->
+				<div>
+					<label class="mb-1 block text-sm text-base-content/70" for="customName">
+						Custom Name
+					</label>
+					<input
+						type="text"
+						id="customName"
+						class="input-bordered input input-sm w-full"
+						bind:value={customName}
+						placeholder={channel.channel.name}
+					/>
+				</div>
 
-				<div class="grid grid-cols-2 gap-6">
-					<div class="form-control">
-						<label class="label" for="customLogo">
-							<span class="label-text font-medium">Custom Logo URL</span>
-						</label>
+				<!-- Category -->
+				<div>
+					<label class="mb-1 block text-sm text-base-content/70" for="category">
+						Category
+					</label>
+					<select
+						id="category"
+						class="select-bordered select select-sm w-full"
+						bind:value={categoryId}
+					>
+						<option value={null}>Uncategorized</option>
+						{#each categories as cat (cat.id)}
+							<option value={cat.id}>{cat.name}</option>
+						{/each}
+					</select>
+				</div>
+
+				<!-- Custom Logo URL -->
+				<div>
+					<label class="mb-1 block text-sm text-base-content/70" for="customLogo">
+						Custom Logo URL
+					</label>
+					<div class="flex items-center gap-2">
 						<input
 							type="url"
 							id="customLogo"
-							class="input-bordered input {customLogoError ? 'input-error' : ''}"
+							class="input-bordered input input-sm flex-1 {customLogoError ? 'input-error' : ''}"
 							bind:value={customLogo}
 							placeholder="https://..."
 						/>
-						<div class="label">
-							<span class="label-text-alt text-base-content/60">
-								{#if customLogoError}
-									<span class="text-error">{customLogoError}</span>
-								{:else}
-									Leave blank to use original logo
-								{/if}
-							</span>
-						</div>
+						{#if logoPreviewUrl}
+							<img
+								src={logoPreviewUrl}
+								alt="Preview"
+								class="h-8 w-8 rounded bg-base-200 object-contain"
+							/>
+						{:else}
+							<div class="flex h-8 w-8 items-center justify-center rounded bg-base-200">
+								<Tv class="h-4 w-4 text-base-content/30" />
+							</div>
+						{/if}
 					</div>
-
-					<!-- Logo Preview -->
-					<div class="form-control">
-						<label class="label">
-							<span class="label-text font-medium">Preview</span>
-						</label>
-						<div class="flex h-[48px] items-center gap-3 rounded-lg bg-base-200 px-3">
-							{#if logoPreviewUrl}
-								<img
-									src={logoPreviewUrl}
-									alt="Logo preview"
-									class="h-10 w-10 rounded bg-base-300 object-contain"
-								/>
-								<span class="flex-1 truncate text-sm text-base-content/60">
-									{customLogo.trim() ? 'Custom logo' : 'Original logo'}
-								</span>
-							{:else}
-								<div class="flex h-10 w-10 items-center justify-center rounded bg-base-300">
-									<Tv class="h-5 w-5 text-base-content/30" />
-								</div>
-								<span class="text-sm text-base-content/60">No logo available</span>
-							{/if}
-						</div>
-					</div>
+					{#if customLogoError}
+						<p class="mt-1 text-xs text-error">{customLogoError}</p>
+					{/if}
 				</div>
-			</div>
 
-			<!-- EPG Source Override Section -->
-			<div class="mt-6 space-y-4">
-				<SectionHeader title="EPG Source" />
-
-				<div class="form-control">
-					<label class="label">
-						<span class="label-text font-medium">Override EPG Source</span>
+				<!-- EPG ID -->
+				<div>
+					<label class="mb-1 block text-sm text-base-content/70" for="epgId">
+						EPG ID
 					</label>
+					<input
+						type="text"
+						id="epgId"
+						class="input-bordered input input-sm w-full"
+						bind:value={epgId}
+						placeholder="XMLTV channel ID"
+					/>
+					<p class="mt-1 text-xs text-base-content/50">Match with external EPG guide data</p>
+				</div>
 
+				<!-- EPG Source Override -->
+				<div>
+					<label class="mb-1 block text-sm text-base-content/70">
+						EPG Source Override
+					</label>
 					{#if epgSourceChannelId && channel.epgSourceChannel}
-						<div class="flex items-center gap-3 rounded-lg bg-base-200 px-3 py-2">
+						<div class="flex items-center gap-2 rounded-lg bg-base-200 px-3 py-2">
 							{#if channel.epgSourceChannel.logo}
 								<img
 									src={channel.epgSourceChannel.logo}
 									alt=""
-									class="h-10 w-10 rounded bg-base-300 object-contain"
+									class="h-8 w-8 rounded bg-base-300 object-contain"
 								/>
 							{:else}
-								<div class="flex h-10 w-10 items-center justify-center rounded bg-base-300">
-									<Tv class="h-5 w-5 text-base-content/30" />
+								<div class="flex h-8 w-8 items-center justify-center rounded bg-base-300">
+									<Tv class="h-4 w-4 text-base-content/30" />
 								</div>
 							{/if}
 							<div class="min-w-0 flex-1">
-								<div class="truncate font-medium">{channel.epgSourceChannel.name}</div>
+								<div class="truncate text-sm font-medium">{channel.epgSourceChannel.name}</div>
 								<div class="text-xs text-base-content/50">{channel.epgSourceAccountName}</div>
 							</div>
 							<button
 								type="button"
-								class="btn text-error btn-ghost btn-sm"
+								class="btn text-error btn-ghost btn-xs"
 								onclick={clearEpgSource}
-								title="Remove EPG source override"
+								title="Remove"
 							>
 								<X class="h-4 w-4" />
 							</button>
 						</div>
 					{:else if epgSourceChannelId}
-						<!-- EPG source set but channel details not loaded yet -->
-						<div class="flex items-center gap-3 rounded-lg bg-base-200 px-3 py-2">
-							<div class="flex h-10 w-10 items-center justify-center rounded bg-base-300">
-								<Link class="h-5 w-5 text-base-content/30" />
+						<div class="flex items-center gap-2 rounded-lg bg-base-200 px-3 py-2">
+							<div class="flex h-8 w-8 items-center justify-center rounded bg-base-300">
+								<Link class="h-4 w-4 text-base-content/30" />
 							</div>
-							<div class="flex-1">
-								<div class="text-sm text-base-content/60">EPG source selected</div>
-							</div>
+							<div class="flex-1 text-sm text-base-content/60">EPG source selected</div>
 							<button
 								type="button"
-								class="btn text-error btn-ghost btn-sm"
+								class="btn text-error btn-ghost btn-xs"
 								onclick={clearEpgSource}
-								title="Remove EPG source override"
+								title="Remove"
 							>
 								<X class="h-4 w-4" />
 							</button>
@@ -478,177 +438,199 @@
 					{:else}
 						<button
 							type="button"
-							class="btn gap-2 btn-outline btn-sm"
+							class="btn w-full justify-start gap-2 btn-outline btn-sm"
 							onclick={() => onOpenEpgSourcePicker?.(channel.channelId)}
 						>
 							<Link class="h-4 w-4" />
 							Select EPG Source
 						</button>
 					{/if}
-
-					<div class="label">
-						<span class="label-text-alt text-base-content/60">
-							Use EPG data from a different channel (e.g., same channel on another account)
-						</span>
-					</div>
+					<p class="mt-1 text-xs text-base-content/50">Use EPG from another channel</p>
 				</div>
 			</div>
 
-			<!-- Technical Details Section -->
-			<div class="mt-6 space-y-4">
-				<SectionHeader title="Technical Details" />
-
-				<div class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-					<div>
-						<span class="text-base-content/50">Original Name</span>
-						<p class="font-medium">{channel.channel.name}</p>
-					</div>
-					<div>
-						<span class="text-base-content/50">Original Number</span>
-						<p class="font-medium">{channel.channel.number || 'None'}</p>
-					</div>
-					<div>
-						<span class="text-base-content/50">Provider Category</span>
-						<p class="font-medium">{channel.channel.categoryTitle || 'None'}</p>
-					</div>
-					<div>
-						<span class="text-base-content/50">Archive</span>
-						<p class="font-medium">
-							{#if channel.channel.tvArchive}
-								Yes ({formatArchiveDuration(channel.channel.archiveDuration)})
-							{:else}
-								No
-							{/if}
-						</p>
-					</div>
-					<div class="col-span-2">
-						<span class="text-base-content/50">Stream Command</span>
-						<div class="mt-1 flex items-center gap-2">
-							<code
-								class="flex-1 truncate rounded bg-base-200 px-2 py-1 font-mono text-xs"
-								title={channel.channel.cmd}
-							>
-								{channel.channel.cmd}
-							</code>
-							<button
-								type="button"
-								class="btn btn-ghost btn-xs"
-								onclick={copyStreamCommand}
-								title="Copy to clipboard"
-							>
-								{#if copiedCmd}
-									<Check class="h-3.5 w-3.5 text-success" />
+			<!-- Technical Details (collapsible) -->
+			<div class="collapse mt-4 rounded-lg bg-base-200" class:collapse-open={technicalDetailsOpen}>
+				<button
+					type="button"
+					class="collapse-title flex min-h-0 items-center justify-between px-3 py-2 text-sm font-medium"
+					onclick={() => (technicalDetailsOpen = !technicalDetailsOpen)}
+				>
+					<span>Technical Details</span>
+					<ChevronDown
+						class="h-4 w-4 transition-transform {technicalDetailsOpen ? 'rotate-180' : ''}"
+					/>
+				</button>
+				<div class="collapse-content px-3 pb-3">
+					<div class="space-y-2 text-sm">
+						<div class="flex justify-between">
+							<span class="text-base-content/50">Original Name</span>
+							<span class="font-medium">{channel.channel.name}</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-base-content/50">Original Number</span>
+							<span class="font-medium">{channel.channel.number || 'None'}</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-base-content/50">Provider Category</span>
+							<span class="font-medium">{channel.channel.categoryTitle || 'None'}</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-base-content/50">Archive</span>
+							<span class="font-medium">
+								{#if channel.channel.tvArchive}
+									Yes ({formatArchiveDuration(channel.channel.archiveDuration)})
 								{:else}
-									<Copy class="h-3.5 w-3.5" />
+									No
 								{/if}
-							</button>
+							</span>
+						</div>
+						<div>
+							<span class="text-base-content/50">Stream Command</span>
+							<div class="mt-1 flex items-center gap-2">
+								<code
+									class="flex-1 truncate rounded bg-base-300 px-2 py-1 font-mono text-xs"
+									title={channel.channel.cmd}
+								>
+									{channel.channel.cmd}
+								</code>
+								<button
+									type="button"
+									class="btn btn-ghost btn-xs"
+									onclick={copyStreamCommand}
+									title="Copy"
+								>
+									{#if copiedCmd}
+										<Check class="h-3.5 w-3.5 text-success" />
+									{:else}
+										<Copy class="h-3.5 w-3.5" />
+									{/if}
+								</button>
+							</div>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-base-content/50">Account ID</span>
+							<span class="font-mono text-xs">{channel.accountId}</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-base-content/50">Channel ID</span>
+							<span class="font-mono text-xs">{channel.channelId}</span>
 						</div>
 					</div>
-					<div>
-						<span class="text-base-content/50">Account ID</span>
-						<p class="font-mono text-xs">{channel.accountId}</p>
-					</div>
-					<div>
-						<span class="text-base-content/50">Channel ID</span>
-						<p class="font-mono text-xs">{channel.channelId}</p>
-					</div>
 				</div>
 			</div>
 
-			<!-- Backup Sources Section -->
-			<div class="mt-6 space-y-4">
-				<div class="flex items-center justify-between">
-					<SectionHeader title="Backup Sources" class="border-b-0 pb-0" />
+			<!-- Backup Sources (collapsible) -->
+			<div class="collapse mt-2 rounded-lg bg-base-200" class:collapse-open={backupsOpen}>
+				<button
+					type="button"
+					class="collapse-title flex min-h-0 items-center justify-between px-3 py-2 text-sm font-medium"
+					onclick={() => (backupsOpen = !backupsOpen)}
+				>
+					<span class="flex items-center gap-2">
+						Backup Sources
+						{#if backups.length > 0}
+							<span class="badge badge-xs badge-neutral">{backups.length}</span>
+						{/if}
+					</span>
+					<ChevronDown class="h-4 w-4 transition-transform {backupsOpen ? 'rotate-180' : ''}" />
+				</button>
+				<div class="collapse-content px-3 pb-3">
+					{#if backupError}
+						<div class="alert mb-2 py-2 alert-error">
+							<AlertCircle class="h-4 w-4" />
+							<span class="text-sm">{backupError}</span>
+						</div>
+					{/if}
+
+					{#if loadingBackups}
+						<div class="flex justify-center py-3">
+							<Loader2 class="h-5 w-5 animate-spin text-base-content/50" />
+						</div>
+					{:else if backups.length === 0}
+						<p class="py-2 text-xs text-base-content/50">
+							No backups configured. Backups provide failover if the primary stream is unavailable.
+						</p>
+					{:else}
+						<div class="space-y-2">
+							{#each backups as backup, i (backup.id)}
+								<div class="flex items-center gap-2 rounded bg-base-300 px-2 py-1.5">
+									<span class="badge badge-xs badge-neutral">{i + 1}</span>
+									{#if backup.channel.logo}
+										<img
+											src={backup.channel.logo}
+											alt=""
+											class="h-6 w-6 rounded bg-base-100 object-contain"
+										/>
+									{:else}
+										<div class="flex h-6 w-6 items-center justify-center rounded bg-base-100">
+											<Tv class="h-3 w-3 text-base-content/30" />
+										</div>
+									{/if}
+									<div class="min-w-0 flex-1">
+										<span class="block truncate text-xs font-medium">{backup.channel.name}</span>
+										<span class="text-xs text-base-content/50">{backup.accountName}</span>
+									</div>
+									<div class="flex gap-0.5">
+										<button
+											type="button"
+											class="btn btn-ghost btn-xs"
+											onclick={() => moveBackupUp(i)}
+											disabled={i === 0 || backupSaving}
+											title="Move up"
+										>
+											<ChevronUp class="h-3 w-3" />
+										</button>
+										<button
+											type="button"
+											class="btn btn-ghost btn-xs"
+											onclick={() => moveBackupDown(i)}
+											disabled={i >= backups.length - 1 || backupSaving}
+											title="Move down"
+										>
+											<ChevronDown class="h-3 w-3" />
+										</button>
+										<button
+											type="button"
+											class="btn text-error btn-ghost btn-xs"
+											onclick={() => removeBackup(backup.id)}
+											title="Remove"
+										>
+											<Trash2 class="h-3 w-3" />
+										</button>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
+
 					{#if onOpenBackupBrowser}
 						<button
 							type="button"
-							class="btn gap-1 btn-ghost btn-sm"
+							class="btn mt-2 gap-1 btn-ghost btn-xs"
 							onclick={() => onOpenBackupBrowser(channel.id, channel.channelId)}
 						>
-							<Plus class="h-4 w-4" />
+							<Plus class="h-3 w-3" />
 							Add Backup
 						</button>
 					{/if}
 				</div>
-
-				{#if backupError}
-					<div class="alert py-2 alert-error">
-						<AlertCircle class="h-4 w-4" />
-						<span class="text-sm">{backupError}</span>
-					</div>
-				{/if}
-
-				{#if loadingBackups}
-					<div class="flex justify-center py-4">
-						<Loader2 class="h-5 w-5 animate-spin text-base-content/50" />
-					</div>
-				{:else if backups.length === 0}
-					<p class="py-2 text-sm text-base-content/50">
-						No backup sources configured. Backups provide failover if the primary stream is
-						unavailable.
-					</p>
-				{:else}
-					<div class="space-y-2">
-						{#each backups as backup, i (backup.id)}
-							<div class="flex items-center gap-3 rounded-lg bg-base-200 px-3 py-2">
-								<span class="badge badge-sm badge-neutral">{i + 1}</span>
-								{#if backup.channel.logo}
-									<img
-										src={backup.channel.logo}
-										alt=""
-										class="h-8 w-8 rounded bg-base-300 object-contain"
-									/>
-								{:else}
-									<div class="flex h-8 w-8 items-center justify-center rounded bg-base-300">
-										<Tv class="h-4 w-4 text-base-content/30" />
-									</div>
-								{/if}
-								<div class="min-w-0 flex-1">
-									<span class="block truncate text-sm font-medium">{backup.channel.name}</span>
-									<span class="text-xs text-base-content/50">{backup.accountName}</span>
-								</div>
-								<div class="flex gap-1">
-									<button
-										type="button"
-										class="btn btn-ghost btn-xs"
-										onclick={() => moveBackupUp(i)}
-										disabled={i === 0 || backupSaving}
-										title="Move up"
-									>
-										<ChevronUp class="h-4 w-4" />
-									</button>
-									<button
-										type="button"
-										class="btn btn-ghost btn-xs"
-										onclick={() => moveBackupDown(i)}
-										disabled={i >= backups.length - 1 || backupSaving}
-										title="Move down"
-									>
-										<ChevronDown class="h-4 w-4" />
-									</button>
-									<button
-										type="button"
-										class="btn text-error btn-ghost btn-xs"
-										onclick={() => removeBackup(backup.id)}
-										title="Remove backup"
-									>
-										<Trash2 class="h-4 w-4" />
-									</button>
-								</div>
-							</div>
-						{/each}
-					</div>
-				{/if}
 			</div>
 
 			<!-- Footer -->
-			<div class="modal-action mt-6">
+			<div class="modal-action mt-4">
 				{#if onDelete}
-					<button class="btn mr-auto btn-outline btn-error" onclick={onDelete}>Delete</button>
+					<button class="btn mr-auto btn-outline btn-error btn-sm" onclick={onDelete}>
+						Delete
+					</button>
 				{/if}
 
-				<button class="btn btn-ghost" onclick={onClose} disabled={saving}>Cancel</button>
-				<button class="btn btn-primary" onclick={handleSubmit} disabled={saving || !isValid}>
+				<button class="btn btn-ghost btn-sm" onclick={onClose} disabled={saving}>Cancel</button>
+				<button
+					class="btn btn-primary btn-sm"
+					onclick={handleSubmit}
+					disabled={saving || !isValid}
+				>
 					{#if saving}
 						<Loader2 class="h-4 w-4 animate-spin" />
 					{/if}
