@@ -4,22 +4,28 @@
 	import type { DownloadClientDefinition } from '$lib/types/downloadClient';
 
 	interface Props {
-		definition: DownloadClientDefinition | null | undefined;
-		movieCategory: string;
-		tvCategory: string;
-		recentPriority: 'normal' | 'high' | 'force';
-		olderPriority: 'normal' | 'high' | 'force';
-		initialState: 'start' | 'pause' | 'force';
-		downloadPathLocal: string;
-		downloadPathRemote: string;
-		tempPathLocal: string;
-		tempPathRemote: string;
-		isSabnzbd: boolean;
-		onBrowse: (field: 'downloadPathLocal' | 'tempPathLocal') => void;
+		definition?: DownloadClientDefinition | null;
+		movieCategory?: string;
+		tvCategory?: string;
+		recentPriority?: 'normal' | 'high' | 'force';
+		olderPriority?: 'normal' | 'high' | 'force';
+		initialState?: 'start' | 'pause' | 'force';
+		downloadPathLocal?: string;
+		downloadPathRemote?: string;
+		tempPathLocal?: string;
+		tempPathRemote?: string;
+		isSabnzbd?: boolean;
+		onBrowse?: (field: 'downloadPathLocal' | 'tempPathLocal') => void;
+		mode?: 'connection' | 'settings';
+		urlBaseEnabled?: boolean;
+		urlBase?: string;
+		urlBaseLabel?: string;
+		urlBaseDescription?: string;
+		urlBasePlaceholder?: string;
 	}
 
 	let {
-		definition,
+		definition = undefined,
 		movieCategory = $bindable(),
 		tvCategory = $bindable(),
 		recentPriority = $bindable(),
@@ -29,179 +35,186 @@
 		downloadPathRemote = $bindable(),
 		tempPathLocal = $bindable(),
 		tempPathRemote = $bindable(),
-		isSabnzbd,
-		onBrowse
+		isSabnzbd = false,
+		onBrowse = () => {},
+		mode = 'settings',
+		urlBaseEnabled = $bindable(),
+		urlBase = $bindable(),
+		urlBaseLabel = 'URL Base',
+		urlBaseDescription = 'Path prefix added after host and port.',
+		urlBasePlaceholder = 'sabnzbd'
 	}: Props = $props();
+
+	const urlBaseToggleId = 'url-base-toggle';
+	const urlBaseInputId = 'url-base-input';
+
+	function handleUrlBaseToggle() {
+		if (!urlBaseEnabled) {
+			urlBase = '';
+		}
+	}
 </script>
 
-<!-- Categories (if supported) -->
-{#if definition?.supportsCategories}
-	<SectionHeader title="Categories" />
-
-	<div class="grid grid-cols-2 gap-3">
-		<div class="form-control">
-			<label class="label py-1" for="movieCategory">
-				<span class="label-text">Movies</span>
-			</label>
+{#if mode === 'connection'}
+	<div class="form-control">
+		<label class="label cursor-pointer gap-2 py-1" for={urlBaseToggleId}>
 			<input
-				id="movieCategory"
-				type="text"
-				class="input-bordered input input-sm"
-				bind:value={movieCategory}
-				placeholder="movies"
+				id={urlBaseToggleId}
+				type="checkbox"
+				class="checkbox checkbox-sm"
+				bind:checked={urlBaseEnabled}
+				onchange={handleUrlBaseToggle}
 			/>
-		</div>
+			<span class="label-text text-sm">Use URL Base</span>
+		</label>
 
-		<div class="form-control">
-			<label class="label py-1" for="tvCategory">
-				<span class="label-text">TV Shows</span>
-			</label>
-			<input
-				id="tvCategory"
-				type="text"
-				class="input-bordered input input-sm"
-				bind:value={tvCategory}
-				placeholder="tv"
-			/>
-		</div>
-	</div>
-{/if}
-
-<!-- Priority & Initial State (if supported) -->
-{#if definition?.supportsPriority}
-	<SectionHeader title="Download Behavior" class={definition?.supportsCategories ? 'mt-4' : ''} />
-
-	<div class="grid grid-cols-3 gap-3">
-		<div class="form-control">
-			<label class="label py-1" for="recentPriority">
-				<span class="label-text text-xs">Recent</span>
-			</label>
-			<select
-				id="recentPriority"
-				class="select-bordered select select-sm"
-				bind:value={recentPriority}
-			>
-				<option value="normal">Normal</option>
-				<option value="high">High</option>
-				<option value="force">Force</option>
-			</select>
-		</div>
-
-		<div class="form-control">
-			<label class="label py-1" for="olderPriority">
-				<span class="label-text text-xs">Older</span>
-			</label>
-			<select
-				id="olderPriority"
-				class="select-bordered select select-sm"
-				bind:value={olderPriority}
-			>
-				<option value="normal">Normal</option>
-				<option value="high">High</option>
-				<option value="force">Force</option>
-			</select>
-		</div>
-
-		<div class="form-control">
-			<label class="label py-1" for="initialState">
-				<span class="label-text text-xs">Start As</span>
-			</label>
-			<select id="initialState" class="select-bordered select select-sm" bind:value={initialState}>
-				<option value="start">Start</option>
-				<option value="pause">Paused</option>
-				<option value="force">Force</option>
-			</select>
-		</div>
-	</div>
-{/if}
-
-<!-- Path Mapping -->
-<SectionHeader title="Path Mapping" class="mt-4" />
-
-<p class="mb-2 text-xs text-base-content/60">
-	Map paths between the download client's view and your local filesystem.
-</p>
-
-<!-- Completed Downloads Path Mapping -->
-<div class="mb-3 rounded-lg bg-base-200/50 p-3">
-	<div class="mb-2 text-xs font-medium text-base-content/80">
-		{isSabnzbd ? 'Completed Download Folder' : 'Download Folder'}
-	</div>
-
-	<div class="grid grid-cols-2 gap-2">
-		<div class="form-control">
-			<label class="label py-0.5" for="downloadPathRemote">
-				<span class="label-text text-xs">Client Path</span>
-			</label>
-			<input
-				id="downloadPathRemote"
-				type="text"
-				class="input-bordered input input-xs"
-				bind:value={downloadPathRemote}
-				placeholder={isSabnzbd ? '/complete' : '/downloads'}
-			/>
-		</div>
-
-		<div class="form-control">
-			<label class="label py-0.5" for="downloadPathLocal">
-				<span class="label-text text-xs">Local Path</span>
-			</label>
-			<div class="join w-full">
+		{#if urlBaseEnabled}
+			<div class="mt-1">
+				<label class="label py-1" for={urlBaseInputId}>
+					<span class="label-text">{urlBaseLabel}</span>
+				</label>
 				<input
-					id="downloadPathLocal"
+					id={urlBaseInputId}
 					type="text"
-					class="input-bordered input input-xs join-item flex-1"
-					bind:value={downloadPathLocal}
-					placeholder="/mnt/downloads"
+					class="input-bordered input input-sm"
+					bind:value={urlBase}
+					placeholder={urlBasePlaceholder}
 				/>
-				<button
-					type="button"
-					class="btn join-item border border-base-300 btn-ghost btn-xs"
-					onclick={() => onBrowse('downloadPathLocal')}
-					title="Browse folders"
-				>
-					<FolderOpen class="h-3 w-3" />
-				</button>
+				<div class="label py-1">
+					<span class="label-text-alt text-xs text-base-content/60">{urlBaseDescription}</span>
+				</div>
+			</div>
+		{/if}
+	</div>
+{:else}
+	<!-- Categories (if supported) -->
+	{#if definition?.supportsCategories}
+		<SectionHeader title="Categories" />
+
+		<div class="grid grid-cols-2 gap-3">
+			<div class="form-control">
+				<label class="label py-1" for="movieCategory">
+					<span class="label-text">Movies</span>
+				</label>
+				<input
+					id="movieCategory"
+					type="text"
+					class="input-bordered input input-sm"
+					bind:value={movieCategory}
+					placeholder="movies"
+				/>
+			</div>
+
+			<div class="form-control">
+				<label class="label py-1" for="tvCategory">
+					<span class="label-text">TV Shows</span>
+				</label>
+				<input
+					id="tvCategory"
+					type="text"
+					class="input-bordered input input-sm"
+					bind:value={tvCategory}
+					placeholder="tv"
+				/>
 			</div>
 		</div>
-	</div>
-</div>
+	{/if}
 
-<!-- Temp Downloads Path Mapping (SABnzbd only) -->
-{#if isSabnzbd}
-	<div class="rounded-lg bg-base-200/50 p-3">
-		<div class="mb-2 text-xs font-medium text-base-content/80">Temporary Download Folder</div>
+	<!-- Priority & Initial State (if supported) -->
+	{#if definition?.supportsPriority}
+		<SectionHeader title="Download Behavior" class={definition?.supportsCategories ? 'mt-4' : ''} />
+
+		<div class="grid grid-cols-3 gap-3">
+			<div class="form-control">
+				<label class="label py-1" for="recentPriority">
+					<span class="label-text text-xs">Recent</span>
+				</label>
+				<select
+					id="recentPriority"
+					class="select-bordered select select-sm"
+					bind:value={recentPriority}
+				>
+					<option value="normal">Normal</option>
+					<option value="high">High</option>
+					<option value="force">Force</option>
+				</select>
+			</div>
+
+			<div class="form-control">
+				<label class="label py-1" for="olderPriority">
+					<span class="label-text text-xs">Older</span>
+				</label>
+				<select
+					id="olderPriority"
+					class="select-bordered select select-sm"
+					bind:value={olderPriority}
+				>
+					<option value="normal">Normal</option>
+					<option value="high">High</option>
+					<option value="force">Force</option>
+				</select>
+			</div>
+
+			<div class="form-control">
+				<label class="label py-1" for="initialState">
+					<span class="label-text text-xs">Start As</span>
+				</label>
+				<select
+					id="initialState"
+					class="select-bordered select select-sm"
+					bind:value={initialState}
+				>
+					<option value="start">Start</option>
+					<option value="pause">Paused</option>
+					<option value="force">Force</option>
+				</select>
+			</div>
+		</div>
+	{/if}
+
+	<!-- Path Mapping -->
+	<SectionHeader title="Path Mapping" class="mt-4" />
+
+	<p class="mb-2 text-xs text-base-content/60">
+		Map paths between the download client's view and your local filesystem.
+	</p>
+
+	<!-- Completed Downloads Path Mapping -->
+	<div class="mb-3 rounded-lg bg-base-200/50 p-3">
+		<div class="mb-2 text-xs font-medium text-base-content/80">
+			{isSabnzbd ? 'Completed Download Folder' : 'Download Folder'}
+		</div>
 
 		<div class="grid grid-cols-2 gap-2">
 			<div class="form-control">
-				<label class="label py-0.5" for="tempPathRemote">
+				<label class="label py-0.5" for="downloadPathRemote">
 					<span class="label-text text-xs">Client Path</span>
 				</label>
 				<input
-					id="tempPathRemote"
+					id="downloadPathRemote"
 					type="text"
 					class="input-bordered input input-xs"
-					bind:value={tempPathRemote}
-					placeholder="/incomplete"
+					bind:value={downloadPathRemote}
+					placeholder={isSabnzbd ? '/complete' : '/downloads'}
 				/>
 			</div>
 
 			<div class="form-control">
-				<label class="label py-0.5" for="tempPathLocal">
+				<label class="label py-0.5" for="downloadPathLocal">
 					<span class="label-text text-xs">Local Path</span>
 				</label>
 				<div class="join w-full">
 					<input
-						id="tempPathLocal"
+						id="downloadPathLocal"
 						type="text"
 						class="input-bordered input input-xs join-item flex-1"
-						bind:value={tempPathLocal}
-						placeholder="/mnt/incomplete"
+						bind:value={downloadPathLocal}
+						placeholder="/mnt/downloads"
 					/>
 					<button
 						type="button"
 						class="btn join-item border border-base-300 btn-ghost btn-xs"
-						onclick={() => onBrowse('tempPathLocal')}
+						onclick={() => onBrowse('downloadPathLocal')}
 						title="Browse folders"
 					>
 						<FolderOpen class="h-3 w-3" />
@@ -210,4 +223,49 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- Temp Downloads Path Mapping (SABnzbd only) -->
+	{#if isSabnzbd}
+		<div class="rounded-lg bg-base-200/50 p-3">
+			<div class="mb-2 text-xs font-medium text-base-content/80">Temporary Download Folder</div>
+
+			<div class="grid grid-cols-2 gap-2">
+				<div class="form-control">
+					<label class="label py-0.5" for="tempPathRemote">
+						<span class="label-text text-xs">Client Path</span>
+					</label>
+					<input
+						id="tempPathRemote"
+						type="text"
+						class="input-bordered input input-xs"
+						bind:value={tempPathRemote}
+						placeholder="/incomplete"
+					/>
+				</div>
+
+				<div class="form-control">
+					<label class="label py-0.5" for="tempPathLocal">
+						<span class="label-text text-xs">Local Path</span>
+					</label>
+					<div class="join w-full">
+						<input
+							id="tempPathLocal"
+							type="text"
+							class="input-bordered input input-xs join-item flex-1"
+							bind:value={tempPathLocal}
+							placeholder="/mnt/incomplete"
+						/>
+						<button
+							type="button"
+							class="btn join-item border border-base-300 btn-ghost btn-xs"
+							onclick={() => onBrowse('tempPathLocal')}
+							title="Browse folders"
+						>
+							<FolderOpen class="h-3 w-3" />
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 {/if}
