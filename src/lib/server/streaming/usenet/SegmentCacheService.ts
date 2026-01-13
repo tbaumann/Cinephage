@@ -53,7 +53,11 @@ class SegmentCacheService {
 					createdAt: new Date().toISOString()
 				})
 				.onConflictDoUpdate({
-					target: [nzbSegmentCache.mountId, nzbSegmentCache.fileIndex, nzbSegmentCache.segmentIndex],
+					target: [
+						nzbSegmentCache.mountId,
+						nzbSegmentCache.fileIndex,
+						nzbSegmentCache.segmentIndex
+					],
 					set: {
 						data,
 						size: data.length,
@@ -138,11 +142,7 @@ class SegmentCacheService {
 	 * Prefetch critical segments for a file (first + last N segments).
 	 * This is called after mount creation to ensure fast FFmpeg probing.
 	 */
-	async prefetchCriticalSegments(
-		mountId: string,
-		fileIndex: number,
-		file: NzbFile
-	): Promise<void> {
+	async prefetchCriticalSegments(mountId: string, fileIndex: number, file: NzbFile): Promise<void> {
 		const totalSegments = file.segments.length;
 		if (totalSegments === 0) {
 			logger.warn('[SegmentCacheService] No segments to prefetch', { mountId, fileIndex });
@@ -248,12 +248,10 @@ class SegmentCacheService {
 	 */
 	async clearMountCache(mountId: string): Promise<void> {
 		try {
-			const result = await db
-				.delete(nzbSegmentCache)
-				.where(eq(nzbSegmentCache.mountId, mountId));
+			await db.delete(nzbSegmentCache).where(eq(nzbSegmentCache.mountId, mountId));
 
 			logger.debug('[SegmentCacheService] Cleared mount cache', {
-				mountId,
+				mountId
 				// Note: result.changes would give count but not available in all cases
 			});
 		} catch (error) {

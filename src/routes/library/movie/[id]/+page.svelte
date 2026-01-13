@@ -558,8 +558,4 @@
 {/if}
 
 <!-- Score Detail Modal -->
-<ScoreDetailModal
-	open={isScoreModalOpen}
-	onClose={() => (isScoreModalOpen = false)}
-	{scoreData}
-/>
+<ScoreDetailModal open={isScoreModalOpen} onClose={() => (isScoreModalOpen = false)} {scoreData} />

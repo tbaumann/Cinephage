@@ -2145,11 +2145,7 @@ export const nzbSegmentCache = sqliteTable(
 	},
 	(table) => [
 		// Fast lookup by mount + file + segment
-		uniqueIndex('idx_segment_cache_lookup').on(
-			table.mountId,
-			table.fileIndex,
-			table.segmentIndex
-		),
+		uniqueIndex('idx_segment_cache_lookup').on(table.mountId, table.fileIndex, table.segmentIndex),
 		// For cleanup when mount is deleted (cascade handles this, but useful for queries)
 		index('idx_segment_cache_mount').on(table.mountId)
 	]

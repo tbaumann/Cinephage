@@ -136,7 +136,8 @@ export async function backfillMissingQuality(): Promise<BackfillResult> {
 			try {
 				// Use sceneName if available (has original release name with quality markers)
 				// Fall back to relativePath if sceneName is not available
-				const nameToparse = file.sceneName || file.relativePath.split('/').pop() || file.relativePath;
+				const nameToparse =
+					file.sceneName || file.relativePath.split('/').pop() || file.relativePath;
 				const parsed = parser.parse(nameToparse);
 
 				// Normalize the values with proper capitalization
@@ -192,7 +193,8 @@ export async function backfillMissingQuality(): Promise<BackfillResult> {
 			try {
 				// Use sceneName if available (has original release name with quality markers)
 				// Fall back to relativePath if sceneName is not available
-				const nameToParse = file.sceneName || file.relativePath.split('/').pop() || file.relativePath;
+				const nameToParse =
+					file.sceneName || file.relativePath.split('/').pop() || file.relativePath;
 				const parsed = parser.parse(nameToParse);
 
 				// Normalize the values with proper capitalization

@@ -446,14 +446,10 @@ class ReleaseDecisionService {
 				};
 
 				if (hasExistingFiles) {
-					return this.createAcceptedResult(
-						'upgrade',
-						'Force override - replacing existing files',
-						{
-							upgradeStats: stats,
-							isUpgrade: true
-						}
-					);
+					return this.createAcceptedResult('upgrade', 'Force override - replacing existing files', {
+						upgradeStats: stats,
+						isUpgrade: true
+					});
 				} else {
 					return this.createAcceptedResult('new', 'Force override - new season pack', {
 						upgradeStats: stats,
@@ -680,14 +676,10 @@ class ReleaseDecisionService {
 				};
 
 				if (hasExistingFiles) {
-					return this.createAcceptedResult(
-						'upgrade',
-						'Force override - replacing existing files',
-						{
-							upgradeStats: stats,
-							isUpgrade: true
-						}
-					);
+					return this.createAcceptedResult('upgrade', 'Force override - replacing existing files', {
+						upgradeStats: stats,
+						isUpgrade: true
+					});
 				} else {
 					return this.createAcceptedResult('new', 'Force override - new series pack', {
 						upgradeStats: stats,

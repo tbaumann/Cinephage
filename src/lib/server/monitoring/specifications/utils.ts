@@ -36,7 +36,9 @@ export interface ExistingFileRecord {
  * @param existingFile - File record from database
  * @returns ReleaseAttributes if quality data available, undefined otherwise
  */
-export function buildExistingAttrs(existingFile: ExistingFileRecord): ReleaseAttributes | undefined {
+export function buildExistingAttrs(
+	existingFile: ExistingFileRecord
+): ReleaseAttributes | undefined {
 	const quality = existingFile.quality;
 	const sceneName = existingFile.sceneName || existingFile.relativePath;
 

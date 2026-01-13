@@ -230,10 +230,13 @@ export class MediaMatcherService {
 					});
 					return [match];
 				} else {
-					logger.warn('[MediaMatcher] IMDB ID found in path but not in TMDB, falling back to title search', {
-						imdbId: extractedIds.imdbId,
-						filePath
-					});
+					logger.warn(
+						'[MediaMatcher] IMDB ID found in path but not in TMDB, falling back to title search',
+						{
+							imdbId: extractedIds.imdbId,
+							filePath
+						}
+					);
 				}
 			}
 

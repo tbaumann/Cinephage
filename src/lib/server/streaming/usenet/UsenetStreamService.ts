@@ -20,7 +20,6 @@ import {
 	type ParsedNzb,
 	type CreateStreamResult,
 	type ByteRange,
-	type NzbFile,
 	getContentType,
 	parseRangeHeader,
 	isMediaFile
@@ -118,9 +117,7 @@ class UsenetStreamService {
 
 		// Check if RAR-only content - not supported for streaming
 		if (isRarOnlyNzb(parsed)) {
-			throw new Error(
-				'RAR-compressed releases cannot be streamed. Use a download client instead.'
-			);
+			throw new Error('RAR-compressed releases cannot be streamed. Use a download client instead.');
 		}
 
 		if (mount.status !== 'ready') {
@@ -217,7 +214,8 @@ class UsenetStreamService {
 				if (hasRarFiles) {
 					return {
 						canStream: false,
-						error: 'This release is RAR compressed and cannot be streamed. Try a different release or use a download client instead.',
+						error:
+							'This release is RAR compressed and cannot be streamed. Try a different release or use a download client instead.',
 						requiresExtraction: false,
 						archiveType: 'rar'
 					};

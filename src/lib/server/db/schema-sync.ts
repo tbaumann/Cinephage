@@ -2581,7 +2581,7 @@ const SCHEMA_UPDATES: Record<number, (sqlite: Database.Database) => void> = {
 		}
 	},
 
-// Version 34: Add url_base column to download_clients
+	// Version 34: Add url_base column to download_clients
 	34: (sqlite) => {
 		if (!columnExists(sqlite, 'download_clients', 'url_base')) {
 			sqlite.prepare(`ALTER TABLE "download_clients" ADD COLUMN "url_base" text`).run();

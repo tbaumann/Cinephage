@@ -15,13 +15,7 @@ import { getSegmentCacheService } from '$lib/server/streaming/usenet/SegmentCach
 /**
  * Mount status values.
  */
-export type MountStatus =
-	| 'pending'
-	| 'parsing'
-	| 'ready'
-	| 'downloading'
-	| 'error'
-	| 'expired';
+export type MountStatus = 'pending' | 'parsing' | 'ready' | 'downloading' | 'error' | 'expired';
 
 /**
  * Streamability info for a mount.
@@ -117,8 +111,8 @@ class NzbMountManager {
 					: undefined;
 
 			// Store all files with segments for streaming
-		// Note: RAR files are stored for detection but streaming will be rejected
-		const filesToStore = parsed.files;
+			// Note: RAR files are stored for detection but streaming will be rejected
+			const filesToStore = parsed.files;
 
 			const mediaFilesData = filesToStore.map((f) => ({
 				index: f.index,
@@ -173,9 +167,7 @@ class NzbMountManager {
 
 			// Prefetch critical segments for fast FFmpeg probing (async, non-blocking)
 			if (parsed.mediaFiles.length > 0) {
-				const mainFile = parsed.mediaFiles.reduce((best, f) =>
-					f.size > best.size ? f : best
-				);
+				const mainFile = parsed.mediaFiles.reduce((best, f) => (f.size > best.size ? f : best));
 				setImmediate(async () => {
 					try {
 						await getSegmentCacheService().prefetchCriticalSegments(

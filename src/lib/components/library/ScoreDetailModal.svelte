@@ -145,7 +145,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each breakdownCategories as { key, label }}
+							{#each breakdownCategories as { key, label } (key)}
 								{@const category = scoreData.scoringResult.breakdown[key]}
 								{#if category.formats.length > 0 || category.score !== 0}
 									<tr>
@@ -190,9 +190,9 @@
 				{#if showFormats}
 					<div class="border-t border-base-300 p-4">
 						<div class="flex flex-wrap gap-2">
-							{#each scoreData.scoringResult.matchedFormats as format}
+							{#each scoreData.scoringResult.matchedFormats as format (format.format.name)}
 								<div
-									class="badge {format.score >= 0 ? 'badge-outline' : 'badge-error badge-outline'}"
+									class="badge {format.score >= 0 ? 'badge-outline' : 'badge-outline badge-error'}"
 									title="{format.format.category}: {format.score}"
 								>
 									{format.format.name}
@@ -280,7 +280,7 @@
 						{#if scoreData.sceneName}
 							<div class="mt-3 border-t border-base-300 pt-3">
 								<div class="text-xs text-base-content/50">Scene Name:</div>
-								<div class="mt-1 break-all font-mono text-xs">{scoreData.sceneName}</div>
+								<div class="mt-1 font-mono text-xs break-all">{scoreData.sceneName}</div>
 							</div>
 						{/if}
 					</div>

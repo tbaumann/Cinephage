@@ -686,7 +686,10 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 			await this.pollClients();
 
 			// Periodic orphan cleanup (every 10 minutes)
-			if (startTime - this.lastOrphanCleanupTime > DownloadMonitorService.ORPHAN_CLEANUP_INTERVAL_MS) {
+			if (
+				startTime - this.lastOrphanCleanupTime >
+				DownloadMonitorService.ORPHAN_CLEANUP_INTERVAL_MS
+			) {
 				this.lastOrphanCleanupTime = startTime;
 				// Run orphan cleanup in background (don't block polling)
 				this.runOrphanCleanup().catch((err) => {

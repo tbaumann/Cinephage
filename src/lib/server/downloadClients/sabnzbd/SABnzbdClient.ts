@@ -405,7 +405,9 @@ export class SABnzbdClient implements IDownloadClient {
 						existingId: existingDownload.id,
 						existingStatus: existingDownload.status
 					});
-					const error = new Error(`Duplicate download: "${options.title}" already exists in SABnzbd`);
+					const error = new Error(
+						`Duplicate download: "${options.title}" already exists in SABnzbd`
+					);
 					(error as Error & { existingDownload: DownloadInfo }).existingDownload = existingDownload;
 					(error as Error & { isDuplicate: boolean }).isDuplicate = true;
 					throw error;

@@ -1385,7 +1385,11 @@ export class MonitoringSearchService {
 							itemId: movie.id,
 							itemType: 'movie',
 							title: movie.title,
-							existingFile: { name: existingFileName, score: existingScore, breakdown: existingBreakdown },
+							existingFile: {
+								name: existingFileName,
+								score: existingScore,
+								breakdown: existingBreakdown
+							},
 							bestCandidate: null,
 							candidatesChecked: 0,
 							wouldGrab: false,
@@ -1472,10 +1476,20 @@ export class MonitoringSearchService {
 
 				// Validate release against scoring profile (defense-in-depth check)
 				if (profile) {
-					const candidateScoreResult = scoreRelease(release.title, profile, undefined, release.size, {
-						mediaType: 'movie'
-					});
-					if (!candidateScoreResult.meetsMinimum || candidateScoreResult.isBanned || candidateScoreResult.sizeRejected) {
+					const candidateScoreResult = scoreRelease(
+						release.title,
+						profile,
+						undefined,
+						release.size,
+						{
+							mediaType: 'movie'
+						}
+					);
+					if (
+						!candidateScoreResult.meetsMinimum ||
+						candidateScoreResult.isBanned ||
+						candidateScoreResult.sizeRejected
+					) {
 						const reason = candidateScoreResult.isBanned
 							? 'banned'
 							: candidateScoreResult.sizeRejected
@@ -1567,7 +1581,11 @@ export class MonitoringSearchService {
 							itemId: movie.id,
 							itemType: 'movie',
 							title: movie.title,
-							existingFile: { name: existingFileName, score: existingScore, breakdown: existingBreakdown },
+							existingFile: {
+								name: existingFileName,
+								score: existingScore,
+								breakdown: existingBreakdown
+							},
 							bestCandidate: bestCandidate ?? {
 								name: release.title,
 								score: release.totalScore ?? 0,
@@ -1618,7 +1636,11 @@ export class MonitoringSearchService {
 						itemId: movie.id,
 						itemType: 'movie',
 						title: movie.title,
-						existingFile: { name: existingFileName, score: existingScore, breakdown: existingBreakdown },
+						existingFile: {
+							name: existingFileName,
+							score: existingScore,
+							breakdown: existingBreakdown
+						},
 						bestCandidate,
 						candidatesChecked,
 						wouldGrab: false,
@@ -1642,7 +1664,11 @@ export class MonitoringSearchService {
 						itemId: movie.id,
 						itemType: 'movie',
 						title: movie.title,
-						existingFile: { name: existingFileName, score: existingScore, breakdown: existingBreakdown },
+						existingFile: {
+							name: existingFileName,
+							score: existingScore,
+							breakdown: existingBreakdown
+						},
 						bestCandidate: null,
 						candidatesChecked: 0,
 						wouldGrab: false,
@@ -1735,7 +1761,11 @@ export class MonitoringSearchService {
 							itemId: episode.id,
 							itemType: 'episode',
 							title,
-							existingFile: { name: existingFileName, score: existingScore, breakdown: existingBreakdown },
+							existingFile: {
+								name: existingFileName,
+								score: existingScore,
+								breakdown: existingBreakdown
+							},
 							bestCandidate: null,
 							candidatesChecked: 0,
 							wouldGrab: false,
@@ -1813,12 +1843,22 @@ export class MonitoringSearchService {
 						episodeCount = await this.getSeasonEpisodeCount(seriesData.id, targetSeason);
 					}
 
-					const candidateScoreResult = scoreRelease(release.title, profile, undefined, release.size, {
-						mediaType: 'tv',
-						isSeasonPack,
-						episodeCount
-					});
-					if (!candidateScoreResult.meetsMinimum || candidateScoreResult.isBanned || candidateScoreResult.sizeRejected) {
+					const candidateScoreResult = scoreRelease(
+						release.title,
+						profile,
+						undefined,
+						release.size,
+						{
+							mediaType: 'tv',
+							isSeasonPack,
+							episodeCount
+						}
+					);
+					if (
+						!candidateScoreResult.meetsMinimum ||
+						candidateScoreResult.isBanned ||
+						candidateScoreResult.sizeRejected
+					) {
 						const reason = candidateScoreResult.isBanned
 							? 'banned'
 							: candidateScoreResult.sizeRejected
@@ -1913,7 +1953,11 @@ export class MonitoringSearchService {
 							itemId: episode.id,
 							itemType: 'episode',
 							title,
-							existingFile: { name: existingFileName, score: existingScore, breakdown: existingBreakdown },
+							existingFile: {
+								name: existingFileName,
+								score: existingScore,
+								breakdown: existingBreakdown
+							},
 							bestCandidate: bestCandidate ?? {
 								name: release.title,
 								score: release.totalScore ?? 0,
@@ -1966,7 +2010,11 @@ export class MonitoringSearchService {
 						itemId: episode.id,
 						itemType: 'episode',
 						title,
-						existingFile: { name: existingFileName, score: existingScore, breakdown: existingBreakdown },
+						existingFile: {
+							name: existingFileName,
+							score: existingScore,
+							breakdown: existingBreakdown
+						},
 						bestCandidate,
 						candidatesChecked,
 						wouldGrab: false,
@@ -1990,7 +2038,11 @@ export class MonitoringSearchService {
 						itemId: episode.id,
 						itemType: 'episode',
 						title,
-						existingFile: { name: existingFileName, score: existingScore, breakdown: existingBreakdown },
+						existingFile: {
+							name: existingFileName,
+							score: existingScore,
+							breakdown: existingBreakdown
+						},
 						bestCandidate: null,
 						candidatesChecked: 0,
 						wouldGrab: false,

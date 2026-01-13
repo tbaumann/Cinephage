@@ -7,7 +7,7 @@
 
 import { db } from '../db/index.js';
 import { movies, movieFiles, series, episodes, episodeFiles } from '../db/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { scoreRelease, parseRelease } from './scorer.js';
 import { buildExistingAttrs, type ExistingFileRecord } from '../monitoring/specifications/utils.js';
 import { QualityFilter } from '../quality/QualityFilter.js';
@@ -194,9 +194,7 @@ export async function computeMovieFileScore(movieId: string): Promise<FileScoreR
 /**
  * Compute score for an episode's file
  */
-export async function computeEpisodeFileScore(
-	episodeId: string
-): Promise<FileScoreResult | null> {
+export async function computeEpisodeFileScore(episodeId: string): Promise<FileScoreResult | null> {
 	// Fetch the episode with its series
 	const episode = await db
 		.select({

@@ -49,8 +49,10 @@
 {#if score !== null || loading}
 	<button
 		type="button"
-		class="badge {badgeClass} {sizeClasses[size]} cursor-pointer hover:brightness-110 transition-all"
-		onclick={onclick}
+		class="badge {badgeClass} {sizeClasses[
+			size
+		]} cursor-pointer transition-all hover:brightness-110"
+		{onclick}
 		title={tooltipText}
 	>
 		{#if loading}
