@@ -25,6 +25,7 @@ import { eq } from 'drizzle-orm';
 interface StreamSource {
 	accountId: string;
 	channelId: string;
+	stalkerId: string;
 	cmd: string;
 	priority: number;
 }
@@ -55,10 +56,6 @@ export interface StreamError extends Error {
 	attempts?: number;
 }
 
-// User agent for proxying streams
-const PROXY_USER_AGENT =
-	'Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 4 rev: 2116 Mobile Safari/533.3';
-
 export class StalkerStreamService {
 	// Cache of authenticated clients per account
 	private clients: Map<string, StalkerPortalClient> = new Map();
@@ -85,6 +82,7 @@ export class StalkerStreamService {
 			{
 				accountId: item.accountId,
 				channelId: item.channelId,
+				stalkerId: item.channel.stalkerId,
 				cmd: item.channel.cmd,
 				priority: 0
 			}
@@ -94,6 +92,7 @@ export class StalkerStreamService {
 			sources.push({
 				accountId: backup.accountId,
 				channelId: backup.channelId,
+				stalkerId: backup.channel.stalkerId,
 				cmd: backup.channel.cmd,
 				priority: backup.priority
 			});
@@ -154,11 +153,15 @@ export class StalkerStreamService {
 		source: StreamSource,
 		lineupItemId: string
 	): Promise<FetchStreamResult> {
-		const { accountId, channelId, cmd } = source;
+		const { accountId, channelId, stalkerId } = source;
 
-		// Validate account exists and is enabled before attempting fetch
+		// Get account with URL type info
 		const account = db
-			.select({ id: stalkerAccounts.id, enabled: stalkerAccounts.enabled })
+			.select({
+				id: stalkerAccounts.id,
+				enabled: stalkerAccounts.enabled,
+				streamUrlType: stalkerAccounts.streamUrlType
+			})
 			.from(stalkerAccounts)
 			.where(eq(stalkerAccounts.id, accountId))
 			.get();
@@ -171,12 +174,12 @@ export class StalkerStreamService {
 			throw new Error(`Account is disabled: ${accountId}`);
 		}
 
-		// Extract stream URL directly from cmd (skip broken create_link)
-		// The cmd format is "ffmpeg http://..." - we just need the URL part
-		const streamUrl = this.extractUrlFromCmd(cmd);
-		if (!streamUrl) {
-			throw new Error(`Invalid cmd format: ${cmd}`);
-		}
+		// Get authenticated client and fetch fresh stream URL using the correct method
+		const client = await this.getClient(accountId);
+		const streamUrl = await client.getFreshStreamUrl(
+			stalkerId,
+			account.streamUrlType as 'direct' | 'create_link' | 'unknown' | null
+		);
 
 		// Determine stream type from URL
 		const type = this.detectStreamType(streamUrl);
@@ -190,11 +193,11 @@ export class StalkerStreamService {
 
 		const fetchStart = Date.now();
 
-		// Fetch the stream - try minimal headers first
-		// Some IPTV servers reject requests with STB-specific headers
+		// Fetch the stream - use minimal headers as some portals reject STB headers
 		const response = await fetch(streamUrl, {
 			headers: {
-				'User-Agent': PROXY_USER_AGENT,
+				'User-Agent':
+					'Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 4 rev: 2116 Mobile Safari/533.3',
 				Accept: '*/*'
 			},
 			redirect: 'follow'
@@ -214,15 +217,101 @@ export class StalkerStreamService {
 			throw new Error(`Upstream error: ${response.status}`);
 		}
 
-		logger.debug('[StalkerStreamService] Stream fetched successfully', {
+		// Validate stream has actual content
+		const contentLength = response.headers.get('content-length');
+		if (contentLength === '0') {
+			logger.warn('[StalkerStreamService] Empty stream detected', {
+				lineupItemId,
+				accountId,
+				streamUrl,
+				fetchMs
+			});
+			throw new Error('Empty stream (Content-Length: 0)');
+		}
+
+		// For HLS streams, validate the playlist content
+		if (type === 'hls' || streamUrl.toLowerCase().includes('.m3u8')) {
+			const text = await response.text();
+			if (!text.includes('#EXTM3U')) {
+				logger.warn('[StalkerStreamService] Invalid HLS playlist', {
+					lineupItemId,
+					accountId,
+					streamUrl,
+					contentPreview: text.substring(0, 100)
+				});
+				throw new Error('Invalid HLS playlist (missing #EXTM3U)');
+			}
+
+			logger.debug('[StalkerStreamService] HLS stream validated', {
+				lineupItemId,
+				accountId,
+				type: 'hls',
+				fetchMs,
+				playlistLength: text.length
+			});
+
+			return {
+				response: new Response(text, {
+					status: response.status,
+					headers: response.headers
+				}),
+				url: streamUrl,
+				type: 'hls',
+				accountId,
+				channelId,
+				lineupItemId
+			};
+		}
+
+		// For direct streams (TS, MP4, etc.), read first chunk to verify data flows
+		const reader = response.body?.getReader();
+		if (!reader) {
+			throw new Error('Stream has no readable body');
+		}
+
+		const firstChunk = await reader.read();
+		if (firstChunk.done || !firstChunk.value || firstChunk.value.length === 0) {
+			reader.releaseLock();
+			logger.warn('[StalkerStreamService] Stream returned no data', {
+				lineupItemId,
+				accountId,
+				streamUrl,
+				fetchMs
+			});
+			throw new Error('Stream returned no data');
+		}
+
+		logger.debug('[StalkerStreamService] Direct stream validated', {
 			lineupItemId,
 			accountId,
 			type,
-			fetchMs
+			fetchMs,
+			firstChunkSize: firstChunk.value.length
+		});
+
+		// Create a new stream that includes the chunk we already read
+		const reconstructedStream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(firstChunk.value);
+			},
+			async pull(controller) {
+				const { value, done } = await reader.read();
+				if (done) {
+					controller.close();
+				} else if (value) {
+					controller.enqueue(value);
+				}
+			},
+			cancel() {
+				reader.releaseLock();
+			}
 		});
 
 		return {
-			response,
+			response: new Response(reconstructedStream, {
+				status: response.status,
+				headers: response.headers
+			}),
 			url: streamUrl,
 			type,
 			accountId,
@@ -314,31 +403,6 @@ export class StalkerStreamService {
 			id += chars[Math.floor(Math.random() * chars.length)];
 		}
 		return id;
-	}
-
-	/**
-	 * Extract the playable URL from the channel cmd field.
-	 * The cmd format is typically "ffmpeg http://..." or just the URL.
-	 */
-	private extractUrlFromCmd(cmd: string): string | null {
-		if (!cmd) return null;
-
-		const trimmed = cmd.trim();
-
-		// If it starts with http, it's already a URL
-		if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-			return trimmed;
-		}
-
-		// Otherwise extract URL from "ffmpeg URL" or similar format
-		const parts = trimmed.split(/\s+/);
-		for (const part of parts) {
-			if (part.startsWith('http://') || part.startsWith('https://')) {
-				return part;
-			}
-		}
-
-		return null;
 	}
 
 	/**
