@@ -16,6 +16,7 @@ import type {
 } from './types.js';
 import { reject, accept, RejectionReason } from './types.js';
 import type { ScoringProfile } from '$lib/server/scoring/types.js';
+import { buildExistingAttrs } from './utils.js';
 
 /**
  * Check if a movie's existing file is below the quality cutoff
@@ -53,9 +54,14 @@ export class MovieCutoffUnmetSpecification implements IMonitoringSpecification<M
 			return reject(RejectionReason.NO_PROFILE);
 		}
 
-		// Score the existing file
+		// Score the existing file using stored quality data if available
 		const existingFileName = context.existingFile.sceneName || context.existingFile.relativePath;
-		const existingScore = scoreRelease(existingFileName, fullProfile as ScoringProfile);
+		const existingAttrs = buildExistingAttrs(context.existingFile);
+		const existingScore = scoreRelease(
+			existingFileName,
+			fullProfile as ScoringProfile,
+			existingAttrs
+		);
 
 		// Check if below cutoff
 		if (existingScore.totalScore >= upgradeUntilScore) {
@@ -102,9 +108,14 @@ export class EpisodeCutoffUnmetSpecification implements IMonitoringSpecification
 			return reject(RejectionReason.NO_PROFILE);
 		}
 
-		// Score the existing file
+		// Score the existing file using stored quality data if available
 		const existingFileName = context.existingFile.sceneName || context.existingFile.relativePath;
-		const existingScore = scoreRelease(existingFileName, fullProfile as ScoringProfile);
+		const existingAttrs = buildExistingAttrs(context.existingFile);
+		const existingScore = scoreRelease(
+			existingFileName,
+			fullProfile as ScoringProfile,
+			existingAttrs
+		);
 
 		// Check if below cutoff
 		if (existingScore.totalScore >= upgradeUntilScore) {

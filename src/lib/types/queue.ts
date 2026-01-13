@@ -8,6 +8,7 @@
 export type QueueStatus =
 	| 'queued' // Added to queue, waiting to start
 	| 'downloading' // Actively downloading
+	| 'stalled' // Download stalled (no seeders/peers available)
 	| 'paused' // Download paused
 	| 'completed' // Download finished, waiting for import
 	| 'importing' // Import in progress
@@ -190,6 +191,8 @@ export interface GrabRequest {
 	indexerName?: string;
 	/** Protocol: 'torrent' | 'usenet' | 'streaming' */
 	protocol?: string;
+	/** Release categories from indexer (for content type validation) */
+	categories?: number[];
 
 	// Target media (at least one required)
 	movieId?: string;
@@ -262,10 +265,13 @@ export interface GrabResponse {
  */
 export interface QueueStats {
 	totalCount: number;
+	queuedCount: number;
 	downloadingCount: number;
+	stalledCount: number;
 	seedingCount: number;
 	pausedCount: number;
 	completedCount: number;
+	importingCount: number;
 	failedCount: number;
 	totalSizeBytes: number;
 	totalDownloadSpeed: number;

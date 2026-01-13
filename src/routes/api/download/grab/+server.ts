@@ -8,6 +8,7 @@ import { logger } from '$lib/logging';
 import type { GrabRequest, GrabResponse } from '$lib/types/queue';
 import { getDownloadResolutionService, releaseDecisionService } from '$lib/server/downloads';
 import type { DownloadInfo } from '$lib/server/downloadClients/core/interfaces';
+import { categoryMatchesSearchType, getCategoryContentType } from '$lib/server/indexers/types';
 import { strmService, StrmService, getStreamingBaseUrl } from '$lib/server/streaming';
 import { getNzbMountManager } from '$lib/server/streaming/nzb';
 import { getUsenetStreamService } from '$lib/server/streaming/usenet';
@@ -73,6 +74,31 @@ export const POST: RequestHandler = async ({ request }) => {
 			{ success: false, error: 'Either movieId or seriesId is required' } satisfies GrabResponse,
 			{ status: 400 }
 		);
+	}
+
+	// Validate release category matches media type (prevents grabbing audio for movies, etc.)
+	if (data.categories && data.categories.length > 0) {
+		const searchType = data.mediaType === 'movie' ? 'movie' : 'tv';
+		const hasMatchingCategory = data.categories.some((cat) =>
+			categoryMatchesSearchType(cat, searchType)
+		);
+
+		if (!hasMatchingCategory) {
+			const actualContentType = getCategoryContentType(data.categories[0]);
+			logger.error('[Grab] BLOCKED: Release category mismatch - potential wrong content type', {
+				title: data.title,
+				expectedType: data.mediaType,
+				actualContentType,
+				categories: data.categories
+			});
+			return json(
+				{
+					success: false,
+					error: `Category mismatch: ${actualContentType} release cannot be grabbed for ${data.mediaType}`
+				} satisfies GrabResponse,
+				{ status: 422 }
+			);
+		}
 	}
 
 	try {
@@ -1159,40 +1185,37 @@ async function handleNzbStreamingGrab(data: GrabRequest): Promise<Response> {
 			episodeIds
 		});
 
-		// Check if content is streamable or requires extraction
+		// Check if content is streamable
 		const streamService = getUsenetStreamService();
 		const streamability = await streamService.checkStreamability(mount.id);
 
-		// If extraction is required, return early with mount info
-		// The client can then trigger extraction and poll for progress
-		if (streamability.requiresExtraction) {
-			logger.info('[Grab] NZB requires extraction', {
+		logger.info('[Grab] Streamability check result', {
+			title,
+			mountId: mount.id,
+			canStream: streamability.canStream,
+			archiveType: streamability.archiveType,
+			error: streamability.error
+		});
+
+		// If content cannot be streamed (e.g., RAR-compressed), return error
+		if (!streamability.canStream) {
+			logger.info('[Grab] NZB content not streamable', {
 				title,
 				mountId: mount.id,
 				archiveType: streamability.archiveType,
 				error: streamability.error
 			});
 
-			return json({
-				success: true,
-				data: {
-					queueId: mount.id,
-					hash: mount.nzbHash,
-					clientId: 'nzb-streaming',
-					clientName: 'NZB Streaming',
-					category: mediaType === 'movie' ? 'movies' : 'tv',
-					wasDuplicate: false,
-					isUpgrade: false,
-					requiresExtraction: true,
-					mountId: mount.id,
-					streamability: {
-						canStream: streamability.canStream,
-						requiresExtraction: streamability.requiresExtraction,
-						archiveType: streamability.archiveType,
-						error: streamability.error
-					}
-				}
-			} satisfies GrabResponse);
+			// Clean up the mount since it won't be used
+			await nzbMountManager.deleteMount(mount.id);
+
+			return json(
+				{
+					success: false,
+					error: streamability.error || 'Cannot stream this release'
+				} satisfies GrabResponse,
+				{ status: 400 }
+			);
 		}
 
 		// Determine base URL for .strm files

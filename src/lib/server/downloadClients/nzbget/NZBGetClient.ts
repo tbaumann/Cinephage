@@ -201,10 +201,10 @@ export class NZBGetClient implements IDownloadClient {
 				id: item.NZBID.toString(),
 				name: item.NZBName,
 				hash: item.NZBID.toString(),
+				// Normalized to 0-1 range (downloaded / total)
 				progress:
-					((item.DownloadedSizeHi * 4294967296 + item.DownloadedSizeLo) /
-						(item.FileSizeHi * 4294967296 + item.FileSizeLo || 1)) *
-					100,
+					(item.DownloadedSizeHi * 4294967296 + item.DownloadedSizeLo) /
+					(item.FileSizeHi * 4294967296 + item.FileSizeLo || 1),
 				status: this.mapStatus(item.Status),
 				size: item.FileSizeHi * 4294967296 + item.FileSizeLo,
 				downloadSpeed: 0, // Rate is global in 'status', not per-torrent easily
@@ -231,7 +231,7 @@ export class NZBGetClient implements IDownloadClient {
 				id: item.ID.toString(),
 				name: item.Name,
 				hash: item.ID.toString(),
-				progress: item.Status === 'SUCCESS' ? 100 : 0,
+				progress: item.Status === 'SUCCESS' ? 1 : 0, // Normalized to 0-1 range
 				status: item.Status === 'SUCCESS' ? 'completed' : 'error',
 				size: item.FileSizeHi * 4294967296 + item.FileSizeLo,
 				downloadSpeed: 0,

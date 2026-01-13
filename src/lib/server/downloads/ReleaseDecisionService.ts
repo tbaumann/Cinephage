@@ -138,11 +138,6 @@ class ReleaseDecisionService {
 			release: release.title
 		});
 
-		// Force bypass
-		if (options.force) {
-			return this.createAcceptedResult('new', 'Force override enabled');
-		}
-
 		try {
 			// Fetch movie with profile
 			const movie = await db.query.movies.findFirst({
@@ -154,8 +149,8 @@ class ReleaseDecisionService {
 				return this.createRejectedResult('Movie not found', 'movie_not_found');
 			}
 
-			// Check blocklist
-			if (!options.skipBlocklist) {
+			// Check blocklist (skip when forced)
+			if (!options.force && !options.skipBlocklist) {
 				const blocklistResult = await this.checkBlocklist(release, { movieId });
 				if (!blocklistResult.accepted) {
 					return blocklistResult;
@@ -175,41 +170,52 @@ class ReleaseDecisionService {
 
 			// If no existing file, this is a new download
 			if (!existingFile) {
-				// Score the release to ensure it meets minimum requirements
-				const fullProfile = getProfile(profile.id);
-				if (fullProfile) {
-					const scoreResult = scoreRelease(
-						release.title,
-						fullProfile as ScoringProfile,
-						undefined,
-						release.size,
-						{
-							mediaType: 'movie'
+				// Skip score validation when forced
+				if (!options.force) {
+					// Score the release to ensure it meets minimum requirements
+					const fullProfile = getProfile(profile.id);
+					if (fullProfile) {
+						const scoreResult = scoreRelease(
+							release.title,
+							fullProfile as ScoringProfile,
+							undefined,
+							release.size,
+							{
+								mediaType: 'movie'
+							}
+						);
+
+						if (scoreResult.isBanned) {
+							return this.createRejectedResult(
+								`Release banned: ${scoreResult.bannedReasons.join(', ')}`,
+								'banned'
+							);
 						}
-					);
 
-					if (scoreResult.isBanned) {
-						return this.createRejectedResult(
-							`Release banned: ${scoreResult.bannedReasons.join(', ')}`,
-							'banned'
-						);
-					}
+						if (scoreResult.sizeRejected) {
+							return this.createRejectedResult(
+								scoreResult.sizeRejectionReason || 'Size rejected',
+								'size_rejected'
+							);
+						}
 
-					if (scoreResult.sizeRejected) {
-						return this.createRejectedResult(
-							scoreResult.sizeRejectionReason || 'Size rejected',
-							'size_rejected'
-						);
-					}
-
-					if (!scoreResult.meetsMinimum) {
-						return this.createRejectedResult('Release below minimum score', 'below_minimum');
+						if (!scoreResult.meetsMinimum) {
+							return this.createRejectedResult('Release below minimum score', 'below_minimum');
+						}
 					}
 				}
 
 				return this.createAcceptedResult('new', 'No existing file - new download', {
 					candidateScore: undefined,
 					isUpgrade: false
+				});
+			}
+
+			// Existing file found - this is an upgrade scenario
+			// When forced, skip validation but still mark as upgrade so old file gets replaced
+			if (options.force) {
+				return this.createAcceptedResult('upgrade', 'Force override - replacing existing file', {
+					isUpgrade: true
 				});
 			}
 
@@ -256,10 +262,6 @@ class ReleaseDecisionService {
 			release: release.title
 		});
 
-		if (options.force) {
-			return this.createAcceptedResult('new', 'Force override enabled');
-		}
-
 		try {
 			// Fetch episode with series and profile
 			const episode = await db.query.episodes.findFirst({
@@ -275,8 +277,8 @@ class ReleaseDecisionService {
 				return this.createRejectedResult('Episode not found', 'episode_not_found');
 			}
 
-			// Check blocklist
-			if (!options.skipBlocklist) {
+			// Check blocklist (skip when forced)
+			if (!options.force && !options.skipBlocklist) {
 				const blocklistResult = await this.checkBlocklist(release, {
 					seriesId: episode.seriesId
 				});
@@ -292,45 +294,56 @@ class ReleaseDecisionService {
 			}
 
 			// Find existing file for this episode
-			const existingFile = await this.findEpisodeFile(episodeId);
+			const existingFile = await this.findEpisodeFile(episodeId, episode.seriesId);
 
 			// If no existing file, new download
 			if (!existingFile) {
-				// Score the release to ensure it meets minimum requirements
-				const fullProfile = getProfile(profile.id);
-				if (fullProfile) {
-					const scoreResult = scoreRelease(
-						release.title,
-						fullProfile as ScoringProfile,
-						undefined,
-						release.size,
-						{
-							mediaType: 'tv',
-							isSeasonPack: false
+				// Skip score validation when forced
+				if (!options.force) {
+					// Score the release to ensure it meets minimum requirements
+					const fullProfile = getProfile(profile.id);
+					if (fullProfile) {
+						const scoreResult = scoreRelease(
+							release.title,
+							fullProfile as ScoringProfile,
+							undefined,
+							release.size,
+							{
+								mediaType: 'tv',
+								isSeasonPack: false
+							}
+						);
+
+						if (scoreResult.isBanned) {
+							return this.createRejectedResult(
+								`Release banned: ${scoreResult.bannedReasons.join(', ')}`,
+								'banned'
+							);
 						}
-					);
 
-					if (scoreResult.isBanned) {
-						return this.createRejectedResult(
-							`Release banned: ${scoreResult.bannedReasons.join(', ')}`,
-							'banned'
-						);
-					}
+						if (scoreResult.sizeRejected) {
+							return this.createRejectedResult(
+								scoreResult.sizeRejectionReason || 'Size rejected',
+								'size_rejected'
+							);
+						}
 
-					if (scoreResult.sizeRejected) {
-						return this.createRejectedResult(
-							scoreResult.sizeRejectionReason || 'Size rejected',
-							'size_rejected'
-						);
-					}
-
-					if (!scoreResult.meetsMinimum) {
-						return this.createRejectedResult('Release below minimum score', 'below_minimum');
+						if (!scoreResult.meetsMinimum) {
+							return this.createRejectedResult('Release below minimum score', 'below_minimum');
+						}
 					}
 				}
 
 				return this.createAcceptedResult('new', 'No existing file - new download', {
 					isUpgrade: false
+				});
+			}
+
+			// Existing file found - this is an upgrade scenario
+			// When forced, skip validation but still mark as upgrade so old file gets replaced
+			if (options.force) {
+				return this.createAcceptedResult('upgrade', 'Force override - replacing existing file', {
+					isUpgrade: true
 				});
 			}
 
@@ -380,10 +393,6 @@ class ReleaseDecisionService {
 			release: release.title
 		});
 
-		if (options.force) {
-			return this.createAcceptedResult('new', 'Force override enabled');
-		}
-
 		try {
 			// Fetch series with profile
 			const seriesData = await db.query.series.findFirst({
@@ -395,8 +404,8 @@ class ReleaseDecisionService {
 				return this.createRejectedResult('Series not found', 'series_not_found');
 			}
 
-			// Check blocklist
-			if (!options.skipBlocklist) {
+			// Check blocklist (skip when forced)
+			if (!options.force && !options.skipBlocklist) {
 				const blocklistResult = await this.checkBlocklist(release, { seriesId });
 				if (!blocklistResult.accepted) {
 					return blocklistResult;
@@ -420,8 +429,38 @@ class ReleaseDecisionService {
 
 			// Fetch existing files for all episodes
 			const episodeIds = seasonEpisodes.map((ep) => ep.id);
-			const existingFiles = await this.findEpisodeFilesForEpisodes(episodeIds);
+			const existingFiles = await this.findEpisodeFilesForEpisodes(episodeIds, seriesId);
 			const existingFileMap = new Map(existingFiles.map((f) => [f.episodeIds?.[0], f]));
+
+			// Check if there are existing files (for upgrade detection)
+			const hasExistingFiles = existingFiles.length > 0;
+
+			// When forced with existing files, skip validation but mark as upgrade
+			if (options.force) {
+				const stats: UpgradeStats = {
+					improved: hasExistingFiles ? existingFiles.length : 0,
+					unchanged: 0,
+					downgraded: 0,
+					newEpisodes: seasonEpisodes.length - existingFiles.length,
+					total: seasonEpisodes.length
+				};
+
+				if (hasExistingFiles) {
+					return this.createAcceptedResult(
+						'upgrade',
+						'Force override - replacing existing files',
+						{
+							upgradeStats: stats,
+							isUpgrade: true
+						}
+					);
+				} else {
+					return this.createAcceptedResult('new', 'Force override - new season pack', {
+						upgradeStats: stats,
+						isUpgrade: false
+					});
+				}
+			}
 
 			// Get full profile for scoring
 			const fullProfile = getProfile(profile.id);
@@ -497,18 +536,18 @@ class ReleaseDecisionService {
 			// Determine overall decision using majority benefit rule
 			// Accept if: (improved + newEpisodes) > downgraded
 			const netBenefit = stats.improved + stats.newEpisodes - stats.downgraded;
-			const hasExistingFiles = stats.total > stats.newEpisodes;
+			const hasExistingFilesForDecision = stats.total > stats.newEpisodes;
 
 			logger.debug('[ReleaseDecision] Season pack stats', {
 				seriesId,
 				seasonNumber,
 				stats,
 				netBenefit,
-				hasExistingFiles
+				hasExistingFiles: hasExistingFilesForDecision
 			});
 
 			// If no existing files, this is all new content
-			if (!hasExistingFiles) {
+			if (!hasExistingFilesForDecision) {
 				if (!candidateScore.meetsMinimum) {
 					return this.createRejectedResult('Release below minimum score', 'below_minimum');
 				}
@@ -583,10 +622,6 @@ class ReleaseDecisionService {
 			release: release.title
 		});
 
-		if (options.force) {
-			return this.createAcceptedResult('new', 'Force override enabled');
-		}
-
 		try {
 			// Fetch series with profile
 			const seriesData = await db.query.series.findFirst({
@@ -598,8 +633,8 @@ class ReleaseDecisionService {
 				return this.createRejectedResult('Series not found', 'series_not_found');
 			}
 
-			// Check blocklist
-			if (!options.skipBlocklist) {
+			// Check blocklist (skip when forced)
+			if (!options.force && !options.skipBlocklist) {
 				const blocklistResult = await this.checkBlocklist(release, { seriesId });
 				if (!blocklistResult.accepted) {
 					return blocklistResult;
@@ -623,11 +658,41 @@ class ReleaseDecisionService {
 
 			// Fetch all existing files
 			const episodeIds = allEpisodes.map((ep) => ep.id);
-			const existingFiles = await this.findEpisodeFilesForEpisodes(episodeIds);
+			const existingFiles = await this.findEpisodeFilesForEpisodes(episodeIds, seriesId);
 			const existingFileMap = new Map<string, (typeof existingFiles)[0]>();
 			for (const file of existingFiles) {
 				for (const epId of file.episodeIds || []) {
 					existingFileMap.set(epId, file);
+				}
+			}
+
+			// Check if there are existing files (for upgrade detection)
+			const hasExistingFiles = existingFiles.length > 0;
+
+			// When forced with existing files, skip validation but mark as upgrade
+			if (options.force) {
+				const stats: UpgradeStats = {
+					improved: hasExistingFiles ? existingFiles.length : 0,
+					unchanged: 0,
+					downgraded: 0,
+					newEpisodes: allEpisodes.length - existingFiles.length,
+					total: allEpisodes.length
+				};
+
+				if (hasExistingFiles) {
+					return this.createAcceptedResult(
+						'upgrade',
+						'Force override - replacing existing files',
+						{
+							upgradeStats: stats,
+							isUpgrade: true
+						}
+					);
+				} else {
+					return this.createAcceptedResult('new', 'Force override - new series pack', {
+						upgradeStats: stats,
+						isUpgrade: false
+					});
 				}
 			}
 
@@ -703,9 +768,9 @@ class ReleaseDecisionService {
 
 			// Apply majority benefit rule
 			const netBenefit = stats.improved + stats.newEpisodes - stats.downgraded;
-			const hasExistingFiles = stats.total > stats.newEpisodes;
+			const hasExistingFilesForDecision = stats.total > stats.newEpisodes;
 
-			if (!hasExistingFiles) {
+			if (!hasExistingFilesForDecision) {
 				if (!candidateScore.meetsMinimum) {
 					return this.createRejectedResult('Release below minimum score', 'below_minimum');
 				}
@@ -824,7 +889,7 @@ class ReleaseDecisionService {
 			}
 
 			// Fetch existing files
-			const existingFiles = await this.findEpisodeFilesForEpisodes(episodeIds);
+			const existingFiles = await this.findEpisodeFilesForEpisodes(episodeIds, seriesId);
 			const existingFileMap = new Map<string, (typeof existingFiles)[0]>();
 			for (const file of existingFiles) {
 				for (const epId of file.episodeIds || []) {
@@ -1131,10 +1196,13 @@ class ReleaseDecisionService {
 	 * Find episode file for a specific episode
 	 */
 	private async findEpisodeFile(
-		episodeId: string
+		episodeId: string,
+		seriesId: string
 	): Promise<typeof episodeFiles.$inferSelect | null> {
-		// Episode files can contain multiple episodes, so we need to check the episodeIds array
-		const files = await db.query.episodeFiles.findMany();
+		// Filter by seriesId first to avoid full-table scan, then check episodeIds array
+		const files = await db.query.episodeFiles.findMany({
+			where: eq(episodeFiles.seriesId, seriesId)
+		});
 
 		for (const file of files) {
 			if (file.episodeIds?.includes(episodeId)) {
@@ -1149,10 +1217,13 @@ class ReleaseDecisionService {
 	 * Find episode files for multiple episodes
 	 */
 	private async findEpisodeFilesForEpisodes(
-		episodeIds: string[]
+		episodeIds: string[],
+		seriesId: string
 	): Promise<Array<typeof episodeFiles.$inferSelect>> {
-		// Get all files and filter those that contain any of the target episodes
-		const files = await db.query.episodeFiles.findMany();
+		// Filter by seriesId first to avoid full-table scan, then filter by episodeIds
+		const files = await db.query.episodeFiles.findMany({
+			where: eq(episodeFiles.seriesId, seriesId)
+		});
 
 		return files.filter((file) => file.episodeIds?.some((epId) => episodeIds.includes(epId)));
 	}

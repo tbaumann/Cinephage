@@ -107,6 +107,8 @@ function mapDownloadStatusToQueueStatus(
 	switch (downloadStatus) {
 		case 'downloading':
 			return 'downloading';
+		case 'stalled':
+			return 'stalled';
 		case 'paused':
 			return 'paused';
 		case 'seeding':
@@ -166,6 +168,10 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 
 	// Pending imports that need retry (path was invalid, waiting for SABnzbd to finish)
 	private pendingImports: Map<string, { attempts: number; lastAttempt: number }> = new Map();
+
+	// Last time orphan cleanup was run (runs every 10 minutes)
+	private lastOrphanCleanupTime = 0;
+	private static readonly ORPHAN_CLEANUP_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 	private constructor() {
 		super();
@@ -678,6 +684,17 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 
 		try {
 			await this.pollClients();
+
+			// Periodic orphan cleanup (every 10 minutes)
+			if (startTime - this.lastOrphanCleanupTime > DownloadMonitorService.ORPHAN_CLEANUP_INTERVAL_MS) {
+				this.lastOrphanCleanupTime = startTime;
+				// Run orphan cleanup in background (don't block polling)
+				this.runOrphanCleanup().catch((err) => {
+					logger.warn('Orphan cleanup failed', {
+						error: err instanceof Error ? err.message : String(err)
+					});
+				});
+			}
 		} catch (error) {
 			logger.error('Error during download poll', {
 				error: error instanceof Error ? error.message : String(error)
@@ -686,6 +703,21 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 
 		// Schedule next poll
 		this.schedulePoll();
+	}
+
+	/**
+	 * Run orphan cleanup in background
+	 */
+	private async runOrphanCleanup(): Promise<void> {
+		logger.debug('Running periodic orphan cleanup');
+		const result = await this.cleanupOrphanedDownloads(false);
+		if (result.removed.length > 0) {
+			logger.info('Orphan cleanup completed', {
+				removed: result.removed.length,
+				skipped: result.skipped.length,
+				errors: result.errors.length
+			});
+		}
 	}
 
 	/**
@@ -1336,10 +1368,13 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 
 		const stats: QueueStats = {
 			totalCount: rows.length,
+			queuedCount: 0,
 			downloadingCount: 0,
+			stalledCount: 0,
 			seedingCount: 0,
 			pausedCount: 0,
 			completedCount: 0,
+			importingCount: 0,
 			failedCount: 0,
 			totalSizeBytes: 0,
 			totalDownloadSpeed: 0,
@@ -1352,8 +1387,14 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 			stats.totalUploadSpeed += row.uploadSpeed || 0;
 
 			switch (row.status) {
+				case 'queued':
+					stats.queuedCount++;
+					break;
 				case 'downloading':
 					stats.downloadingCount++;
+					break;
+				case 'stalled':
+					stats.stalledCount++;
 					break;
 				case 'seeding':
 					stats.seedingCount++;
@@ -1363,6 +1404,9 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 					break;
 				case 'completed':
 					stats.completedCount++;
+					break;
+				case 'importing':
+					stats.importingCount++;
 					break;
 				case 'failed':
 					stats.failedCount++;
@@ -1572,18 +1616,31 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 
 	/**
 	 * Mark a queue item as importing (for ImportService to call)
+	 * Returns false if max import attempts exceeded
 	 */
-	async markImporting(id: string): Promise<void> {
+	async markImporting(id: string): Promise<boolean> {
 		const now = new Date().toISOString();
 
 		// First get current import attempts
 		const current = await db
-			.select({ importAttempts: downloadQueue.importAttempts })
+			.select({ importAttempts: downloadQueue.importAttempts, title: downloadQueue.title })
 			.from(downloadQueue)
 			.where(eq(downloadQueue.id, id))
 			.get();
 
 		const newAttempts = (current?.importAttempts ?? 0) + 1;
+
+		// Enforce MAX_IMPORT_ATTEMPTS limit
+		if (newAttempts > MAX_IMPORT_ATTEMPTS) {
+			logger.error('Max import attempts exceeded, marking as failed', {
+				queueItemId: id,
+				title: current?.title,
+				attempts: newAttempts,
+				maxAttempts: MAX_IMPORT_ATTEMPTS
+			});
+			await this.markFailed(id, `Import failed after ${newAttempts} attempts`);
+			return false;
+		}
 
 		await db
 			.update(downloadQueue)
@@ -1599,6 +1656,7 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 			this.emit('queue:updated', updatedItem);
 			this.emitSSE('queue:updated', updatedItem);
 		}
+		return true;
 	}
 
 	/**

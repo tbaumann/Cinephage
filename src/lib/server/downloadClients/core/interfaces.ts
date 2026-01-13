@@ -53,7 +53,7 @@ export interface DownloadInfo {
 	name: string;
 	hash: string;
 	progress: number;
-	status: 'downloading' | 'seeding' | 'paused' | 'completed' | 'error' | 'queued';
+	status: 'downloading' | 'stalled' | 'seeding' | 'paused' | 'completed' | 'error' | 'queued';
 	size: number;
 	downloadSpeed: number;
 	uploadSpeed: number;

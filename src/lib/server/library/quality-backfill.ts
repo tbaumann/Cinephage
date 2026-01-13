@@ -125,6 +125,7 @@ export async function backfillMissingQuality(): Promise<BackfillResult> {
 		const allEpisodeFiles = await db
 			.select({
 				id: episodeFiles.id,
+				sceneName: episodeFiles.sceneName,
 				relativePath: episodeFiles.relativePath
 			})
 			.from(episodeFiles);
@@ -133,9 +134,10 @@ export async function backfillMissingQuality(): Promise<BackfillResult> {
 
 		for (const file of allEpisodeFiles) {
 			try {
-				// Extract filename from path
-				const filename = file.relativePath.split('/').pop() || file.relativePath;
-				const parsed = parser.parse(filename);
+				// Use sceneName if available (has original release name with quality markers)
+				// Fall back to relativePath if sceneName is not available
+				const nameToparse = file.sceneName || file.relativePath.split('/').pop() || file.relativePath;
+				const parsed = parser.parse(nameToparse);
 
 				// Normalize the values with proper capitalization
 				const resolution = parsed.resolution !== 'unknown' ? parsed.resolution : undefined;
@@ -179,6 +181,7 @@ export async function backfillMissingQuality(): Promise<BackfillResult> {
 		const allMovieFiles = await db
 			.select({
 				id: movieFiles.id,
+				sceneName: movieFiles.sceneName,
 				relativePath: movieFiles.relativePath
 			})
 			.from(movieFiles);
@@ -187,9 +190,10 @@ export async function backfillMissingQuality(): Promise<BackfillResult> {
 
 		for (const file of allMovieFiles) {
 			try {
-				// Extract filename from path
-				const filename = file.relativePath.split('/').pop() || file.relativePath;
-				const parsed = parser.parse(filename);
+				// Use sceneName if available (has original release name with quality markers)
+				// Fall back to relativePath if sceneName is not available
+				const nameToParse = file.sceneName || file.relativePath.split('/').pop() || file.relativePath;
+				const parsed = parser.parse(nameToParse);
 
 				// Normalize the values with proper capitalization
 				const resolution = parsed.resolution !== 'unknown' ? parsed.resolution : undefined;

@@ -1,14 +1,40 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { monitoringScheduler } from '$lib/server/monitoring/MonitoringScheduler.js';
+import { monitoringSearchService } from '$lib/server/monitoring/search/MonitoringSearchService.js';
 import { logger } from '$lib/logging';
 
 /**
  * POST /api/monitoring/search/upgrade
  * Manually trigger upgrade search
+ *
+ * Query params:
+ * - dryRun=true: Simulate the search without grabbing. Logs what would happen and returns detailed upgrade decisions.
  */
-export const POST: RequestHandler = async () => {
+export const POST: RequestHandler = async ({ url }) => {
+	const dryRun = url.searchParams.get('dryRun') === 'true';
+
 	try {
+		if (dryRun) {
+			// Dry-run mode: simulate the search without grabbing
+			logger.info('[API] Starting upgrade search dry-run');
+
+			const results = await monitoringSearchService.searchForUpgrades({
+				cutoffUnmetOnly: false,
+				dryRun: true
+			});
+
+			return json({
+				success: true,
+				message: 'Upgrade search dry-run completed (no grabs performed)',
+				dryRun: true,
+				summary: results.summary,
+				items: results.items,
+				upgradeDetails: results.upgradeDetails
+			});
+		}
+
+		// Normal mode: actually grab upgrades
 		const result = await monitoringScheduler.runUpgradeSearch();
 
 		return json({

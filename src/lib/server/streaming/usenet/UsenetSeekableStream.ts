@@ -34,6 +34,10 @@ export interface UsenetSeekableStreamOptions {
 	nntpManager: NntpManager;
 	range?: ByteRange;
 	onProgress?: (bytesStreamed: number, totalBytes: number) => void;
+	/** Mount ID for DB cache lookups */
+	mountId?: string;
+	/** File index within the mount for DB cache lookups */
+	fileIndex?: number;
 }
 
 /**
@@ -65,8 +69,14 @@ export class UsenetSeekableStream extends Readable {
 		// Create segment store
 		this.store = new SegmentStore(options.file.segments);
 
-		// Create adaptive prefetcher
-		this.prefetcher = new AdaptivePrefetcher(options.nntpManager, this.store);
+		// Create adaptive prefetcher with DB cache support
+		this.prefetcher = new AdaptivePrefetcher(
+			options.nntpManager,
+			this.store,
+			undefined, // config
+			options.mountId,
+			options.fileIndex
+		);
 
 		// Initialize state based on range
 		this.state = this.initializeState();

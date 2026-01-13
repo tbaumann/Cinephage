@@ -229,6 +229,11 @@ export class MediaMatcherService {
 						filePath
 					});
 					return [match];
+				} else {
+					logger.warn('[MediaMatcher] IMDB ID found in path but not in TMDB, falling back to title search', {
+						imdbId: extractedIds.imdbId,
+						filePath
+					});
 				}
 			}
 
@@ -639,13 +644,23 @@ export class MediaMatcherService {
 			return;
 		}
 
-		// Create movie file entry
+		// Parse quality from the original filename (preserves quality markers)
+		const originalFilename = basename(file.path, extname(file.path));
+		const parsedQuality = parseRelease(originalFilename);
+
+		// Create movie file entry with proper sceneName and quality data
 		await db.insert(movieFiles).values({
 			movieId,
 			relativePath: fileName,
 			size: file.size,
 			mediaInfo,
-			sceneName: file.parsedTitle
+			sceneName: originalFilename,
+			quality: {
+				resolution: parsedQuality.resolution ?? undefined,
+				source: parsedQuality.source ?? undefined,
+				codec: parsedQuality.codec ?? undefined,
+				hdr: parsedQuality.hdr ?? undefined
+			}
 		});
 
 		// Trigger subtitle search if enabled (after metadata is fetched)
@@ -822,7 +837,11 @@ export class MediaMatcherService {
 			await db.update(episodes).set(updates).where(eq(episodes.id, episode.id));
 		}
 
-		// Create episode file entry
+		// Parse quality from the original filename (preserves quality markers)
+		const originalFilename = basename(file.path, extname(file.path));
+		const parsedQuality = parseRelease(originalFilename);
+
+		// Create episode file entry with proper sceneName and quality data
 		await db.insert(episodeFiles).values({
 			seriesId,
 			seasonNumber,
@@ -830,7 +849,13 @@ export class MediaMatcherService {
 			relativePath: relativePath.replace(seriesFolder + '/', ''),
 			size: file.size,
 			mediaInfo,
-			sceneName: file.parsedTitle
+			sceneName: originalFilename,
+			quality: {
+				resolution: parsedQuality.resolution ?? undefined,
+				source: parsedQuality.source ?? undefined,
+				codec: parsedQuality.codec ?? undefined,
+				hdr: parsedQuality.hdr ?? undefined
+			}
 		});
 
 		// Update series stats

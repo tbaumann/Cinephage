@@ -5,6 +5,7 @@
 	import MonitorToggle from './MonitorToggle.svelte';
 	import StatusIndicator from './StatusIndicator.svelte';
 	import QualityBadge from './QualityBadge.svelte';
+	import ScoreBadge from './ScoreBadge.svelte';
 	import {
 		Search,
 		Settings,
@@ -23,17 +24,26 @@
 		error?: string;
 	}
 
+	interface ScoreInfo {
+		score: number;
+		isAtCutoff: boolean;
+		upgradesAllowed: boolean;
+	}
+
 	interface Props {
 		movie: LibraryMovie;
 		qualityProfileName?: string | null;
 		isDownloading?: boolean;
 		autoSearching?: boolean;
 		autoSearchResult?: AutoSearchResult | null;
+		scoreInfo?: ScoreInfo | null;
+		scoreLoading?: boolean;
 		onMonitorToggle?: (newValue: boolean) => void;
 		onAutoSearch?: () => void;
 		onSearch?: () => void;
 		onEdit?: () => void;
 		onDelete?: () => void;
+		onScoreClick?: () => void;
 	}
 
 	let {
@@ -42,11 +52,14 @@
 		isDownloading = false,
 		autoSearching = false,
 		autoSearchResult = null,
+		scoreInfo = null,
+		scoreLoading = false,
 		onMonitorToggle,
 		onAutoSearch,
 		onSearch,
 		onEdit,
-		onDelete
+		onDelete,
+		onScoreClick
 	}: Props = $props();
 
 	const bestQuality = $derived(getBestQualityFromFiles(movie.files));
@@ -214,6 +227,14 @@
 							quality={movie.files[0].quality}
 							mediaInfo={movie.files[0].mediaInfo}
 							size="md"
+						/>
+						<ScoreBadge
+							score={scoreInfo?.score ?? null}
+							isAtCutoff={scoreInfo?.isAtCutoff ?? false}
+							upgradesAllowed={scoreInfo?.upgradesAllowed ?? true}
+							loading={scoreLoading}
+							size="md"
+							onclick={onScoreClick}
 						/>
 					{/if}
 				</div>

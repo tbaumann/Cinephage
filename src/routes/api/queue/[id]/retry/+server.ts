@@ -7,6 +7,8 @@ import { getDownloadClientManager } from '$lib/server/downloadClients/DownloadCl
 import { logger } from '$lib/logging';
 import { redactUrl } from '$lib/server/utils/urlSecurity';
 
+const MAX_IMPORT_ATTEMPTS = 10;
+
 /**
  * POST - Retry a failed download
  *
@@ -24,8 +26,17 @@ export const POST: RequestHandler = async ({ params }) => {
 		}
 
 		// Only allow retrying failed downloads
-		if (queueItem.status !== 'failed' && queueItem.status !== 'warning') {
+		if (queueItem.status !== 'failed') {
 			throw error(400, `Cannot retry download with status: ${queueItem.status}`);
+		}
+
+		// Check if max import attempts exceeded
+		const currentAttempts = queueItem.importAttempts || 0;
+		if (currentAttempts >= MAX_IMPORT_ATTEMPTS) {
+			throw error(
+				400,
+				`Max retry attempts (${MAX_IMPORT_ATTEMPTS}) exceeded. Consider re-searching for a different release.`
+			);
 		}
 
 		// Get download client
@@ -101,6 +112,8 @@ export const POST: RequestHandler = async ({ params }) => {
 				uploadSpeed: 0,
 				eta: null,
 				errorMessage: null,
+				startedAt: null,
+				completedAt: null,
 				importAttempts: (queueItem.importAttempts || 0) + 1,
 				lastAttemptAt: new Date().toISOString()
 			})

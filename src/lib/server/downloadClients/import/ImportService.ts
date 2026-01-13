@@ -264,8 +264,19 @@ export class ImportService extends EventEmitter {
 			});
 		}
 
-		// Mark as importing
-		await downloadMonitor.markImporting(queueItemId);
+		// Mark as importing (returns false if max attempts exceeded)
+		const canProceed = await downloadMonitor.markImporting(queueItemId);
+		if (!canProceed) {
+			worker.fail('Max import attempts exceeded');
+			return {
+				success: false,
+				queueItemId,
+				importedFiles: [],
+				failedFiles: [],
+				totalSize: 0,
+				error: 'Max import attempts exceeded'
+			};
+		}
 
 		try {
 			// Set source path
@@ -1460,7 +1471,7 @@ export class ImportService extends EventEmitter {
 			protocol: queueItem.protocol,
 			movieId: queueItem.movieId,
 			seriesId: queueItem.seriesId,
-			episodeIds: queueItem.episodeIds as string[],
+			episodeIds: queueItem.episodeIds ?? undefined,
 			seasonNumber: queueItem.seasonNumber,
 			status,
 			statusReason: extras.statusReason,

@@ -317,6 +317,69 @@ export class SABnzbdClient implements IDownloadClient {
 	}
 
 	/**
+	 * Check for existing download with matching title (for duplicate detection).
+	 * SABnzbd generates new nzo_ids each time, so we deduplicate by title.
+	 * Only checks active/recent downloads - not the entire history.
+	 */
+	private async findDuplicateByTitle(
+		title: string,
+		category?: string
+	): Promise<DownloadInfo | null> {
+		try {
+			// Get current downloads (queue + recent history)
+			const downloads = await this.getDownloads(category);
+
+			// Normalize title for comparison (remove extension, normalize whitespace)
+			const normalizedTitle = title
+				.replace(/\.nzb$/i, '')
+				.replace(/[._-]/g, ' ')
+				.toLowerCase()
+				.trim();
+
+			for (const download of downloads) {
+				// Skip failed/error downloads (allow retry)
+				if (download.status === 'error') continue;
+
+				// Skip completed downloads that have been removed/imported
+				// (they're in history but no longer active)
+				if (download.status === 'completed' && download.canBeRemoved) continue;
+
+				// Normalize existing download name
+				const existingName = download.name
+					.replace(/\.nzb$/i, '')
+					.replace(/[._-]/g, ' ')
+					.toLowerCase()
+					.trim();
+
+				// Check for match (exact or very similar)
+				if (existingName === normalizedTitle) {
+					return download;
+				}
+
+				// Also check if one is a substring of the other (handles slight title variations)
+				if (existingName.includes(normalizedTitle) || normalizedTitle.includes(existingName)) {
+					// Only match if they're very similar (>80% length match)
+					const lengthRatio =
+						Math.min(existingName.length, normalizedTitle.length) /
+						Math.max(existingName.length, normalizedTitle.length);
+					if (lengthRatio > 0.8) {
+						return download;
+					}
+				}
+			}
+
+			return null;
+		} catch (error) {
+			// Don't block on duplicate check failure - log and continue
+			logger.warn('[SABnzbd] Failed to check for duplicates', {
+				title,
+				error: error instanceof Error ? error.message : String(error)
+			});
+			return null;
+		}
+	}
+
+	/**
 	 * Add a download to SABnzbd.
 	 * Returns the NZB ID (nzo_id).
 	 */
@@ -333,6 +396,21 @@ export class SABnzbdClient implements IDownloadClient {
 		});
 
 		try {
+			// Check for duplicates before adding (SABnzbd generates new IDs, so we check by title)
+			if (options.title) {
+				const existingDownload = await this.findDuplicateByTitle(options.title, options.category);
+				if (existingDownload) {
+					logger.warn('[SABnzbd] Duplicate download detected', {
+						title: options.title,
+						existingId: existingDownload.id,
+						existingStatus: existingDownload.status
+					});
+					const error = new Error(`Duplicate download: "${options.title}" already exists in SABnzbd`);
+					(error as Error & { existingDownload: DownloadInfo }).existingDownload = existingDownload;
+					(error as Error & { isDuplicate: boolean }).isDuplicate = true;
+					throw error;
+				}
+			}
 			let response;
 
 			// Check for NZB file content
@@ -714,7 +792,7 @@ export class SABnzbdClient implements IDownloadClient {
 			id: item.nzo_id,
 			name: item.filename,
 			hash: item.nzo_id, // SABnzbd uses nzo_id instead of hash
-			progress: item.percentage,
+			progress: item.percentage / 100, // Normalize to 0-1 (SABnzbd returns 0-100)
 			status: this.mapStatus(item.status, item.percentage),
 			size: this.parseMbToBytes(item.mb),
 			downloadSpeed: this.parseSpeedToBytes(item.speed),
@@ -729,32 +807,33 @@ export class SABnzbdClient implements IDownloadClient {
 	/**
 	 * Estimate progress for history items based on post-processing status.
 	 * Download is 100%, post-processing stages should show meaningful progress.
+	 * Returns normalized 0-1 range.
 	 */
 	private estimateHistoryProgress(status: SabnzbdDownloadStatus, isCompleted: boolean): number {
-		if (isCompleted) return 100;
+		if (isCompleted) return 1;
 
 		// Post-processing stages happen after download is 100%
-		// Estimate progress through the pipeline
+		// Estimate progress through the pipeline (normalized to 0-1)
 		switch (status) {
 			case 'Completed':
-				return 100;
+				return 1;
 			case 'Verifying':
 			case 'QuickCheck':
 			case 'Checking':
-				return 85; // Download done, verifying
+				return 0.85; // Download done, verifying
 			case 'Repairing':
-				return 88; // Repairing pars
+				return 0.88; // Repairing pars
 			case 'Extracting':
-				return 92; // Extracting archives
+				return 0.92; // Extracting archives
 			case 'Moving':
-				return 97; // Almost done
+				return 0.97; // Almost done
 			case 'Running':
-				return 95; // Running post-scripts
+				return 0.95; // Running post-scripts
 			case 'Failed':
 			case 'Deleted':
 				return 0;
 			default:
-				return 80; // Generic post-processing
+				return 0.8; // Generic post-processing
 		}
 	}
 

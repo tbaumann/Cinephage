@@ -6,11 +6,13 @@
  * - Adjusts prefetch window based on pattern
  * - Respects backpressure signals
  * - Cancels irrelevant prefetches on seek
+ * - Checks persistent DB cache before NNTP fetch
  */
 
 import { logger } from '$lib/logging';
 import type { NntpManager } from './NntpManager';
 import { SegmentStore } from './SegmentStore';
+import { getSegmentCacheService } from './SegmentCacheService';
 import type { AccessPattern, PrefetchStrategy } from './types';
 
 /**
@@ -56,6 +58,8 @@ export class AdaptivePrefetcher {
 	private config: AdaptivePrefetcherConfig;
 	private nntpManager: NntpManager;
 	private store: SegmentStore;
+	private mountId: string | null;
+	private fileIndex: number | null;
 	private accessHistory: AccessRecord[] = [];
 	private pendingFetches: Map<number, PendingFetch> = new Map();
 	private paused = false;
@@ -65,11 +69,15 @@ export class AdaptivePrefetcher {
 	constructor(
 		nntpManager: NntpManager,
 		store: SegmentStore,
-		config?: Partial<AdaptivePrefetcherConfig>
+		config?: Partial<AdaptivePrefetcherConfig>,
+		mountId?: string,
+		fileIndex?: number
 	) {
 		this.nntpManager = nntpManager;
 		this.store = store;
 		this.config = { ...DEFAULT_CONFIG, ...config };
+		this.mountId = mountId ?? null;
+		this.fileIndex = fileIndex ?? null;
 	}
 
 	/**
@@ -122,17 +130,47 @@ export class AdaptivePrefetcher {
 	/**
 	 * Get a segment, fetching from NNTP if not cached.
 	 * Records access for pattern detection and triggers prefetch.
+	 * Checks both in-memory cache and persistent DB cache.
 	 */
 	async getSegment(index: number): Promise<Buffer> {
 		// Record access
 		this.recordAccess(index);
 
-		// Check cache first
+		// Check in-memory cache first (fastest)
 		const cached = this.store.getCachedSegment(index);
 		if (cached) {
 			// Still trigger prefetch for next segments
 			this.triggerPrefetch(index);
 			return cached;
+		}
+
+		// Check persistent DB cache (survives restarts)
+		if (this.mountId && this.fileIndex !== null) {
+			try {
+				const dbCached = await getSegmentCacheService().getCachedSegment(
+					this.mountId,
+					this.fileIndex,
+					index
+				);
+				if (dbCached) {
+					logger.debug('[AdaptivePrefetcher] DB cache hit', {
+						mountId: this.mountId,
+						fileIndex: this.fileIndex,
+						segmentIndex: index,
+						size: dbCached.length
+					});
+					// Also cache in memory for faster subsequent access
+					this.store.cacheSegment(index, dbCached);
+					this.triggerPrefetch(index);
+					return dbCached;
+				}
+			} catch (error) {
+				// DB cache miss or error - fall through to NNTP fetch
+				logger.debug('[AdaptivePrefetcher] DB cache check failed', {
+					segmentIndex: index,
+					error: error instanceof Error ? error.message : 'Unknown'
+				});
+			}
 		}
 
 		// Check if already being fetched
@@ -141,7 +179,7 @@ export class AdaptivePrefetcher {
 			return pending.promise;
 		}
 
-		// Fetch the segment
+		// Fetch the segment from NNTP
 		const data = await this.fetchSegment(index);
 
 		// Trigger prefetch for next segments

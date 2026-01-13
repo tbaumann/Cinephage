@@ -38,8 +38,7 @@ export async function executeUpgradeMonitorTask(
 		// Search for ALL potential upgrades (both movies and episodes)
 		// cutoffUnmetOnly: false means we search everything, not just items below cutoff
 		const upgradeResults = await monitoringSearchService.searchForUpgrades({
-			maxItems: 50, // Limit to prevent overwhelming indexers
-			cutoffUnmetOnly: false, // Search all items for potential upgrades
+			cutoffUnmetOnly: false,
 			signal: ctx?.abortSignal
 		});
 

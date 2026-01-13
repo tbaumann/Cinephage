@@ -10,6 +10,7 @@ import {
 } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { getDownloadClientManager } from '$lib/server/downloadClients/DownloadClientManager';
+import { downloadMonitor } from '$lib/server/downloadClients/monitoring';
 import { logger } from '$lib/logging';
 
 /**
@@ -87,41 +88,14 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 			throw error(404, 'Queue item not found');
 		}
 
-		// Get download client to perform actions
-		const client = queueItem.downloadClientId
-			? await db
-					.select()
-					.from(downloadClients)
-					.where(eq(downloadClients.id, queueItem.downloadClientId))
-					.get()
-			: null;
-
-		// Handle different actions
+		// Handle different actions using downloadMonitor which emits SSE events
 		if (action === 'pause') {
-			// Pause download in client
-			if (client && queueItem.infoHash) {
-				const clientInstance = await getDownloadClientManager().getClientInstance(client.id);
-				if (clientInstance) {
-					await clientInstance.pauseDownload(queueItem.infoHash);
-				}
-			}
-
-			await db.update(downloadQueue).set({ status: 'paused' }).where(eq(downloadQueue.id, id));
-
+			await downloadMonitor.pauseDownload(id);
 			return json({ success: true, action: 'paused' });
 		}
 
 		if (action === 'resume') {
-			// Resume download in client
-			if (client && queueItem.infoHash) {
-				const clientInstance = await getDownloadClientManager().getClientInstance(client.id);
-				if (clientInstance) {
-					await clientInstance.resumeDownload(queueItem.infoHash);
-				}
-			}
-
-			await db.update(downloadQueue).set({ status: 'downloading' }).where(eq(downloadQueue.id, id));
-
+			await downloadMonitor.resumeDownload(id);
 			return json({ success: true, action: 'resumed' });
 		}
 

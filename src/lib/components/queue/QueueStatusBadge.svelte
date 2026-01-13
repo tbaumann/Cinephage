@@ -7,6 +7,7 @@
 		CheckCircle2,
 		Loader2,
 		AlertCircle,
+		AlertTriangle,
 		Upload,
 		Trash2
 	} from 'lucide-svelte';
@@ -28,6 +29,7 @@
 	> = {
 		queued: { label: 'Queued', variant: 'badge-ghost', icon: Clock },
 		downloading: { label: 'Downloading', variant: 'badge-info', icon: Download },
+		stalled: { label: 'Stalled', variant: 'badge-warning', icon: AlertTriangle },
 		paused: { label: 'Paused', variant: 'badge-warning', icon: Pause },
 		completed: { label: 'Completed', variant: 'badge-success', icon: CheckCircle2 },
 		importing: { label: 'Importing', variant: 'badge-info', icon: Loader2 },

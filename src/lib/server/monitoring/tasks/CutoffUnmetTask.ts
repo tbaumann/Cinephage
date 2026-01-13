@@ -37,8 +37,7 @@ export async function executeCutoffUnmetTask(
 		// Search for items below quality cutoff only
 		// cutoffUnmetOnly: true means we only search items that haven't reached target quality
 		const cutoffResults = await monitoringSearchService.searchForUpgrades({
-			maxItems: 50,
-			cutoffUnmetOnly: true, // Only search items below cutoff
+			cutoffUnmetOnly: true,
 			signal: ctx?.abortSignal
 		});
 

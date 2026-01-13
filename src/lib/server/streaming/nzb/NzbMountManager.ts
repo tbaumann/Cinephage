@@ -10,6 +10,7 @@ import { db } from '$lib/server/db';
 import { nzbStreamMounts } from '$lib/server/db/schema';
 import { logger } from '$lib/logging';
 import { parseNzb, type NzbFile } from '$lib/server/streaming/usenet';
+import { getSegmentCacheService } from '$lib/server/streaming/usenet/SegmentCacheService';
 
 /**
  * Mount status values.
@@ -18,9 +19,7 @@ export type MountStatus =
 	| 'pending'
 	| 'parsing'
 	| 'ready'
-	| 'requires_extraction'
 	| 'downloading'
-	| 'extracting'
 	| 'error'
 	| 'expired';
 
@@ -117,8 +116,11 @@ class NzbMountManager {
 						}
 					: undefined;
 
-			// Store full media files with segments for streaming
-			const mediaFilesData = parsed.mediaFiles.map((f) => ({
+			// Store all files with segments for streaming
+		// Note: RAR files are stored for detection but streaming will be rejected
+		const filesToStore = parsed.files;
+
+			const mediaFilesData = filesToStore.map((f) => ({
 				index: f.index,
 				name: f.name,
 				size: f.size,
@@ -168,6 +170,27 @@ class NzbMountManager {
 				files: parsed.files.length,
 				mediaFiles: parsed.mediaFiles.length
 			});
+
+			// Prefetch critical segments for fast FFmpeg probing (async, non-blocking)
+			if (parsed.mediaFiles.length > 0) {
+				const mainFile = parsed.mediaFiles.reduce((best, f) =>
+					f.size > best.size ? f : best
+				);
+				setImmediate(async () => {
+					try {
+						await getSegmentCacheService().prefetchCriticalSegments(
+							inserted.id,
+							mainFile.index,
+							mainFile
+						);
+					} catch (error) {
+						logger.warn('[NzbMountManager] Prefetch failed (non-fatal)', {
+							mountId: inserted.id,
+							error: error instanceof Error ? error.message : String(error)
+						});
+					}
+				});
+			}
 
 			return {
 				id: inserted.id,
@@ -266,6 +289,16 @@ class NzbMountManager {
 	 * Delete a mount.
 	 */
 	async deleteMount(id: string): Promise<boolean> {
+		// Clear segment cache for this mount
+		try {
+			await getSegmentCacheService().clearMountCache(id);
+		} catch (error) {
+			logger.warn('[NzbMountManager] Failed to clear segment cache', {
+				mountId: id,
+				error: error instanceof Error ? error.message : String(error)
+			});
+		}
+
 		const result = await db.delete(nzbStreamMounts).where(eq(nzbStreamMounts.id, id));
 
 		return result.changes > 0;

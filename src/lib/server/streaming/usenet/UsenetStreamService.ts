@@ -5,7 +5,8 @@
  * - Mount management
  * - Stream lifecycle
  * - NZB parsing and caching
- * - Streamability checks (RAR detection)
+ * - Streamability checks (rejects RAR-compressed content)
+ * - Direct streaming for media files (MKV, MP4, etc.)
  * - Clean resource cleanup
  */
 
@@ -19,8 +20,10 @@ import {
 	type ParsedNzb,
 	type CreateStreamResult,
 	type ByteRange,
+	type NzbFile,
 	getContentType,
-	parseRangeHeader
+	parseRangeHeader,
+	isMediaFile
 } from './types';
 
 // Forward mount manager imports from old location for compatibility
@@ -106,28 +109,22 @@ class UsenetStreamService {
 		}
 
 		// Check mount status
-		if (mount.status === 'requires_extraction') {
-			throw new Error(
-				'This release contains only RAR files and cannot be streamed directly. Please search for a different release or extract the content first.'
-			);
-		}
-
-		if (mount.status === 'downloading' || mount.status === 'extracting') {
-			throw new Error(`Extraction in progress: ${mount.status}`);
-		}
-
-		if (mount.status !== 'ready') {
-			throw new Error(`Mount not ready: ${mount.status}`);
+		if (mount.status === 'downloading') {
+			throw new Error(`Mount is downloading: ${mount.status}`);
 		}
 
 		// Get parsed NZB
 		const parsed = await this.getParsedNzb(mount);
 
-		// Check if RAR-only (should have been caught earlier, but double-check)
+		// Check if RAR-only content - not supported for streaming
 		if (isRarOnlyNzb(parsed)) {
 			throw new Error(
-				'This release contains only RAR files and cannot be streamed directly. Please search for a different release.'
+				'RAR-compressed releases cannot be streamed. Use a download client instead.'
 			);
+		}
+
+		if (mount.status !== 'ready') {
+			throw new Error(`Mount not ready: ${mount.status}`);
 		}
 
 		// Get the file to stream
@@ -142,11 +139,13 @@ class UsenetStreamService {
 		// Parse range header
 		const range = parseRangeHeader(rangeHeader, file.size);
 
-		// Create stream
+		// Create stream with DB cache support
 		const stream = new UsenetSeekableStream({
 			file,
 			nntpManager,
-			range: range ?? undefined
+			range: range ?? undefined,
+			mountId,
+			fileIndex
 		});
 
 		const contentType = getContentType(file.name);
@@ -186,27 +185,47 @@ class UsenetStreamService {
 			};
 		}
 
+		logger.info('[UsenetStreamService] Starting checkStreamability', { mountId });
+
 		try {
 			const parsed = await this.getParsedNzb(mount);
 
+			logger.info('[UsenetStreamService] checkStreamability parsed NZB', {
+				mountId,
+				filesCount: parsed.files.length,
+				mediaFilesCount: parsed.mediaFiles.length,
+				rarFilesCount: parsed.files.filter((f) => f.isRar).length
+			});
+
 			// Check for RAR-only content
 			if (isRarOnlyNzb(parsed)) {
-				return {
-					canStream: false,
-					error:
-						'This release contains only RAR files. RAR streaming is not supported. Please search for a different release.',
-					requiresExtraction: true,
-					archiveType: 'rar',
-					estimatedSize: parsed.totalSize
-				};
+				logger.info('[UsenetStreamService] Detected RAR-only content', { mountId });
+				return this.checkRarStreamability(parsed);
 			}
 
 			// Get best streamable file
 			const bestFile = getBestStreamableFile(parsed);
 			if (!bestFile) {
+				// Check if there are RAR files - provide better error message
+				const hasRarFiles = parsed.files.some((f) => f.isRar);
+				logger.info('[UsenetStreamService] No streamable file found', {
+					mountId,
+					hasRarFiles,
+					totalFiles: parsed.files.length
+				});
+
+				if (hasRarFiles) {
+					return {
+						canStream: false,
+						error: 'This release is RAR compressed and cannot be streamed. Try a different release or use a download client instead.',
+						requiresExtraction: false,
+						archiveType: 'rar'
+					};
+				}
+
 				return {
 					canStream: false,
-					error: 'No streamable media files found',
+					error: 'No streamable media files found in this release.',
 					requiresExtraction: false,
 					archiveType: 'none'
 				};
@@ -229,6 +248,21 @@ class UsenetStreamService {
 	}
 
 	/**
+	 * Check if RAR-only content is streamable.
+	 * RAR archives are not supported for streaming - return error.
+	 */
+	private checkRarStreamability(_parsed: ParsedNzb): StreamabilityResult {
+		logger.info('[UsenetStreamService] RAR content detected - not streamable');
+
+		return {
+			canStream: false,
+			error: 'RAR-compressed releases cannot be streamed. Use a download client instead.',
+			requiresExtraction: false,
+			archiveType: 'rar'
+		};
+	}
+
+	/**
 	 * Get file metadata for a mount.
 	 */
 	async getFileInfo(
@@ -242,6 +276,12 @@ class UsenetStreamService {
 
 		try {
 			const parsed = await this.getParsedNzb(mount);
+
+			// RAR-only content not supported for streaming
+			if (isRarOnlyNzb(parsed)) {
+				return null;
+			}
+
 			const file = parsed.files.find((f) => f.index === fileIndex);
 			if (!file) return null;
 
@@ -316,7 +356,8 @@ class UsenetStreamService {
 			const parsed: ParsedNzb = {
 				hash: mount.nzbHash,
 				files: mount.mediaFiles,
-				mediaFiles: mount.mediaFiles.filter((f) => !f.isRar),
+				// Filter for actual media files (video/audio), not just non-RAR files
+				mediaFiles: mount.mediaFiles.filter((f) => !f.isRar && isMediaFile(f.name)),
 				totalSize: mount.totalSize,
 				groups: mount.mediaFiles.flatMap((f) => f.groups).filter((v, i, a) => a.indexOf(v) === i)
 			};
@@ -458,17 +499,17 @@ class UsenetStreamService {
 	 */
 	private cleanupCache(): void {
 		const now = Date.now();
-		let cleaned = 0;
+		let nzbCleaned = 0;
 
 		for (const [hash, cached] of this.nzbCache) {
 			if (now - cached.timestamp > NZB_CACHE_TTL) {
 				this.nzbCache.delete(hash);
-				cleaned++;
+				nzbCleaned++;
 			}
 		}
 
-		if (cleaned > 0) {
-			logger.debug('[UsenetStreamService] Cleaned NZB cache', { cleaned });
+		if (nzbCleaned > 0) {
+			logger.debug('[UsenetStreamService] Cleaned NZB cache', { nzbCleaned });
 		}
 	}
 }

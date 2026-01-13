@@ -50,8 +50,9 @@ import { logger } from '$lib/logging';
  * Version 33: Add EPG source override column to channel_lineup_items
  * Version 34: Add url_base column to download_clients
  * Version 35: Add mount_mode column to download_clients
+ * Version 36: Add nzb_segment_cache table for persistent prefetched segments
  */
-export const CURRENT_SCHEMA_VERSION = 35;
+export const CURRENT_SCHEMA_VERSION = 36;
 
 /**
  * All table definitions with CREATE TABLE IF NOT EXISTS
@@ -755,6 +756,16 @@ const TABLE_DEFINITIONS: string[] = [
 		"updated_at" text
 	)`,
 
+	`CREATE TABLE IF NOT EXISTS "nzb_segment_cache" (
+		"id" text PRIMARY KEY NOT NULL,
+		"mount_id" text NOT NULL REFERENCES "nzb_stream_mounts"("id") ON DELETE CASCADE,
+		"file_index" integer NOT NULL,
+		"segment_index" integer NOT NULL,
+		"data" blob NOT NULL,
+		"size" integer NOT NULL,
+		"created_at" text
+	)`,
+
 	`CREATE TABLE IF NOT EXISTS "media_browser_servers" (
 		"id" text PRIMARY KEY NOT NULL,
 		"name" text NOT NULL,
@@ -995,6 +1006,9 @@ const INDEX_DEFINITIONS: string[] = [
 	`CREATE INDEX IF NOT EXISTS "idx_nzb_mounts_series" ON "nzb_stream_mounts" ("series_id")`,
 	`CREATE INDEX IF NOT EXISTS "idx_nzb_mounts_expires" ON "nzb_stream_mounts" ("expires_at")`,
 	`CREATE INDEX IF NOT EXISTS "idx_nzb_mounts_hash" ON "nzb_stream_mounts" ("nzb_hash")`,
+	// NZB segment cache indexes
+	`CREATE UNIQUE INDEX IF NOT EXISTS "idx_segment_cache_lookup" ON "nzb_segment_cache" ("mount_id", "file_index", "segment_index")`,
+	`CREATE INDEX IF NOT EXISTS "idx_segment_cache_mount" ON "nzb_segment_cache" ("mount_id")`,
 	// Stalker Portal indexes
 	`CREATE INDEX IF NOT EXISTS "idx_stalker_portals_enabled" ON "stalker_portals" ("enabled")`,
 	// Stalker Portal accounts indexes
@@ -2567,7 +2581,7 @@ const SCHEMA_UPDATES: Record<number, (sqlite: Database.Database) => void> = {
 		}
 	},
 
-	// Version 34: Add url_base column to download_clients
+// Version 34: Add url_base column to download_clients
 	34: (sqlite) => {
 		if (!columnExists(sqlite, 'download_clients', 'url_base')) {
 			sqlite.prepare(`ALTER TABLE "download_clients" ADD COLUMN "url_base" text`).run();
@@ -2581,6 +2595,37 @@ const SCHEMA_UPDATES: Record<number, (sqlite: Database.Database) => void> = {
 			sqlite.prepare(`ALTER TABLE "download_clients" ADD COLUMN "mount_mode" text`).run();
 			logger.info('[SchemaSync] Added mount_mode column to download_clients');
 		}
+	},
+
+	// Version 36: Add nzb_segment_cache table for persistent prefetched segments
+	36: (sqlite) => {
+		sqlite
+			.prepare(
+				`CREATE TABLE IF NOT EXISTS "nzb_segment_cache" (
+				"id" text PRIMARY KEY NOT NULL,
+				"mount_id" text NOT NULL REFERENCES "nzb_stream_mounts"("id") ON DELETE CASCADE,
+				"file_index" integer NOT NULL,
+				"segment_index" integer NOT NULL,
+				"data" blob NOT NULL,
+				"size" integer NOT NULL,
+				"created_at" text
+			)`
+			)
+			.run();
+
+		// Create indexes
+		sqlite
+			.prepare(
+				`CREATE UNIQUE INDEX IF NOT EXISTS "idx_segment_cache_lookup" ON "nzb_segment_cache" ("mount_id", "file_index", "segment_index")`
+			)
+			.run();
+		sqlite
+			.prepare(
+				`CREATE INDEX IF NOT EXISTS "idx_segment_cache_mount" ON "nzb_segment_cache" ("mount_id")`
+			)
+			.run();
+
+		logger.info('[SchemaSync] Created nzb_segment_cache table for persistent prefetched segments');
 	}
 };
 

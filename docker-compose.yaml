@@ -11,7 +11,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
-      - ${CINEPHAGE_MEDIA_PATH}:/media
+      - ${CINEPHAGE_MEDIA_PATH:-./media}:/media
     environment:
       - ORIGIN=${CINEPHAGE_ORIGIN}
       - TZ=${CINEPHAGE_TZ:-UTC}

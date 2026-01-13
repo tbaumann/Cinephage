@@ -21,6 +21,7 @@ import type {
 } from './types.js';
 import { reject, accept, RejectionReason } from './types.js';
 import type { ScoringProfile } from '$lib/server/scoring/types.js';
+import { buildExistingAttrs } from './utils.js';
 
 /**
  * Check if a release is an upgrade for a movie
@@ -59,10 +60,14 @@ export class MovieUpgradeableSpecification implements IMonitoringSpecification<M
 		// Extract existing file name for scoring
 		const existingFileName = context.existingFile.sceneName || context.existingFile.relativePath;
 
+		// Build existing attributes from stored quality data if available
+		const existingAttrs = buildExistingAttrs(context.existingFile);
+
 		// Compare using scorer
 		const comparison = isUpgrade(existingFileName, release.title, fullProfile as ScoringProfile, {
 			minimumImprovement: context.profile.minScoreIncrement || 0,
 			allowSidegrade: false,
+			existingAttrs,
 			candidateSizeBytes: release.size
 		});
 
@@ -121,10 +126,14 @@ export class EpisodeUpgradeableSpecification implements IMonitoringSpecification
 		// Extract existing file name for scoring
 		const existingFileName = context.existingFile.sceneName || context.existingFile.relativePath;
 
+		// Build existing attributes from stored quality data if available
+		const existingAttrs = buildExistingAttrs(context.existingFile);
+
 		// Compare using scorer
 		const comparison = isUpgrade(existingFileName, release.title, fullProfile as ScoringProfile, {
 			minimumImprovement: context.profile.minScoreIncrement || 0,
 			allowSidegrade: false,
+			existingAttrs,
 			candidateSizeBytes: release.size
 		});
 

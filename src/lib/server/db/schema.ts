@@ -1,4 +1,5 @@
 import {
+	blob,
 	integer,
 	real,
 	sqliteTable,
@@ -2114,6 +2115,49 @@ export const nzbStreamMounts = sqliteTable(
 export type NzbStreamMountRecord = typeof nzbStreamMounts.$inferSelect;
 export type NewNzbStreamMountRecord = typeof nzbStreamMounts.$inferInsert;
 
+/**
+ * NZB Segment Cache - Persistent storage for pre-fetched critical segments.
+ *
+ * Stores decoded segment data (first + last segments of video files) to enable
+ * fast FFmpeg probing. Without this, FFmpeg must fetch segments on-demand to
+ * read MKV headers and Cues, causing 1-2 minute playback delays.
+ */
+export const nzbSegmentCache = sqliteTable(
+	'nzb_segment_cache',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		// Reference to parent mount
+		mountId: text('mount_id')
+			.notNull()
+			.references(() => nzbStreamMounts.id, { onDelete: 'cascade' }),
+		// Which file within the mount (0-indexed)
+		fileIndex: integer('file_index').notNull(),
+		// Which segment within the file (0-indexed)
+		segmentIndex: integer('segment_index').notNull(),
+		// Decoded segment data (binary)
+		data: blob('data', { mode: 'buffer' }).notNull(),
+		// Size in bytes (for stats)
+		size: integer('size').notNull(),
+		// Timestamps
+		createdAt: text('created_at').$defaultFn(() => new Date().toISOString())
+	},
+	(table) => [
+		// Fast lookup by mount + file + segment
+		uniqueIndex('idx_segment_cache_lookup').on(
+			table.mountId,
+			table.fileIndex,
+			table.segmentIndex
+		),
+		// For cleanup when mount is deleted (cascade handles this, but useful for queries)
+		index('idx_segment_cache_mount').on(table.mountId)
+	]
+);
+
+export type NzbSegmentCacheRecord = typeof nzbSegmentCache.$inferSelect;
+export type NewNzbSegmentCacheRecord = typeof nzbSegmentCache.$inferInsert;
+
 // ============================================================================
 // NZB STREAMING RELATIONS
 // ============================================================================
@@ -2131,7 +2175,7 @@ export const nntpServersRelations = relations(nntpServers, ({ one }) => ({
 /**
  * NZB Stream Mounts Relations
  */
-export const nzbStreamMountsRelations = relations(nzbStreamMounts, ({ one }) => ({
+export const nzbStreamMountsRelations = relations(nzbStreamMounts, ({ one, many }) => ({
 	indexer: one(indexers, {
 		fields: [nzbStreamMounts.indexerId],
 		references: [indexers.id]
@@ -2143,6 +2187,17 @@ export const nzbStreamMountsRelations = relations(nzbStreamMounts, ({ one }) => 
 	series: one(series, {
 		fields: [nzbStreamMounts.seriesId],
 		references: [series.id]
+	}),
+	cachedSegments: many(nzbSegmentCache)
+}));
+
+/**
+ * NZB Segment Cache Relations
+ */
+export const nzbSegmentCacheRelations = relations(nzbSegmentCache, ({ one }) => ({
+	mount: one(nzbStreamMounts, {
+		fields: [nzbSegmentCache.mountId],
+		references: [nzbStreamMounts.id]
 	})
 }));
 

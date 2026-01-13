@@ -28,9 +28,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		const streamability = await streamService.checkStreamability(mountId);
 
 		// Update mount with streamability info
-		if (streamability.requiresExtraction) {
-			await mountManager.updateStatus(mountId, 'requires_extraction', { streamability });
-		} else if (streamability.canStream) {
+		if (streamability.canStream) {
 			await mountManager.updateStatus(mountId, 'ready', { streamability });
 		} else {
 			await mountManager.updateStatus(mountId, 'error', {

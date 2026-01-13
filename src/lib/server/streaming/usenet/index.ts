@@ -10,8 +10,7 @@
  * - Backpressure-aware streaming
  * - Request deduplication
  * - LRU cache for decoded segments
- *
- * Note: RAR streaming is NOT supported. Only direct media files can be streamed.
+ * - RAR detection (not supported for streaming)
  */
 
 // Main service
@@ -30,6 +29,7 @@ export { NntpConnection } from './NntpConnection';
 export { UsenetSeekableStream, type UsenetSeekableStreamOptions } from './UsenetSeekableStream';
 export { SegmentStore, type SegmentLocation } from './SegmentStore';
 export { AdaptivePrefetcher } from './AdaptivePrefetcher';
+export { getSegmentCacheService, resetSegmentCacheService } from './SegmentCacheService';
 
 // Parsers and decoders
 export { parseNzb, isRarOnlyNzb, getBestStreamableFile } from './NzbParser';

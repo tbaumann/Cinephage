@@ -4,8 +4,10 @@
 		LibraryMovieHeader,
 		MovieFilesTab,
 		MovieEditModal,
-		RenamePreviewModal
+		RenamePreviewModal,
+		ScoreDetailModal
 	} from '$lib/components/library';
+	import type { FileScoreResponse } from '$lib/types/score';
 	import { InteractiveSearchModal } from '$lib/components/search';
 	import { SubtitleSearchModal } from '$lib/components/subtitles';
 	import ExtractionProgressModal from '$lib/components/streaming/ExtractionProgressModal.svelte';
@@ -32,6 +34,7 @@
 	let isRenameModalOpen = $state(false);
 	let isDeleteModalOpen = $state(false);
 	let isExtractionModalOpen = $state(false);
+	let isScoreModalOpen = $state(false);
 	let extractionMountId = $state<string | null>(null);
 	let extractionTitle = $state('');
 	let isSaving = $state(false);
@@ -44,6 +47,19 @@
 		releaseName?: string;
 		error?: string;
 	} | null>(null);
+	let scoreData = $state<FileScoreResponse | null>(null);
+	let scoreLoading = $state(false);
+	let scoreFetched = $state(false);
+
+	// Derived score info for header badge (use normalized score for comparison with search results)
+	const scoreInfo = $derived.by(() => {
+		if (!scoreData) return null;
+		return {
+			score: scoreData.normalizedScore,
+			isAtCutoff: scoreData.upgradeStatus.isAtCutoff,
+			upgradesAllowed: scoreData.upgradeStatus.upgradesAllowed
+		};
+	});
 
 	// Find quality profile name (use default if none set)
 	const qualityProfileName = $derived.by(() => {
@@ -303,6 +319,41 @@
 		// In a more sophisticated app, we'd invalidate the server load
 		window.location.reload();
 	}
+
+	// Score handlers
+	async function fetchScore() {
+		if (scoreFetched || !data.movie.hasFile) return;
+
+		scoreLoading = true;
+		try {
+			const response = await fetch(`/api/library/movies/${data.movie.id}/score`);
+			if (response.ok) {
+				const result = await response.json();
+				if (result.success) {
+					scoreData = result.score;
+				}
+			}
+		} catch (error) {
+			console.error('Failed to fetch score:', error);
+		} finally {
+			scoreLoading = false;
+			scoreFetched = true;
+		}
+	}
+
+	function handleScoreClick() {
+		if (!scoreFetched) {
+			fetchScore();
+		}
+		isScoreModalOpen = true;
+	}
+
+	// Fetch score on mount if movie has a file
+	$effect(() => {
+		if (data.movie.hasFile && !scoreFetched) {
+			fetchScore();
+		}
+	});
 </script>
 
 <svelte:head>
@@ -320,8 +371,11 @@
 		onSearch={handleSearch}
 		onEdit={handleEdit}
 		onDelete={handleDelete}
+		onScoreClick={handleScoreClick}
 		{autoSearching}
 		{autoSearchResult}
+		{scoreInfo}
+		{scoreLoading}
 	/>
 
 	<!-- Main Content -->
@@ -502,3 +556,10 @@
 		}}
 	/>
 {/if}
+
+<!-- Score Detail Modal -->
+<ScoreDetailModal
+	open={isScoreModalOpen}
+	onClose={() => (isScoreModalOpen = false)}
+	{scoreData}
+/>

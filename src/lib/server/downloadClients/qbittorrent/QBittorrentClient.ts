@@ -69,7 +69,7 @@ interface QBittorrentTorrent {
  */
 function mapTorrentStatus(
 	state: string
-): 'downloading' | 'seeding' | 'paused' | 'completed' | 'error' | 'queued' {
+): 'downloading' | 'stalled' | 'seeding' | 'paused' | 'completed' | 'error' | 'queued' {
 	switch (state) {
 		case 'downloading':
 		case 'forcedDL':
@@ -97,7 +97,7 @@ function mapTorrentStatus(
 			return 'queued';
 
 		case 'stalledDL':
-			return 'downloading'; // Stalled but still downloading
+			return 'stalled'; // Stalled - no seeders available
 
 		case 'error':
 		case 'missingFiles':
