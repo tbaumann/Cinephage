@@ -167,6 +167,30 @@ export const BANNED_CONTENT: CustomFormat[] = [
 ];
 
 /**
+ * Music/Soundtrack releases
+ * These are audio-only releases, not video content
+ */
+export const BANNED_MUSIC: CustomFormat[] = [
+	{
+		id: 'banned-soundtrack',
+		name: 'Soundtrack/OST',
+		description: 'Music soundtrack releases (not video content)',
+		category: 'banned',
+		tags: ['Banned', 'Music', 'Soundtrack'],
+		conditions: [
+			{
+				name: 'Soundtrack',
+				type: 'release_title',
+				pattern:
+					'\\b(OST|Original[. ](Motion[. ]Picture|Television|Series)[. ]Soundtrack|Soundtrack)\\b',
+				required: true,
+				negate: false
+			}
+		]
+	}
+];
+
+/**
  * Unusable low quality sources
  * These are so bad they're not worth downloading
  */
@@ -244,6 +268,7 @@ export const ALL_BANNED_FORMATS: CustomFormat[] = [
 	...BANNED_RETAGGING,
 	...BANNED_FAKE_HDR,
 	...BANNED_CONTENT,
+	...BANNED_MUSIC,
 	...BANNED_SOURCES
 ];
 
