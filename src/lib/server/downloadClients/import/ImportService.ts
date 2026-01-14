@@ -1484,6 +1484,7 @@ export class ImportService extends EventEmitter {
 			episodeFileIds: extras.episodeFileIds,
 			grabbedAt: queueItem.addedAt,
 			completedAt: queueItem.completedAt,
+			releaseGroup: queueItem.releaseGroup,
 			importedAt: new Date().toISOString()
 		});
 	}

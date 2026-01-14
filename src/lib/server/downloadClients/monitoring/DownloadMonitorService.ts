@@ -85,6 +85,7 @@ function rowToQueueItem(row: typeof downloadQueue.$inferSelect): QueueItem {
 		outputPath: row.outputPath,
 		importedPath: row.importedPath,
 		quality: row.quality as QueueItem['quality'],
+		releaseGroup: row.releaseGroup,
 		addedAt: row.addedAt || new Date().toISOString(),
 		startedAt: row.startedAt,
 		completedAt: row.completedAt,
@@ -1458,6 +1459,8 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 		episodeIds?: string[];
 		seasonNumber?: number;
 		quality?: QueueItem['quality'];
+		size?: number;
+		releaseGroup?: string;
 		isAutomatic?: boolean;
 		isUpgrade?: boolean;
 	}): Promise<QueueItem> {
@@ -1506,6 +1509,8 @@ export class DownloadMonitorService extends EventEmitter implements BackgroundSe
 			seasonNumber: params.seasonNumber,
 			status: 'queued',
 			quality: params.quality,
+			size: params.size,
+			releaseGroup: params.releaseGroup,
 			addedAt: now,
 			isAutomatic: params.isAutomatic || false,
 			isUpgrade: params.isUpgrade || false

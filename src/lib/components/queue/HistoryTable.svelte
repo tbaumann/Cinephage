@@ -10,21 +10,13 @@
 		Trash2
 	} from 'lucide-svelte';
 	import { resolvePath } from '$lib/utils/routing';
+	import { formatBytes } from '$lib/utils/format';
 
 	interface Props {
 		items: HistoryItemWithMedia[];
 	}
 
 	let { items }: Props = $props();
-
-	// Format bytes
-	function formatBytes(bytes: number | null | undefined): string {
-		if (!bytes) return '-';
-		const k = 1024;
-		const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-	}
 
 	// Format date
 	function formatDate(dateString: string | null | undefined): string {
@@ -91,6 +83,7 @@
 					<th>Media</th>
 					<th>Status</th>
 					<th>Size</th>
+					<th>Group</th>
 					<th>Indexer</th>
 					<th>Grabbed</th>
 					<th>Completed</th>
@@ -157,6 +150,11 @@
 						<!-- Size -->
 						<td>
 							<span class="text-sm">{formatBytes(item.size)}</span>
+						</td>
+
+						<!-- Group -->
+						<td>
+							<span class="text-sm text-base-content/70">{item.releaseGroup || '-'}</span>
 						</td>
 
 						<!-- Indexer -->

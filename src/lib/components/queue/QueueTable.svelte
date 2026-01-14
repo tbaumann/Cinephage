@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolvePath } from '$lib/utils/routing';
+	import { formatBytes, formatSpeed } from '$lib/utils/format';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { QueueItemWithMedia } from '$lib/types/queue';
 	import {
@@ -26,21 +27,6 @@
 	}
 
 	let { items, actionInProgress, handleAction }: Props = $props();
-
-	// Format bytes to human readable
-	function formatBytes(bytes: number | null | undefined): string {
-		if (!bytes) return '-';
-		const k = 1024;
-		const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-	}
-
-	// Format speed
-	function formatSpeed(bytesPerSecond: number): string {
-		if (!bytesPerSecond) return '-';
-		return formatBytes(bytesPerSecond) + '/s';
-	}
 
 	// Format ETA
 	function formatEta(seconds: number | null | undefined): string {
@@ -99,6 +85,7 @@
 					<th>Status</th>
 					<th>Progress</th>
 					<th>Size</th>
+					<th>Group</th>
 					<th>Speed</th>
 					<th>ETA</th>
 					<th>Client</th>
@@ -166,6 +153,11 @@
 						<!-- Size -->
 						<td>
 							<span class="text-sm">{formatBytes(item.size)}</span>
+						</td>
+
+						<!-- Group -->
+						<td>
+							<span class="text-sm text-base-content/70">{item.releaseGroup || '-'}</span>
 						</td>
 
 						<!-- Speed -->

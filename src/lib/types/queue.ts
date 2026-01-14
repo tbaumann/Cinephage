@@ -71,6 +71,9 @@ export interface QueueItem {
 	// Quality
 	quality?: QueueQualityInfo | null;
 
+	// Release group
+	releaseGroup?: string | null;
+
 	// Timestamps
 	addedAt: string;
 	startedAt?: string | null;
@@ -144,6 +147,9 @@ export interface HistoryItem {
 
 	// Quality
 	quality?: QueueQualityInfo | null;
+
+	// Release group
+	releaseGroup?: string | null;
 
 	// Paths
 	importedPath?: string | null;
