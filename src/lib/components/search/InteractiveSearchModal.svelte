@@ -289,12 +289,6 @@
 		}
 	}
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			onClose();
-		}
-	}
-
 	function toggleSort(field: typeof sortBy) {
 		if (sortBy === field) {
 			sortDir = sortDir === 'desc' ? 'asc' : 'desc';

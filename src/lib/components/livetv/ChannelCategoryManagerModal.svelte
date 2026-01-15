@@ -225,16 +225,6 @@
 		draggedIndex = null;
 		dragOverIndex = null;
 	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			if (editingId) {
-				cancelEdit();
-			} else {
-				onClose();
-			}
-		}
-	}
 </script>
 
 <ModalWrapper {open} {onClose} maxWidth="lg" labelledBy="channel-category-manager-modal-title">

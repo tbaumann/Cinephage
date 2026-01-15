@@ -89,12 +89,6 @@
 	function handleSelect(channel: ChannelWithEpg) {
 		onSelect(channel.id, channel);
 	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			onClose();
-		}
-	}
 </script>
 
 <ModalWrapper {open} {onClose} maxWidth="2xl" labelledBy="epg-source-picker-modal-title">

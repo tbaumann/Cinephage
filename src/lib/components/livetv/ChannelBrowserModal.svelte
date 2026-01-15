@@ -57,8 +57,8 @@
 	let totalPages = $state(0);
 
 	// Selection state
-	let selectedIds = $state(new SvelteSet<string>());
-	let addingIds = $state(new SvelteSet<string>());
+	let selectedIds = new SvelteSet<string>();
+	let addingIds = new SvelteSet<string>();
 	let bulkAdding = $state(false);
 
 	// Local copy of lineup IDs (updated after successful adds)
@@ -101,14 +101,17 @@
 		wasOpen = open;
 
 		if (justOpened) {
-			selectedIds = new SvelteSet();
+			selectedIds.clear();
 			selectedAccountId = '';
 			selectedCategoryId = '';
 			searchQuery = '';
 			debouncedSearch = '';
 			page = 1;
 			error = null;
-			localLineupIds = new SvelteSet(lineupChannelIds);
+			localLineupIds.clear();
+			for (const id of lineupChannelIds) {
+				localLineupIds.add(id);
+			}
 			loadAccounts();
 			loadChannels();
 		}
@@ -117,7 +120,10 @@
 	// Sync lineup IDs from parent without resetting filters
 	$effect(() => {
 		if (open && wasOpen) {
-			localLineupIds = new SvelteSet(lineupChannelIds);
+			localLineupIds.clear();
+			for (const id of lineupChannelIds) {
+				localLineupIds.add(id);
+			}
 		}
 	});
 
@@ -220,41 +226,35 @@
 	function toggleSelection(channelId: string) {
 		if (isInLineup(channelId)) return;
 
-		const newSet = new SvelteSet(selectedIds);
-		if (newSet.has(channelId)) {
-			newSet.delete(channelId);
+		if (selectedIds.has(channelId)) {
+			selectedIds.delete(channelId);
 		} else {
-			newSet.add(channelId);
+			selectedIds.add(channelId);
 		}
-		selectedIds = newSet;
 	}
 
 	function toggleAllVisible() {
-		const newSet = new SvelteSet(selectedIds);
 		if (allVisibleSelected) {
 			// Deselect all visible
 			for (const channel of selectableChannels) {
-				newSet.delete(channel.id);
+				selectedIds.delete(channel.id);
 			}
 		} else {
 			// Select all visible
 			for (const channel of selectableChannels) {
-				newSet.add(channel.id);
+				selectedIds.add(channel.id);
 			}
 		}
-		selectedIds = newSet;
 	}
 
 	function clearSelection() {
-		selectedIds = new SvelteSet();
+		selectedIds.clear();
 	}
 
 	async function addSingleChannel(channel: CachedChannel) {
 		if (isInLineup(channel.id) || addingIds.has(channel.id)) return;
 
-		const newAddingIds = new SvelteSet(addingIds);
-		newAddingIds.add(channel.id);
-		addingIds = newAddingIds;
+		addingIds.add(channel.id);
 
 		try {
 			const response = await fetch('/api/livetv/lineup', {
@@ -268,22 +268,18 @@
 			if (!response.ok) throw new Error('Failed to add channel');
 
 			// Update local state for immediate feedback
-			localLineupIds = new SvelteSet(localLineupIds).add(channel.id);
+			localLineupIds.add(channel.id);
 
 			// Remove from selection if selected
 			if (selectedIds.has(channel.id)) {
-				const newSelectedIds = new SvelteSet(selectedIds);
-				newSelectedIds.delete(channel.id);
-				selectedIds = newSelectedIds;
+				selectedIds.delete(channel.id);
 			}
 
 			onChannelsAdded();
 		} catch (e) {
 			console.error('Failed to add channel:', e);
 		} finally {
-			const updatedAddingIds = new SvelteSet(addingIds);
-			updatedAddingIds.delete(channel.id);
-			addingIds = updatedAddingIds;
+			addingIds.delete(channel.id);
 		}
 	}
 
@@ -306,13 +302,11 @@
 			if (!response.ok) throw new Error('Failed to add channels');
 
 			// Update local state
-			const newLocalLineupIds = new SvelteSet(localLineupIds);
 			for (const id of selectedIds) {
-				newLocalLineupIds.add(id);
+				localLineupIds.add(id);
 			}
-			localLineupIds = newLocalLineupIds;
 
-			selectedIds = new SvelteSet();
+			selectedIds.clear();
 			onChannelsAdded();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to add channels';
@@ -353,13 +347,7 @@
 
 	function handleFilterChange() {
 		page = 1;
-		selectedIds = new SvelteSet();
-	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			onClose();
-		}
+		selectedIds.clear();
 	}
 </script>
 

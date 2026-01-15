@@ -32,10 +32,10 @@
 	let error = $state<string | null>(null);
 
 	// Selection state
-	let selectedIds = $state(new SvelteSet<string>());
+	let selectedIds = new SvelteSet<string>();
 
 	// Expanded categories state (all expanded by default)
-	let expandedCategories = $state(new SvelteSet<string | null>());
+	let expandedCategories = new SvelteSet<string | null>();
 
 	// Drag state
 	let draggedItemId = $state<string | null>(null);
@@ -52,7 +52,7 @@
 
 	// Browser modal state
 	let browserModalOpen = $state(false);
-	let lineupChannelIds = $state(new SvelteSet<string>());
+	let lineupChannelIds = new SvelteSet<string>();
 
 	// Backup browser state
 	let browserMode = $state<'add-to-lineup' | 'select-backup'>('add-to-lineup');
@@ -180,7 +180,10 @@
 			const categoriesData = await categoriesRes.json();
 
 			lineup = lineupData.lineup || [];
-			lineupChannelIds = new SvelteSet(lineupData.lineupChannelIds || []);
+			lineupChannelIds.clear();
+			for (const id of lineupData.lineupChannelIds || []) {
+				lineupChannelIds.add(id);
+			}
 			categories = categoriesData.categories || [];
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load data';
@@ -197,42 +200,36 @@
 
 	// Selection handlers
 	function handleSelect(id: string, selected: boolean) {
-		const newSet = new SvelteSet(selectedIds);
 		if (selected) {
-			newSet.add(id);
+			selectedIds.add(id);
 		} else {
-			newSet.delete(id);
+			selectedIds.delete(id);
 		}
-		selectedIds = newSet;
 	}
 
 	function handleSelectAll(categoryId: string | null, selected: boolean) {
 		const channelsInCategory = groupedChannels.get(categoryId) || [];
-		const newSet = new SvelteSet(selectedIds);
 
 		for (const channel of channelsInCategory) {
 			if (selected) {
-				newSet.add(channel.id);
+				selectedIds.add(channel.id);
 			} else {
-				newSet.delete(channel.id);
+				selectedIds.delete(channel.id);
 			}
 		}
-		selectedIds = newSet;
 	}
 
 	function clearSelection() {
-		selectedIds = new SvelteSet();
+		selectedIds.clear();
 	}
 
 	// Expand/collapse handlers
 	function handleToggleExpand(categoryId: string | null) {
-		const newSet = new SvelteSet(expandedCategories);
-		if (newSet.has(categoryId)) {
-			newSet.delete(categoryId);
+		if (expandedCategories.has(categoryId)) {
+			expandedCategories.delete(categoryId);
 		} else {
-			newSet.add(categoryId);
+			expandedCategories.add(categoryId);
 		}
-		expandedCategories = newSet;
 	}
 
 	// Drag handlers

@@ -3,7 +3,6 @@
 
 	interface Props {
 		enabled: boolean;
-		healthy?: boolean;
 		consecutiveFailures?: number;
 		lastFailure?: string;
 		disabledUntil?: string;

@@ -86,12 +86,6 @@
 		if (now >= end) return 100;
 		return ((now - start) / (end - start)) * 100;
 	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			onClose();
-		}
-	}
 </script>
 
 <ModalWrapper

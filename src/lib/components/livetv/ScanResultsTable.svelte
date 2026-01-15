@@ -41,7 +41,7 @@
 	let results = $state<ScanResult[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
-	let selectedIds = $state(new SvelteSet<string>());
+	let selectedIds = new SvelteSet<string>();
 	let approving = $state(false);
 	let ignoring = $state(false);
 	let clearing = $state(false);
@@ -461,7 +461,8 @@
 										<button
 											class="btn text-success btn-ghost btn-sm"
 											onclick={() => {
-												selectedIds = new SvelteSet([result.id]);
+												selectedIds.clear();
+												selectedIds.add(result.id);
 												approveSelected();
 											}}
 											disabled={approving || ignoring}
@@ -472,7 +473,8 @@
 										<button
 											class="btn btn-ghost btn-sm"
 											onclick={() => {
-												selectedIds = new SvelteSet([result.id]);
+												selectedIds.clear();
+												selectedIds.add(result.id);
 												ignoreSelected();
 											}}
 											disabled={approving || ignoring}

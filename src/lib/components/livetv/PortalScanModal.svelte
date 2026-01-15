@@ -257,12 +257,6 @@
 			startingScan = false;
 		}
 	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			onClose();
-		}
-	}
 </script>
 
 <ModalWrapper {open} {onClose} maxWidth="2xl" labelledBy="portal-scan-modal-title">
