@@ -357,7 +357,7 @@
 					>{data.definitionErrors.length} indexer definition(s) failed to load:</span
 				>
 				<ul class="mt-1 list-inside list-disc text-sm">
-					{#each data.definitionErrors.slice(0, 3) as error}
+					{#each data.definitionErrors.slice(0, 3) as error (error.filePath)}
 						<li class="truncate">{error.filePath}: {error.error}</li>
 					{/each}
 					{#if data.definitionErrors.length > 3}

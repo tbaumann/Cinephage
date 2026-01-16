@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
 	import {
 		Shield,
 		RefreshCw,
@@ -208,12 +207,6 @@
 	function formatDuration(ms: number): string {
 		if (ms < 1000) return `${ms}ms`;
 		return `${(ms / 1000).toFixed(1)}s`;
-	}
-
-	function formatCacheTtl(seconds: number): string {
-		if (seconds < 3600) return `${Math.round(seconds / 60)} minutes`;
-		if (seconds < 86400) return `${Math.round(seconds / 3600)} hours`;
-		return `${Math.round(seconds / 86400)} days`;
 	}
 
 	function getSuccessRate(): string {

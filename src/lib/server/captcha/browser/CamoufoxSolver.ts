@@ -48,7 +48,7 @@ async function waitForChallengeComplete(page: Page, timeout = 30000): Promise<bo
 				await new Promise((r) => setTimeout(r, 1000));
 				return true;
 			}
-		} catch (error) {
+		} catch {
 			// Navigation can destroy execution context - this is expected during challenge completion
 			// Wait briefly and check if we now have the clearance cookie
 			await new Promise((r) => setTimeout(r, 500));

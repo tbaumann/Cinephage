@@ -4,7 +4,7 @@
  * Tests for challenge solving logic with mocked browser.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { BrowserContext, Page, Cookie, Response } from 'playwright-core';
 import type { ManagedBrowser } from './CamoufoxManager';
 import type { ChallengeDetectionResult } from '../types';

@@ -5,7 +5,6 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Cookie } from 'playwright-core';
 import type { SolveResult, CaptchaSolverConfig } from './types';
 
 // Mock settings service

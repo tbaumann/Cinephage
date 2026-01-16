@@ -4,7 +4,7 @@
  * Tests for the centralized challenge detection logic.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { Page, Response } from 'playwright-core';
 import {
 	detectChallengeFromResponse,
