@@ -8,10 +8,14 @@
  * They log warnings but DO NOT block CI - useful for manual verification.
  *
  * TESTED PROVIDERS (no API key required):
- * - addic7ed (TV only)
  * - yifysubtitles (movies only)
- * - gestdown (TV only)
  * - subf2m (movies + TV, web scraper)
+ *
+ * OPTIONAL/UNSTABLE (opt-in via env flag):
+ * - addic7ed (TV only)
+ * - gestdown (TV only)
+ *
+ * Set SUBTITLE_LIVE_TESTS_INCLUDE_OPTIONAL=true to enable optional providers.
  *
  * SKIPPED PROVIDERS (require API keys):
  * - opensubtitles (requires API key from opensubtitles.com)
@@ -65,18 +69,21 @@ const ERROR_TIMEOUT_MS = 90000;
 // ============================================================================
 
 /** Providers to test (no API key required) */
-const NO_AUTH_PROVIDERS: ProviderImplementation[] = [
-	'addic7ed',
-	'yifysubtitles',
-	'gestdown',
-	'subf2m'
-];
+const NO_AUTH_PROVIDERS: ProviderImplementation[] = ['yifysubtitles', 'subf2m'];
+
+/** Providers to test only when explicitly enabled */
+const OPTIONAL_NO_AUTH_PROVIDERS: ProviderImplementation[] = ['addic7ed', 'gestdown'];
+
+/** Include optional providers if explicitly enabled */
+const INCLUDE_OPTIONAL_PROVIDERS = process.env.SUBTITLE_LIVE_TESTS_INCLUDE_OPTIONAL === 'true';
 
 /** Providers that support movies */
 const MOVIE_PROVIDERS: ProviderImplementation[] = ['yifysubtitles', 'subf2m'];
 
 /** Providers that support TV shows */
-const TV_PROVIDERS: ProviderImplementation[] = ['addic7ed', 'gestdown', 'subf2m'];
+const TV_PROVIDERS: ProviderImplementation[] = INCLUDE_OPTIONAL_PROVIDERS
+	? ['addic7ed', 'gestdown', 'subf2m']
+	: ['subf2m'];
 
 // ============================================================================
 // Helper Functions
@@ -225,13 +232,13 @@ describe('Live Subtitle Provider Tests', () => {
 		it('should have no-auth providers registered', () => {
 			const implementations = factory.getSupportedImplementations();
 
-			for (const provider of NO_AUTH_PROVIDERS) {
+			for (const provider of [...NO_AUTH_PROVIDERS, ...OPTIONAL_NO_AUTH_PROVIDERS]) {
 				expect(implementations).toContain(provider);
 			}
 		});
 
 		it('should be able to create provider instances', () => {
-			for (const impl of NO_AUTH_PROVIDERS) {
+			for (const impl of [...NO_AUTH_PROVIDERS, ...OPTIONAL_NO_AUTH_PROVIDERS]) {
 				const provider = createProviderSafe(impl);
 				expect(provider).not.toBeNull();
 
@@ -246,7 +253,7 @@ describe('Live Subtitle Provider Tests', () => {
 		it('should have provider definitions with capabilities info', () => {
 			const definitions = factory.getDefinitions();
 
-			for (const impl of NO_AUTH_PROVIDERS) {
+			for (const impl of [...NO_AUTH_PROVIDERS, ...OPTIONAL_NO_AUTH_PROVIDERS]) {
 				const def = definitions.find((d) => d.implementation === impl);
 				expect(def).toBeDefined();
 
@@ -338,6 +345,9 @@ describe('Live Subtitle Provider Tests', () => {
 							);
 
 							if (results.length === 0) {
+								if (NO_AUTH_PROVIDERS.includes(impl)) {
+									throw new Error(`[${impl}] No results found for baseline movie`);
+								}
 								console.warn(
 									`[${impl}] Warning: No results found - provider may be down or content not available`
 								);
@@ -402,6 +412,9 @@ describe('Live Subtitle Provider Tests', () => {
 							);
 
 							if (results.length === 0) {
+								if (NO_AUTH_PROVIDERS.includes(impl)) {
+									throw new Error(`[${impl}] No results found for baseline TV episode`);
+								}
 								console.warn(
 									`[${impl}] Warning: No results found - provider may be down or content not available`
 								);
@@ -785,11 +798,16 @@ describe('Individual Provider Deep Tests', () => {
 		movie?: MovieTestContent;
 		tv?: TvTestContent;
 	}> = [
-		{ impl: 'addic7ed', tv: TEST_TV_SHOWS[0] }, // Breaking Bad only
-		{ impl: 'yifysubtitles', movie: TEST_MOVIES[1] }, // Fight Club only
-		{ impl: 'gestdown', tv: TEST_TV_SHOWS[3] }, // Stranger Things only
-		{ impl: 'subf2m', movie: TEST_MOVIES[0], tv: TEST_TV_SHOWS[2] } // Inception, Rick and Morty
+		{ impl: 'yifysubtitles', movie: TEST_MOVIES[0] }, // Inception only
+		{ impl: 'subf2m', movie: TEST_MOVIES[0], tv: TEST_TV_SHOWS[0] } // Inception, Breaking Bad
 	];
+
+	if (INCLUDE_OPTIONAL_PROVIDERS) {
+		providerTests.push(
+			{ impl: 'addic7ed', tv: TEST_TV_SHOWS[1] }, // Game of Thrones
+			{ impl: 'gestdown', tv: TEST_TV_SHOWS[2] } // Rick and Morty
+		);
+	}
 
 	for (const { impl, movie, tv } of providerTests) {
 		describe(`Provider: ${impl}`, () => {
@@ -824,6 +842,8 @@ describe('Individual Provider Deep Tests', () => {
 									language: results[0].language,
 									providerId: results[0].providerId
 								});
+							} else if (NO_AUTH_PROVIDERS.includes(impl)) {
+								throw new Error(`[${impl}] No results found for baseline movie`);
 							} else {
 								console.warn(`[${impl}] Warning: No results found`);
 							}
@@ -873,6 +893,8 @@ describe('Individual Provider Deep Tests', () => {
 									language: results[0].language,
 									providerId: results[0].providerId
 								});
+							} else if (NO_AUTH_PROVIDERS.includes(impl)) {
+								throw new Error(`[${impl}] No results found for baseline TV episode`);
 							} else {
 								console.warn(`[${impl}] Warning: No results found`);
 							}
