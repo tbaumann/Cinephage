@@ -3,11 +3,7 @@ import type { RequestHandler } from './$types';
 import { getIndexerManager } from '$lib/server/indexers/IndexerManager';
 import type { SearchCriteria } from '$lib/server/indexers/types';
 import { getCategoriesForSearchType } from '$lib/server/indexers/types';
-import {
-	searchQuerySchema,
-	searchCriteriaSchema,
-	enrichmentOptionsSchema
-} from '$lib/validation/schemas';
+import { searchQuerySchema } from '$lib/validation/schemas';
 import { qualityFilter, type EnrichmentOptions } from '$lib/server/quality';
 import { logger } from '$lib/logging';
 import { redactUrl } from '$lib/server/utils/urlSecurity';
@@ -150,7 +146,8 @@ export const GET: RequestHandler = async ({ url }) => {
 		const searchResult = await manager.searchEnhanced(criteria, {
 			searchSource: 'interactive',
 			enrichment: enrichmentOpts,
-			protocolFilter
+			protocolFilter,
+			timeout: 70000
 		});
 
 		return json({
@@ -180,139 +177,10 @@ export const GET: RequestHandler = async ({ url }) => {
 	}
 
 	// Standard search without enrichment (interactive)
-	const searchResult = await manager.search(criteria, { searchSource: 'interactive' });
-
-	return json({
-		releases: redactReleaseUrls(searchResult.releases),
-		meta: {
-			totalResults: searchResult.totalResults,
-			searchTimeMs: searchResult.searchTimeMs,
-			indexerCount: searchResult.indexerResults.length,
-			indexerResults: Object.fromEntries(
-				searchResult.indexerResults.map((ir) => [
-					ir.indexerId,
-					{
-						name: ir.indexerName,
-						count: ir.results.length,
-						durationMs: ir.searchTimeMs,
-						error: ir.error,
-						searchMethod: ir.searchMethod
-					}
-				])
-			),
-			rejectedIndexers: searchResult.rejectedIndexers
-		}
+	const searchResult = await manager.search(criteria, {
+		searchSource: 'interactive',
+		timeout: 70000
 	});
-};
-
-/**
- * POST /api/search
- * Performs a search with typed criteria in request body.
- *
- * Body format:
- * {
- *   "criteria": { ...searchCriteria },
- *   "enrichment": { ...enrichmentOptions }  // optional
- * }
- */
-export const POST: RequestHandler = async ({ request }) => {
-	let data: unknown;
-	try {
-		data = await request.json();
-	} catch {
-		return json({ error: 'Invalid JSON body' }, { status: 400 });
-	}
-
-	// Parse as object with criteria and optional enrichment
-	const body = data as { criteria?: unknown; enrichment?: unknown };
-
-	// If data doesn't have a criteria field, treat the whole body as criteria (backwards compat)
-	const criteriaData = body.criteria ?? data;
-	const enrichmentData = body.enrichment;
-
-	const criteriaResult = searchCriteriaSchema.safeParse(criteriaData);
-
-	if (!criteriaResult.success) {
-		return json(
-			{
-				error: 'Validation failed',
-				details: criteriaResult.error.flatten()
-			},
-			{ status: 400 }
-		);
-	}
-
-	const manager = await getIndexerManager();
-	const criteria = criteriaResult.data as SearchCriteria;
-
-	// Use enhanced search if enrichment is provided
-	if (enrichmentData) {
-		const enrichmentResult = enrichmentOptionsSchema.safeParse(enrichmentData);
-
-		if (!enrichmentResult.success) {
-			return json(
-				{
-					error: 'Invalid enrichment options',
-					details: enrichmentResult.error.flatten()
-				},
-				{ status: 400 }
-			);
-		}
-
-		// Load the scoring profile to get allowedProtocols for indexer filtering
-		let protocolFilter: string[] | undefined;
-		const effectiveProfileId = enrichmentResult.data.scoringProfileId;
-		if (effectiveProfileId) {
-			const profile = await qualityFilter.getProfile(effectiveProfileId);
-			if (profile?.allowedProtocols && profile.allowedProtocols.length > 0) {
-				protocolFilter = profile.allowedProtocols;
-			}
-		}
-
-		const enrichmentOpts: EnrichmentOptions = {
-			...enrichmentResult.data,
-			// Pass TMDB hint from criteria if available
-			tmdbHint:
-				'tmdbId' in criteria || 'imdbId' in criteria
-					? {
-							tmdbId: 'tmdbId' in criteria ? (criteria.tmdbId as number) : undefined,
-							imdbId: 'imdbId' in criteria ? (criteria.imdbId as string) : undefined,
-							tvdbId: 'tvdbId' in criteria ? (criteria.tvdbId as number) : undefined,
-							mediaType: criteria.searchType === 'tv' ? 'tv' : 'movie'
-						}
-					: undefined
-		};
-
-		const searchResult = await manager.searchEnhanced(criteria, {
-			searchSource: 'interactive',
-			enrichment: enrichmentOpts,
-			protocolFilter
-		});
-
-		return json({
-			releases: redactReleaseUrls(searchResult.releases),
-			meta: {
-				totalResults: searchResult.totalResults,
-				rejectedCount: searchResult.rejectedCount,
-				searchTimeMs: searchResult.searchTimeMs,
-				enrichTimeMs: searchResult.enrichTimeMs,
-				scoringProfileId: searchResult.scoringProfileId,
-				indexerCount: searchResult.indexerResults.length,
-				indexerResults: searchResult.indexerResults.map((ir) => ({
-					indexerId: ir.indexerId,
-					indexerName: ir.indexerName,
-					count: ir.results.length,
-					durationMs: ir.searchTimeMs,
-					error: ir.error,
-					searchMethod: ir.searchMethod
-				})),
-				rejectedIndexers: searchResult.rejectedIndexers
-			}
-		});
-	}
-
-	// Standard search without enrichment (interactive)
-	const searchResult = await manager.search(criteria, { searchSource: 'interactive' });
 
 	return json({
 		releases: redactReleaseUrls(searchResult.releases),
