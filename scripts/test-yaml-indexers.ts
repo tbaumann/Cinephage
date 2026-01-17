@@ -10,7 +10,7 @@
  *   npx tsx scripts/test-yaml-indexers.ts --validate         # Validate YAML schemas only
  *   npx tsx scripts/test-yaml-indexers.ts --live             # Live search tests only
  *   npx tsx scripts/test-yaml-indexers.ts --all              # Both validation and live tests
- *   npx tsx scripts/test-yaml-indexers.ts -i 1337x           # Test specific indexer
+ *   npx tsx scripts/test-yaml-indexers.ts -i <id>            # Test specific indexer
  *   npx tsx scripts/test-yaml-indexers.ts --type public      # Filter by access type
  *   npx tsx scripts/test-yaml-indexers.ts -v                 # Verbose output
  */
@@ -177,7 +177,7 @@ ${c.cyan}Options:${c.reset}
 ${c.cyan}Examples:${c.reset}
   npx tsx scripts/test-yaml-indexers.ts                    # Full test suite
   npx tsx scripts/test-yaml-indexers.ts --validate         # Schema validation only
-  npx tsx scripts/test-yaml-indexers.ts -i 1337x -v        # Test 1337x with verbose output
+  npx tsx scripts/test-yaml-indexers.ts -i <id> -v         # Test a specific indexer
   npx tsx scripts/test-yaml-indexers.ts --type public -L   # Live test all public indexers
 `);
 }

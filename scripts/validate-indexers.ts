@@ -8,13 +8,16 @@
  * Usage:
  *   npx tsx scripts/validate-indexers.ts                    # Validate all definitions
  *   npx tsx scripts/validate-indexers.ts --test             # Validate + live test
- *   npx tsx scripts/validate-indexers.ts --indexer 1337x    # Test specific indexer
+ *   npx tsx scripts/validate-indexers.ts --indexer <id>    # Test specific indexer
  *   npx tsx scripts/validate-indexers.ts --verbose          # Show detailed output
+ *   npx tsx scripts/validate-indexers.ts --test --use-captcha-solver
+ *       # Live test using IndexerHttp with captcha solver fallback
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'yaml';
+import { createIndexerHttp } from '../src/lib/server/indexers/http/IndexerHttp';
 
 // ANSI color codes for terminal output
 const colors = {
@@ -214,7 +217,10 @@ function validateDefinition(data: unknown, fileName: string): ValidationResult {
 /**
  * Perform a live test against an indexer.
  */
-async function testIndexer(def: CardigannDefinition): Promise<TestResult> {
+async function testIndexer(
+	def: CardigannDefinition,
+	useCaptchaSolver: boolean
+): Promise<TestResult> {
 	const result: TestResult = {
 		indexerId: def.id,
 		success: false
@@ -241,23 +247,45 @@ async function testIndexer(def: CardigannDefinition): Promise<TestResult> {
 
 		const searchUrl = new URL(searchPath, baseUrl).toString();
 
-		// Perform request
-		const response = await fetch(searchUrl, {
-			method: 'GET',
-			headers: {
-				'User-Agent': 'Cinephage/1.0 (IndexerValidator)'
-			},
-			signal: AbortSignal.timeout(30000)
-		});
+		const timeoutMs = 30000;
+		let content = '';
+		let status = 0;
+		let _headers: Headers | undefined;
+
+		if (useCaptchaSolver) {
+			const http = createIndexerHttp({
+				indexerId: `validator-${def.id}`,
+				indexerName: def.name,
+				baseUrl,
+				userAgent: 'Cinephage/1.0 (IndexerValidator)',
+				defaultTimeout: Math.max(timeoutMs, 60000)
+			});
+
+			const response = await http.get(searchUrl);
+			content = response.body;
+			status = response.status;
+			_headers = response.headers;
+		} else {
+			// Perform request
+			const response = await fetch(searchUrl, {
+				method: 'GET',
+				headers: {
+					'User-Agent': 'Cinephage/1.0 (IndexerValidator)'
+				},
+				signal: AbortSignal.timeout(timeoutMs)
+			});
+
+			status = response.status;
+			_headers = response.headers;
+			content = await response.text();
+		}
 
 		result.duration = Date.now() - startTime;
 
-		if (!response.ok) {
-			result.error = `HTTP ${response.status}: ${response.statusText}`;
+		if (status < 200 || status >= 300) {
+			result.error = `HTTP ${status}`;
 			return result;
 		}
-
-		const content = await response.text();
 
 		// Check for Cloudflare
 		if (content.includes('cf-browser-verification') || content.includes('Just a moment...')) {
@@ -345,7 +373,14 @@ async function main(): Promise<void> {
 	const args = process.argv.slice(2);
 	const verbose = args.includes('--verbose') || args.includes('-v');
 	const doTest = args.includes('--test') || args.includes('-t');
+	const useCaptchaSolver = args.includes('--use-captcha-solver');
 	const indexerArg = args.find((_, i, arr) => arr[i - 1] === '--indexer' || arr[i - 1] === '-i');
+
+	if (useCaptchaSolver && !doTest) {
+		console.warn(
+			`${colors.yellow}Warning: --use-captcha-solver only applies with --test${colors.reset}`
+		);
+	}
 
 	const definitionsDir = path.resolve(process.cwd(), 'data/indexers/definitions');
 
@@ -397,7 +432,7 @@ async function main(): Promise<void> {
 			// Live test if requested
 			if (doTest) {
 				const def = data as CardigannDefinition;
-				const testResult = await testIndexer(def);
+				const testResult = await testIndexer(def, useCaptchaSolver);
 				printTestResult(testResult);
 
 				if (testResult.success) {
