@@ -465,7 +465,7 @@ export class RequestBuilder {
 			meaningfulSearchParams.includes(key.toLowerCase())
 		);
 		// Check if the path template contains keywords placeholder (e.g., {{ .Keywords }})
-		// This allows indexers like 1337x that embed search in the URL path
+		// This allows indexers that embed search in the URL path
 		const pathHasKeywords = path.path?.includes('.Keywords') ?? false;
 		if (!hasInputSearchCriteria && !pathHasKeywords) {
 			return null;
