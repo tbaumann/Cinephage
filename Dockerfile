@@ -10,6 +10,10 @@ RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt
 
 # Copy package files first to leverage Docker cache
 COPY package*.json ./
+COPY .npmrc ./
+
+# Set Node.js memory limits to prevent npm memory leaks during build
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Install all dependencies (including devDependencies for building)
 RUN npm ci

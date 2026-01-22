@@ -431,7 +431,7 @@
 			const response = await fetch(`/api/library/seasons/${seasonId}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ monitored: newValue })
+				body: JSON.stringify({ monitored: newValue, updateEpisodes: true })
 			});
 
 			if (response.ok) {
@@ -874,6 +874,21 @@
 </svelte:head>
 
 <div class="flex w-full flex-col gap-4 px-4 pb-20 md:gap-6 md:overflow-x-hidden md:px-6 lg:px-8">
+	<div
+		class="rounded-lg px-3 py-2 text-sm font-medium text-base-100 md:px-4 md:py-3 {data.series
+			.monitored
+			? 'bg-success/80'
+			: 'bg-error/80'}"
+	>
+		{#if data.series.monitored}
+			Series monitoring is enabled.
+		{:else}
+			Monitoring is disabled.
+			<span class="block text-xs font-normal text-base-100/90">
+				Season and episode toggles are locked. Enable series monitoring to unlock them.
+			</span>
+		{/if}
+	</div>
 	<!-- Header -->
 	<LibrarySeriesHeader
 		series={data.series}

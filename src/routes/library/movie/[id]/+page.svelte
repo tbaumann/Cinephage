@@ -355,6 +355,21 @@
 </svelte:head>
 
 <div class="flex w-full flex-col gap-4 overflow-x-hidden px-4 pb-20 md:gap-6 md:px-6 lg:px-8">
+	<div
+		class="rounded-lg px-3 py-2 text-sm font-medium text-base-100 md:px-4 md:py-3 {data.movie
+			.monitored
+			? 'bg-success/80'
+			: 'bg-error/80'}"
+	>
+		{#if data.movie.monitored}
+			Monitoring enabled.
+		{:else}
+			Monitoring is disabled.
+			<span class="block text-xs font-normal text-base-100/90">
+				Automatic downloads and upgrades will not occur.
+			</span>
+		{/if}
+	</div>
 	<!-- Header -->
 	<LibraryMovieHeader
 		movie={data.movie}
