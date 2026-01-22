@@ -1,0 +1,99 @@
+{
+  lib,
+  buildNpmPackage,
+  pkgs,
+  nodejs
+}:
+
+buildNpmPackage {
+  pname = "cinephage";
+  version = "0.0.1";
+
+  src = lib.cleanSourceWith {
+    filter = (
+      path: type:
+      let
+        baseName = baseNameOf path;
+        relPath = lib.removePrefix (toString ./.) path;
+      in
+      # Include essential source files
+      (lib.hasPrefix "src/" relPath)
+      || (lib.hasPrefix "static/" relPath)
+      || (lib.hasPrefix "data/indexers/" relPath)
+      || (baseName == "package.json")
+      || (baseName == "package-lock.json")
+      || (baseName == "vite.config.ts")
+      || (baseName == "vite.config.js")
+      || (baseName == "tsconfig.json")
+      || (baseName == "svelte.config.js")
+      || (baseName == "tailwind.config.js")
+      || (baseName == "tailwind.config.ts")
+      || (baseName == "eslint.config.js")
+      || (baseName == ".npmrc")
+      || (baseName == ".prettierrc")
+      || (baseName == ".prettierignore")
+      || (baseName == ".gitignore")
+      || (baseName == "server.js")
+      ||
+        # Exclude unnecessary files and directories
+        !(
+          lib.hasPrefix "." baseName
+          && baseName != ".npmrc"
+          && baseName != ".prettierrc"
+          && baseName != ".prettierignore"
+          && baseName != ".gitignore"
+        )
+        && !(
+          type == "directory"
+          && (
+            baseName == "node_modules"
+            || baseName == "build"
+            || baseName == ".output"
+            || baseName == ".svelte-kit"
+            || baseName == ".git"
+            || baseName == ".github"
+            || baseName == ".vscode"
+            || baseName == "docs"
+            || baseName == "scripts"
+            || baseName == "Inspiration"
+            || baseName == ".claude"
+            || baseName == ".opencode"
+            || baseName == "logs"
+            || baseName == "tmp"
+            || baseName == "temp"
+            || baseName == ".tmp"
+          )
+        )
+        &&
+          # Exclude database files, logs, and environment files
+          !(lib.hasSuffix ".db" baseName)
+        && !(lib.hasSuffix ".log" baseName)
+        && !(lib.hasPrefix ".env" baseName)
+        && !(lib.hasSuffix ".bak" baseName)
+        && !(lib.hasSuffix ".backup" baseName)
+        && !(lib.hasSuffix ".swp" baseName)
+        && !(lib.hasSuffix ".swo" baseName)
+        && !(lib.hasSuffix "~" baseName)
+        && !(lib.hasSuffix ".sqlite" baseName)
+        && !(lib.hasSuffix ".sqlite3" baseName)
+        && !(lib.hasSuffix ".tsbuildinfo" baseName)
+    );
+    src = ../.;
+  };
+
+  npmDepsHash = "sha256-z69FKqg71nmnsZkd+ahTbUSd9hkT/koCnKMQ8P4LwXA=";
+
+  installPhase = ''
+              mkdir -p $out/dist
+              cp -r * $out/dist
+              makeWrapper ${pkgs.lib.getExe pkgs.nodejs} $out/bin/cinephage --add-flags $out/dist/server.js
+            '';
+
+  meta = with lib; {
+    description = "A media management application";
+    homepage = "https://github.com/cinephage/cinephage";
+    license = licenses.gpl3Plus;
+    platforms = platforms.linux ++ platforms.darwin;
+    mainProgram = "cinephage";
+  };
+}
