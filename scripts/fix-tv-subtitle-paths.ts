@@ -13,9 +13,7 @@ import { eq, isNotNull } from 'drizzle-orm';
 
 type EpisodeRow = typeof episodes.$inferSelect;
 type SeriesRow = typeof series.$inferSelect;
-type RootFolderRow = typeof rootFolders.$inferSelect;
 type EpisodeFileRow = typeof episodeFiles.$inferSelect;
-type SubtitleRow = typeof subtitles.$inferSelect;
 
 function resolveEpisodeMediaDir(
 	rootPath: string,
@@ -132,12 +130,10 @@ async function main() {
 		dryRun
 	};
 
-	// eslint-disable-next-line no-console
 	console.log('[fix-tv-subtitle-paths] Completed', summary);
 }
 
 main().catch((error) => {
-	// eslint-disable-next-line no-console
 	console.error('[fix-tv-subtitle-paths] Failed', error);
 	process.exitCode = 1;
 });
