@@ -79,7 +79,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Full history for changelog generation
+          fetch-depth: 0 # Full history for changelog generation
 
       - name: Set lowercase image name
         run: echo "IMAGE_NAME_LC=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
@@ -198,7 +198,7 @@ jobs:
         run: |
           # Get the last release tag, or use the first commit if no releases exist
           LAST_TAG=$(git describe --tags --abbrev=0 --match "v*" 2>/dev/null || git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
+
           if [ -z "$LAST_TAG" ]; then
             # No previous release, get all commits
             COMMIT_RANGE="HEAD"
@@ -207,22 +207,22 @@ jobs:
             COMMIT_RANGE="${LAST_TAG}..HEAD"
             echo "Generating changelog from ${LAST_TAG} to HEAD"
           fi
-          
+
           # Generate changelog sections
           CHANGELOG=""
-          
+
           # Features (conventional commits: feat:, feature:, add:)
           FEATURES=$(git log --pretty=format:"- %s (%h)" "$COMMIT_RANGE" --grep="^feat" --grep="^feature" --grep="^add" -iE 2>/dev/null | head -30 || true)
           if [ -n "$FEATURES" ]; then
             CHANGELOG="${CHANGELOG}### 🎉 New Features\n\n${FEATURES}\n\n"
           fi
-          
+
           # Fixes (conventional commits: fix:, bug:, bugfix:)
           FIXES=$(git log --pretty=format:"- %s (%h)" "$COMMIT_RANGE" --grep="^fix" --grep="^bug" --grep="^bugfix" -iE 2>/dev/null | head -30 || true)
           if [ -n "$FIXES" ]; then
             CHANGELOG="${CHANGELOG}### 🐛 Bug Fixes\n\n${FIXES}\n\n"
           fi
-          
+
           # Other changes (exclude merge commits, chore, ci, docs, style, refactor, test, perf, build)
           OTHERS=$(git log --pretty=format:"- %s (%h)" "$COMMIT_RANGE" --grep="^Merge" -i --invert-grep 2>/dev/null | \
             grep -vE "^(feat|fix|feature|add|bug|bugfix|chore|ci|docs|style|refactor|test|perf|build)(\(.+\))?:" -i | \
@@ -230,7 +230,7 @@ jobs:
           if [ -n "$OTHERS" ]; then
             CHANGELOG="${CHANGELOG}### 📝 Other Changes\n\n${OTHERS}\n\n"
           fi
-          
+
           # If no changelog generated, add a default message with commit list
           if [ -z "$CHANGELOG" ]; then
             COMMIT_COUNT=$(git rev-list --count "$COMMIT_RANGE" 2>/dev/null || echo "0")
@@ -240,14 +240,14 @@ jobs:
               CHANGELOG="${CHANGELOG}${COMMIT_LIST}\n\n"
             fi
           fi
-          
+
           # Escape for GitHub Actions output (multiline)
           {
             echo "changelog<<EOF"
             echo -e "$CHANGELOG"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
-          
+
           echo "Generated changelog:"
           echo -e "$CHANGELOG"
 
@@ -283,10 +283,10 @@ jobs:
         run: |
           # Tag with version
           docker buildx imagetools create -t "${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:${VERSION}" "$AMD64_IMAGE" "$ARM64_IMAGE"
-          
+
           # Tag as latest
           docker buildx imagetools create -t "${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest" "$AMD64_IMAGE" "$ARM64_IMAGE"
-          
+
           echo "✅ Tagged image with ${VERSION} and latest"
 
       - name: Get manifest digest
@@ -323,7 +323,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           # Create and push tag
           if git rev-parse "${{ github.event.inputs.version }}" >/dev/null 2>&1; then
             echo "⚠️  Tag already exists, skipping tag creation"
@@ -340,9 +340,9 @@ jobs:
           name: Release ${{ github.event.inputs.version }}
           body: |
             ${{ needs.generate-changelog.outputs.changelog }}
-            
+
             ---
-            
+
             ${{ github.event.inputs.release_notes }}
           draft: false
           prerelease: false
@@ -369,41 +369,41 @@ jobs:
           PACKAGE_NAME: ${{ env.IMAGE_NAME_LC }}
         run: |
           echo "🧹 Cleaning up old untagged images..."
-          
+
           # Get package versions using GitHub API
           API_RESPONSE=$(curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             "https://api.github.com/user/packages/container/${PACKAGE_NAME}/versions")
-          
+
           # Check if API call was successful
           if echo "$API_RESPONSE" | jq -e '.message' > /dev/null 2>&1; then
             echo "⚠️  API Error: $(echo "$API_RESPONSE" | jq -r '.message')"
             echo "Skipping cleanup..."
             exit 0
           fi
-          
+
           # Get untagged versions (versions with no tags)
           UNTAGGED_VERSIONS=$(echo "$API_RESPONSE" | jq -r '.[] | select(.metadata.container.tags | length == 0) | .id' | sort -rn)
-          
+
           if [ -z "$UNTAGGED_VERSIONS" ]; then
             echo "✅ No untagged images found to clean up"
             exit 0
           fi
-          
+
           # Count untagged versions
           COUNT=$(echo "$UNTAGGED_VERSIONS" | grep -c . || echo "0")
           echo "Found ${COUNT} untagged image version(s)"
-          
+
           # Keep the last 5 untagged versions for safety, delete the rest
           TO_DELETE=$(echo "$UNTAGGED_VERSIONS" | tail -n +6)
-          
+
           if [ -z "$TO_DELETE" ]; then
             echo "✅ All untagged images are within the safety threshold (keeping last 5)"
             exit 0
           fi
-          
+
           DELETE_COUNT=$(echo "$TO_DELETE" | grep -c . || echo "0")
           echo "Deleting ${DELETE_COUNT} old untagged version(s) (keeping last 5)..."
-          
+
           # Delete untagged versions
           echo "$TO_DELETE" | while read -r version_id; do
             if [ -n "$version_id" ] && [ "$version_id" != "null" ]; then
@@ -420,5 +420,5 @@ jobs:
               fi
             fi
           done
-          
+
           echo "✅ Cleanup complete"
