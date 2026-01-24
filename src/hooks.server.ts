@@ -256,7 +256,6 @@ async function initializeEpgScheduler() {
 	}
 }
 
-
 // Start initialization in next tick - ensures module loading completes immediately
 // so the HTTP server can start responding to requests while services initialize in background.
 // Using setImmediate pushes the async work to the next event loop iteration.
