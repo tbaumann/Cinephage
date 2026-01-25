@@ -65,14 +65,24 @@ export const load: PageServerLoad = async ({ url }) => {
 					: 0
 		})) as LibrarySeries[];
 
-		// Fetch all episode files for file-type filtering
+		// Fetch all episode files for file-type filtering and size aggregation
 		const allEpisodeFiles = await db
 			.select({
 				seriesId: episodeFiles.seriesId,
+				size: episodeFiles.size,
 				quality: episodeFiles.quality,
 				mediaInfo: episodeFiles.mediaInfo
 			})
 			.from(episodeFiles);
+
+		// Build seriesId -> total size map for sort-by-size
+		const seriesTotalSizeMap = new Map<string, number>();
+		for (const file of allEpisodeFiles) {
+			seriesTotalSizeMap.set(
+				file.seriesId,
+				(seriesTotalSizeMap.get(file.seriesId) ?? 0) + (file.size ?? 0)
+			);
+		}
 
 		// Extract unique file attribute values for filter dropdowns
 		const uniqueResolutions = new Set<string>();
@@ -186,6 +196,9 @@ export const load: PageServerLoad = async ({ url }) => {
 					break;
 				case 'progress':
 					comparison = a.percentComplete - b.percentComplete;
+					break;
+				case 'size':
+					comparison = (seriesTotalSizeMap.get(a.id) ?? 0) - (seriesTotalSizeMap.get(b.id) ?? 0);
 					break;
 				default:
 					comparison = (a.title || '').localeCompare(b.title || '');

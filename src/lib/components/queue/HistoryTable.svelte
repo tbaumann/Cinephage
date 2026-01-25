@@ -16,9 +16,15 @@
 
 	interface Props {
 		items: HistoryItemWithMedia[];
+		sort?: string;
+		onSort?: (field: string) => void;
 	}
 
-	let { items }: Props = $props();
+	let { items, sort = 'date-desc', onSort }: Props = $props();
+
+	const [sortField, sortDir] = $derived(
+		(sort || 'date-desc').split('-') as [string, 'asc' | 'desc']
+	);
 
 	// Format date
 	function formatDate(dateString: string | null | undefined): string {
@@ -64,14 +70,82 @@
 		<table class="table table-sm">
 			<thead>
 				<tr>
-					<th>Title</th>
-					<th>Media</th>
-					<th>Status</th>
-					<th>Size</th>
-					<th>Group</th>
-					<th>Indexer</th>
-					<th>Grabbed</th>
-					<th>Completed</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('title')}>
+								Title {sortField === 'title' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Title
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('media')}>
+								Media {sortField === 'media' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Media
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('status')}>
+								Status {sortField === 'status' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Status
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('size')}>
+								Size {sortField === 'size' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Size
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('group')}>
+								Group {sortField === 'group' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Group
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('indexer')}>
+								Indexer {sortField === 'indexer' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Indexer
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('grabbed')}>
+								Grabbed {sortField === 'grabbed' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Grabbed
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button
+								type="button"
+								class="btn btn-ghost btn-xs"
+								onclick={() => onSort('completed')}
+							>
+								Completed {sortField === 'completed' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Completed
+						{/if}
+					</th>
 				</tr>
 			</thead>
 			<tbody>

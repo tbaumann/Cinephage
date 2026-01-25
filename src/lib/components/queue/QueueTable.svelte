@@ -26,9 +26,43 @@
 		items: QueueItemWithMedia[];
 		actionInProgress: string | null;
 		handleAction: (id: string) => SubmitFunction;
+		selectable?: boolean;
+		selectedIds?: Set<string>;
+		onSelectChange?: (id: string, selected: boolean) => void;
+		onSelectAllToggle?: () => void;
+		sort?: string;
+		onSort?: (field: string) => void;
 	}
 
-	let { items, actionInProgress, handleAction }: Props = $props();
+	let {
+		items,
+		actionInProgress,
+		handleAction,
+		selectable = false,
+		selectedIds = new Set(),
+		onSelectChange = () => {},
+		onSelectAllToggle = () => {},
+		sort = 'added-desc',
+		onSort
+	}: Props = $props();
+
+	const [sortField, sortDir] = $derived(
+		(sort || 'added-desc').split('-') as [string, 'asc' | 'desc']
+	);
+
+	function formatAdded(dateString: string | null | undefined): string {
+		if (!dateString) return '-';
+		return new Date(dateString).toLocaleDateString(undefined, {
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
+
+	const allSelected = $derived(
+		selectable && items.length > 0 && items.every((i) => selectedIds.has(i.id))
+	);
 
 	// Format ETA
 	function formatEta(seconds: number | null | undefined): string {
@@ -56,7 +90,14 @@
 	<!-- Mobile: Card View -->
 	<div class="space-y-3 lg:hidden">
 		{#each items as item (item.id)}
-			<QueueItemCard {item} {actionInProgress} {handleAction} />
+			<QueueItemCard
+				{item}
+				{actionInProgress}
+				{handleAction}
+				{selectable}
+				selected={selectable && selectedIds.has(item.id)}
+				{onSelectChange}
+			/>
 		{/each}
 	</div>
 
@@ -65,22 +106,127 @@
 		<table class="table table-sm">
 			<thead>
 				<tr>
-					<th>Title</th>
-					<th>Media</th>
-					<th>Status</th>
-					<th>Progress</th>
-					<th>Size</th>
-					<th>Group</th>
-					<th>Speed</th>
-					<th>ETA</th>
-					<th>Client</th>
-					<th class="text-right">Actions</th>
+					{#if selectable}
+						<th class="w-10">
+							<input
+								type="checkbox"
+								class="checkbox checkbox-sm"
+								checked={allSelected}
+								onchange={onSelectAllToggle}
+								aria-label="Select all"
+							/>
+						</th>
+					{/if}
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('title')}>
+								Title {sortField === 'title' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Title
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('media')}>
+								Media {sortField === 'media' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Media
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('status')}>
+								Status {sortField === 'status' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Status
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('progress')}>
+								Progress {sortField === 'progress' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Progress
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('size')}>
+								Size {sortField === 'size' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Size
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('group')}>
+								Group {sortField === 'group' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Group
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('added')}>
+								Added {sortField === 'added' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Added
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('speed')}>
+								Speed {sortField === 'speed' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Speed
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('eta')}>
+								ETA {sortField === 'eta' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							ETA
+						{/if}
+					</th>
+					<th>
+						{#if onSort}
+							<button type="button" class="btn btn-ghost btn-xs" onclick={() => onSort('client')}>
+								Client {sortField === 'client' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+							</button>
+						{:else}
+							Client
+						{/if}
+					</th>
+					{#if !selectable}
+						<th class="text-right">Actions</th>
+					{/if}
 				</tr>
 			</thead>
 			<tbody>
 				{#each items as item (item.id)}
 					{@const mediaInfo = getMediaInfo(item)}
 					<tr class="hover">
+						{#if selectable}
+							<td class="w-10">
+								<input
+									type="checkbox"
+									class="checkbox checkbox-sm"
+									checked={selectedIds.has(item.id)}
+									onchange={() => onSelectChange(item.id, !selectedIds.has(item.id))}
+									aria-label="Select {item.title}"
+								/>
+							</td>
+						{/if}
 						<!-- Release Title -->
 						<td>
 							<div class="max-w-xs">
@@ -145,6 +291,11 @@
 							<span class="text-sm text-base-content/70">{item.releaseGroup || '-'}</span>
 						</td>
 
+						<!-- Added -->
+						<td>
+							<span class="text-sm">{formatAdded(item.addedAt)}</span>
+						</td>
+
 						<!-- Speed -->
 						<td>
 							<div class="flex flex-col text-xs">
@@ -197,50 +348,52 @@
 						</td>
 
 						<!-- Actions -->
-						<td>
-							<div class="flex justify-end gap-1">
-								{#if actionInProgress === item.id}
-									<span class="btn btn-disabled btn-ghost btn-sm">
-										<Loader2 class="h-4 w-4 animate-spin" />
-									</span>
-								{:else}
-									<!-- Pause/Resume -->
-									{#if item.status === 'downloading' || item.status === 'seeding'}
-										<form method="POST" action="?/pause" use:enhance={handleAction(item.id)}>
+						{#if !selectable}
+							<td>
+								<div class="flex justify-end gap-1">
+									{#if actionInProgress === item.id}
+										<span class="btn btn-disabled btn-ghost btn-sm">
+											<Loader2 class="h-4 w-4 animate-spin" />
+										</span>
+									{:else}
+										<!-- Pause/Resume -->
+										{#if item.status === 'downloading' || item.status === 'seeding'}
+											<form method="POST" action="?/pause" use:enhance={handleAction(item.id)}>
+												<input type="hidden" name="id" value={item.id} />
+												<button class="btn btn-ghost btn-sm" title="Pause">
+													<Pause class="h-4 w-4" />
+												</button>
+											</form>
+										{:else if item.status === 'paused'}
+											<form method="POST" action="?/resume" use:enhance={handleAction(item.id)}>
+												<input type="hidden" name="id" value={item.id} />
+												<button class="btn btn-ghost btn-sm" title="Resume">
+													<Play class="h-4 w-4" />
+												</button>
+											</form>
+										{/if}
+
+										<!-- Retry (for failed items) -->
+										{#if item.status === 'failed'}
+											<form method="POST" action="?/retry" use:enhance={handleAction(item.id)}>
+												<input type="hidden" name="id" value={item.id} />
+												<button class="btn btn-ghost btn-sm" title="Retry">
+													<RotateCcw class="h-4 w-4" />
+												</button>
+											</form>
+										{/if}
+
+										<!-- Remove -->
+										<form method="POST" action="?/remove" use:enhance={handleAction(item.id)}>
 											<input type="hidden" name="id" value={item.id} />
-											<button class="btn btn-ghost btn-sm" title="Pause">
-												<Pause class="h-4 w-4" />
-											</button>
-										</form>
-									{:else if item.status === 'paused'}
-										<form method="POST" action="?/resume" use:enhance={handleAction(item.id)}>
-											<input type="hidden" name="id" value={item.id} />
-											<button class="btn btn-ghost btn-sm" title="Resume">
-												<Play class="h-4 w-4" />
+											<button class="btn text-error btn-ghost btn-sm" title="Remove">
+												<Trash2 class="h-4 w-4" />
 											</button>
 										</form>
 									{/if}
-
-									<!-- Retry (for failed items) -->
-									{#if item.status === 'failed'}
-										<form method="POST" action="?/retry" use:enhance={handleAction(item.id)}>
-											<input type="hidden" name="id" value={item.id} />
-											<button class="btn btn-ghost btn-sm" title="Retry">
-												<RotateCcw class="h-4 w-4" />
-											</button>
-										</form>
-									{/if}
-
-									<!-- Remove -->
-									<form method="POST" action="?/remove" use:enhance={handleAction(item.id)}>
-										<input type="hidden" name="id" value={item.id} />
-										<button class="btn text-error btn-ghost btn-sm" title="Remove">
-											<Trash2 class="h-4 w-4" />
-										</button>
-									</form>
-								{/if}
-							</div>
-						</td>
+								</div>
+							</td>
+						{/if}
 					</tr>
 				{/each}
 			</tbody>

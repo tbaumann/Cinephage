@@ -27,9 +27,19 @@
 		item: QueueItemWithMedia;
 		actionInProgress: string | null;
 		handleAction: (id: string) => SubmitFunction;
+		selectable?: boolean;
+		selected?: boolean;
+		onSelectChange?: (id: string, selected: boolean) => void;
 	}
 
-	let { item, actionInProgress, handleAction }: Props = $props();
+	let {
+		item,
+		actionInProgress,
+		handleAction,
+		selectable = false,
+		selected = false,
+		onSelectChange
+	}: Props = $props();
 
 	let isExpanded = $state(false);
 
@@ -54,6 +64,18 @@
 	<div class="card-body gap-2 p-3">
 		<!-- Header: Status + Title + Expand toggle -->
 		<div class="flex items-start gap-2">
+			{#if selectable}
+				<input
+					type="checkbox"
+					class="checkbox mt-0.5 shrink-0 checkbox-sm"
+					checked={selected}
+					onclick={(e) => {
+						e.stopPropagation();
+						onSelectChange?.(item.id, !selected);
+					}}
+					aria-label="Select {item.title}"
+				/>
+			{/if}
 			<QueueStatusBadge status={item.status} class="shrink-0" />
 			<div class="min-w-0 flex-1">
 				<p class="truncate text-sm font-medium" title={item.title}>{item.title}</p>
@@ -147,44 +169,46 @@
 		{/if}
 
 		<!-- Actions -->
-		<div class="mt-1 flex justify-end gap-1 border-t border-base-300 pt-2">
-			{#if actionInProgress === item.id}
-				<span class="btn btn-disabled btn-ghost btn-sm">
-					<Loader2 class="h-4 w-4 animate-spin" />
-				</span>
-			{:else}
-				{#if item.status === 'downloading' || item.status === 'seeding'}
-					<form method="POST" action="?/pause" use:enhance={handleAction(item.id)}>
+		{#if !selectable}
+			<div class="mt-1 flex justify-end gap-1 border-t border-base-300 pt-2">
+				{#if actionInProgress === item.id}
+					<span class="btn btn-disabled btn-ghost btn-sm">
+						<Loader2 class="h-4 w-4 animate-spin" />
+					</span>
+				{:else}
+					{#if item.status === 'downloading' || item.status === 'seeding'}
+						<form method="POST" action="?/pause" use:enhance={handleAction(item.id)}>
+							<input type="hidden" name="id" value={item.id} />
+							<button class="btn btn-ghost btn-sm" title="Pause">
+								<Pause class="h-4 w-4" />
+							</button>
+						</form>
+					{:else if item.status === 'paused'}
+						<form method="POST" action="?/resume" use:enhance={handleAction(item.id)}>
+							<input type="hidden" name="id" value={item.id} />
+							<button class="btn btn-ghost btn-sm" title="Resume">
+								<Play class="h-4 w-4" />
+							</button>
+						</form>
+					{/if}
+
+					{#if item.status === 'failed'}
+						<form method="POST" action="?/retry" use:enhance={handleAction(item.id)}>
+							<input type="hidden" name="id" value={item.id} />
+							<button class="btn btn-ghost btn-sm" title="Retry">
+								<RotateCcw class="h-4 w-4" />
+							</button>
+						</form>
+					{/if}
+
+					<form method="POST" action="?/remove" use:enhance={handleAction(item.id)}>
 						<input type="hidden" name="id" value={item.id} />
-						<button class="btn btn-ghost btn-sm" title="Pause">
-							<Pause class="h-4 w-4" />
-						</button>
-					</form>
-				{:else if item.status === 'paused'}
-					<form method="POST" action="?/resume" use:enhance={handleAction(item.id)}>
-						<input type="hidden" name="id" value={item.id} />
-						<button class="btn btn-ghost btn-sm" title="Resume">
-							<Play class="h-4 w-4" />
+						<button class="btn text-error btn-ghost btn-sm" title="Remove">
+							<Trash2 class="h-4 w-4" />
 						</button>
 					</form>
 				{/if}
-
-				{#if item.status === 'failed'}
-					<form method="POST" action="?/retry" use:enhance={handleAction(item.id)}>
-						<input type="hidden" name="id" value={item.id} />
-						<button class="btn btn-ghost btn-sm" title="Retry">
-							<RotateCcw class="h-4 w-4" />
-						</button>
-					</form>
-				{/if}
-
-				<form method="POST" action="?/remove" use:enhance={handleAction(item.id)}>
-					<input type="hidden" name="id" value={item.id} />
-					<button class="btn text-error btn-ghost btn-sm" title="Remove">
-						<Trash2 class="h-4 w-4" />
-					</button>
-				</form>
-			{/if}
-		</div>
+			</div>
+		{/if}
 	</div>
 </div>

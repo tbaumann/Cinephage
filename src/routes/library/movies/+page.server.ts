@@ -148,6 +148,11 @@ export const load: PageServerLoad = async ({ url }) => {
 				case 'year':
 					comparison = (a.year || 0) - (b.year || 0);
 					break;
+				case 'size':
+					comparison =
+						a.files.reduce((s, f) => s + (f.size ?? 0), 0) -
+						b.files.reduce((s, f) => s + (f.size ?? 0), 0);
+					break;
 				default:
 					comparison = (a.title || '').localeCompare(b.title || '');
 			}

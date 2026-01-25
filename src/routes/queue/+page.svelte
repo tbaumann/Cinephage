@@ -4,16 +4,82 @@
 	import { page } from '$app/stores';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
-	import { Download, History, Filter } from 'lucide-svelte';
+	import { SvelteSet } from 'svelte/reactivity';
+	import { Download, History, Filter, CheckSquare, X } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import QueueTable from '$lib/components/queue/QueueTable.svelte';
 	import QueueStats from '$lib/components/queue/QueueStats.svelte';
 	import HistoryTable from '$lib/components/queue/HistoryTable.svelte';
+	import QueueBulkActionBar from '$lib/components/queue/QueueBulkActionBar.svelte';
+	import QueueBulkRemoveModal from '$lib/components/queue/QueueBulkRemoveModal.svelte';
 	import { Inbox, Search } from 'lucide-svelte';
+	import { toasts } from '$lib/stores/toast.svelte';
 
 	let { data }: { data: PageData } = $props();
 
 	let activeTab = $state<'queue' | 'history'>('queue');
+
+	// Queue selection state (for bulk remove)
+	let selectedQueueIds = new SvelteSet<string>();
+	let showQueueCheckboxes = $state(false);
+	let isBulkRemoveModalOpen = $state(false);
+	let bulkLoading = $state(false);
+
+	const selectedQueueCount = $derived(selectedQueueIds.size);
+
+	function toggleQueueSelectionMode() {
+		showQueueCheckboxes = !showQueueCheckboxes;
+		if (!showQueueCheckboxes) {
+			selectedQueueIds.clear();
+		}
+	}
+
+	function selectAllQueue() {
+		for (const item of data.queueItems) {
+			selectedQueueIds.add(item.id);
+		}
+	}
+
+	function clearQueueSelection() {
+		selectedQueueIds.clear();
+	}
+
+	function handleQueueItemSelectChange(id: string, selected: boolean) {
+		if (selected) {
+			selectedQueueIds.add(id);
+		} else {
+			selectedQueueIds.delete(id);
+		}
+	}
+
+	function handleQueueSelectAllToggle() {
+		if (selectedQueueIds.size === data.queueItems.length) {
+			clearQueueSelection();
+		} else {
+			selectAllQueue();
+		}
+	}
+
+	function handleQueueKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && showQueueCheckboxes) {
+			toggleQueueSelectionMode();
+		}
+	}
+
+	function handleBulkRemoveDone(opts: { success: boolean; removedCount?: number; error?: string }) {
+		bulkLoading = false;
+		if (opts.success) {
+			isBulkRemoveModalOpen = false;
+			clearQueueSelection();
+			showQueueCheckboxes = false;
+			invalidateAll();
+			if (opts.removedCount != null && opts.removedCount > 0) {
+				toasts.success(`Removed ${opts.removedCount} from queue`);
+			}
+		} else {
+			toasts.error(opts.error || 'Failed to remove from queue');
+		}
+	}
 
 	// SSE for real-time updates
 	let eventSource: EventSource | null = null;
@@ -142,6 +208,8 @@
 	<title>Download Queue - Cinephage</title>
 </svelte:head>
 
+<svelte:window onkeydown={handleQueueKeydown} />
+
 <div class="space-y-6">
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -181,6 +249,21 @@
 	{#if activeTab === 'queue'}
 		<!-- Queue Filters -->
 		<div class="flex flex-wrap items-center gap-3">
+			{#if showQueueCheckboxes}
+				<button class="btn gap-1.5 btn-ghost btn-xs sm:btn-sm" onclick={selectAllQueue}>
+					<span class="hidden sm:inline">Select All</span>
+					<span class="sm:hidden">All</span>
+				</button>
+				<button class="btn gap-1.5 btn-ghost btn-xs sm:btn-sm" onclick={toggleQueueSelectionMode}>
+					<X class="h-4 w-4" />
+					<span class="hidden sm:inline">Done</span>
+				</button>
+			{:else}
+				<button class="btn gap-1.5 btn-ghost btn-xs sm:btn-sm" onclick={toggleQueueSelectionMode}>
+					<CheckSquare class="h-4 w-4" />
+					<span class="hidden sm:inline">Select</span>
+				</button>
+			{/if}
 			<div class="flex items-center gap-2">
 				<Filter class="h-4 w-4 text-base-content/60" />
 				<span class="text-sm text-base-content/60">Filters:</span>
@@ -209,6 +292,28 @@
 				<option value="all">All Media</option>
 				<option value="movie">Movies</option>
 				<option value="tv">TV Shows</option>
+			</select>
+
+			<!-- Mobile only: Sort by (desktop uses table header clicks) -->
+			<select
+				class="select-bordered select select-sm lg:hidden"
+				value={data.filters.sort ?? 'added-desc'}
+				onchange={(e) => updateFilters('sort', e.currentTarget.value)}
+			>
+				<option value="added-desc">Added (Newest)</option>
+				<option value="added-asc">Added (Oldest)</option>
+				<option value="title-asc">Title (A-Z)</option>
+				<option value="title-desc">Title (Z-A)</option>
+				<option value="media-asc">Media (Movies first)</option>
+				<option value="media-desc">Media (TV first)</option>
+				<option value="status-asc">Status (A-Z)</option>
+				<option value="status-desc">Status (Z-A)</option>
+				<option value="progress-desc">Progress (High)</option>
+				<option value="progress-asc">Progress (Low)</option>
+				<option value="size-desc">Size (Largest)</option>
+				<option value="size-asc">Size (Smallest)</option>
+				<option value="group-asc">Group (A-Z)</option>
+				<option value="group-desc">Group (Z-A)</option>
 			</select>
 
 			{#if data.clients.length > 0}
@@ -252,7 +357,21 @@
 				{/if}
 			</div>
 		{:else}
-			<QueueTable items={data.queueItems} {actionInProgress} {handleAction} />
+			<QueueTable
+				items={data.queueItems}
+				{actionInProgress}
+				{handleAction}
+				selectable={showQueueCheckboxes}
+				selectedIds={selectedQueueIds}
+				onSelectChange={handleQueueItemSelectChange}
+				onSelectAllToggle={handleQueueSelectAllToggle}
+				sort={data.filters.sort ?? 'added-desc'}
+				onSort={(field) => {
+					const [f, d] = (data.filters.sort || 'added-desc').split('-');
+					const newDir = f === field ? (d === 'desc' ? 'asc' : 'desc') : 'desc';
+					updateFilters('sort', `${field}-${newDir}`);
+				}}
+			/>
 		{/if}
 	{/if}
 
@@ -286,6 +405,32 @@
 				<option value="all">All Media</option>
 				<option value="movie">Movies</option>
 				<option value="tv">TV Shows</option>
+			</select>
+
+			<!-- Mobile only: Sort by (desktop uses table header clicks) -->
+			<select
+				class="select-bordered select select-sm lg:hidden"
+				value={data.filters.historySort ?? 'date-desc'}
+				onchange={(e) => updateFilters('historySort', e.currentTarget.value)}
+			>
+				<option value="date-desc">Date (Newest)</option>
+				<option value="date-asc">Date (Oldest)</option>
+				<option value="grabbed-desc">Grabbed (Newest)</option>
+				<option value="grabbed-asc">Grabbed (Oldest)</option>
+				<option value="completed-desc">Completed (Newest)</option>
+				<option value="completed-asc">Completed (Oldest)</option>
+				<option value="title-asc">Title (A-Z)</option>
+				<option value="title-desc">Title (Z-A)</option>
+				<option value="media-asc">Media (Movies first)</option>
+				<option value="media-desc">Media (TV first)</option>
+				<option value="status-asc">Status (A-Z)</option>
+				<option value="status-desc">Status (Z-A)</option>
+				<option value="size-desc">Size (Largest)</option>
+				<option value="size-asc">Size (Smallest)</option>
+				<option value="group-asc">Group (A-Z)</option>
+				<option value="group-desc">Group (Z-A)</option>
+				<option value="indexer-asc">Indexer (A-Z)</option>
+				<option value="indexer-desc">Indexer (Z-A)</option>
 			</select>
 
 			{#if data.clients.length > 0}
@@ -323,7 +468,34 @@
 				{/if}
 			</div>
 		{:else}
-			<HistoryTable items={data.historyItems} />
+			<HistoryTable
+				items={data.historyItems}
+				sort={data.filters.historySort ?? 'date-desc'}
+				onSort={(field) => {
+					const [f, d] = (data.filters.historySort || 'date-desc').split('-');
+					const newDir = f === field ? (d === 'desc' ? 'asc' : 'desc') : 'desc';
+					updateFilters('historySort', `${field}-${newDir}`);
+				}}
+			/>
 		{/if}
 	{/if}
 </div>
+
+{#if activeTab === 'queue' && selectedQueueCount > 0}
+	<QueueBulkActionBar
+		selectedCount={selectedQueueCount}
+		loading={bulkLoading}
+		onRemove={() => (isBulkRemoveModalOpen = true)}
+		onClear={clearQueueSelection}
+	/>
+{/if}
+
+<QueueBulkRemoveModal
+	open={isBulkRemoveModalOpen}
+	selectedCount={selectedQueueCount}
+	selectedIds={[...selectedQueueIds]}
+	loading={bulkLoading}
+	onCancel={() => (isBulkRemoveModalOpen = false)}
+	onSubmitting={() => (bulkLoading = true)}
+	onDone={handleBulkRemoveDone}
+/>

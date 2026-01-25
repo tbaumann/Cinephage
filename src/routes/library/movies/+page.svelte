@@ -173,7 +173,9 @@
 		{ value: 'added-desc', label: 'Date Added (Newest)' },
 		{ value: 'added-asc', label: 'Date Added (Oldest)' },
 		{ value: 'year-desc', label: 'Year (Newest)' },
-		{ value: 'year-asc', label: 'Year (Oldest)' }
+		{ value: 'year-asc', label: 'Year (Oldest)' },
+		{ value: 'size-desc', label: 'Size (Largest)' },
+		{ value: 'size-asc', label: 'Size (Smallest)' }
 	];
 
 	const filterOptions = $derived([

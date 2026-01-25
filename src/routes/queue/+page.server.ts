@@ -44,6 +44,7 @@ export const load: PageServerLoad = async ({ url, setHeaders }) => {
 	const mediaType = url.searchParams.get('mediaType') as 'movie' | 'tv' | 'all' | null;
 	const clientId = url.searchParams.get('clientId');
 	const normalizedClientId = clientId && clientId !== 'all' ? clientId : null;
+	const sort = url.searchParams.get('sort') || 'added-desc';
 
 	// Parse history filters
 	const historyStatus = url.searchParams.get('historyStatus') as HistoryStatus | 'all' | null;
@@ -52,6 +53,7 @@ export const load: PageServerLoad = async ({ url, setHeaders }) => {
 		| 'tv'
 		| 'all'
 		| null;
+	const historySort = url.searchParams.get('historySort') || 'date-desc';
 
 	// Build queue where conditions
 	const queueConditions = [];
@@ -106,6 +108,7 @@ export const load: PageServerLoad = async ({ url, setHeaders }) => {
 			outputPath: row.outputPath,
 			importedPath: row.importedPath,
 			quality: row.quality as QueueItemWithMedia['quality'],
+			releaseGroup: row.releaseGroup ?? null,
 			addedAt: row.addedAt || new Date().toISOString(),
 			startedAt: row.startedAt,
 			completedAt: row.completedAt,
@@ -166,6 +169,47 @@ export const load: PageServerLoad = async ({ url, setHeaders }) => {
 
 		queueItems.push(item);
 	}
+
+	// Sort queue items
+	const [sortField, sortDir] = sort.split('-') as [string, 'asc' | 'desc'];
+	queueItems.sort((a, b) => {
+		let comparison = 0;
+		switch (sortField) {
+			case 'title':
+				comparison = (a.title || '').localeCompare(b.title || '');
+				break;
+			case 'size':
+				comparison = (a.size ?? 0) - (b.size ?? 0);
+				break;
+			case 'media':
+				// movie=0, tv=1; asc = movies first, desc = TV first
+				comparison = (a.movieId ? 0 : 1) - (b.movieId ? 0 : 1);
+				break;
+			case 'status':
+				comparison = (a.status || '').localeCompare(b.status || '');
+				break;
+			case 'progress':
+				comparison = a.progress - b.progress;
+				break;
+			case 'group':
+				comparison = (a.releaseGroup || '').localeCompare(b.releaseGroup || '');
+				break;
+			case 'speed':
+				comparison = (a.downloadSpeed || 0) - (b.downloadSpeed || 0);
+				break;
+			case 'eta':
+				comparison = (a.eta || 0) - (b.eta || 0);
+				break;
+			case 'client':
+				comparison = (a.downloadClient?.name || '').localeCompare(b.downloadClient?.name || '');
+				break;
+			case 'added':
+			default:
+				comparison = new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
+				break;
+		}
+		return sortDir === 'desc' ? -comparison : comparison;
+	});
 
 	// Build history where conditions
 	const historyConditions = [];
@@ -239,6 +283,51 @@ export const load: PageServerLoad = async ({ url, setHeaders }) => {
 		series: row.seriesId && seriesMap.has(row.seriesId) ? seriesMap.get(row.seriesId)! : null
 	}));
 
+	// Sort history items
+	const [historySortField, historySortDir] = historySort.split('-') as [string, 'asc' | 'desc'];
+	historyItems.sort((a, b) => {
+		let comparison = 0;
+		const dateA = new Date(
+			a.importedAt || a.completedAt || a.grabbedAt || a.createdAt || 0
+		).getTime();
+		const dateB = new Date(
+			b.importedAt || b.completedAt || b.grabbedAt || b.createdAt || 0
+		).getTime();
+		switch (historySortField) {
+			case 'title':
+				comparison = (a.title || '').localeCompare(b.title || '');
+				break;
+			case 'size':
+				comparison = (a.size ?? 0) - (b.size ?? 0);
+				break;
+			case 'media':
+				comparison = (a.movieId ? 0 : 1) - (b.movieId ? 0 : 1);
+				break;
+			case 'status':
+				comparison = (a.status || '').localeCompare(b.status || '');
+				break;
+			case 'group':
+				comparison = (a.releaseGroup || '').localeCompare(b.releaseGroup || '');
+				break;
+			case 'indexer':
+				comparison = (a.indexerName || '').localeCompare(b.indexerName || '');
+				break;
+			case 'grabbed':
+				comparison = new Date(a.grabbedAt || 0).getTime() - new Date(b.grabbedAt || 0).getTime();
+				break;
+			case 'completed':
+				comparison =
+					new Date(a.importedAt || a.completedAt || a.createdAt || 0).getTime() -
+					new Date(b.importedAt || b.completedAt || b.createdAt || 0).getTime();
+				break;
+			case 'date':
+			default:
+				comparison = dateA - dateB;
+				break;
+		}
+		return historySortDir === 'desc' ? -comparison : comparison;
+	});
+
 	// Get stats
 	const stats = await downloadMonitor.getStats();
 
@@ -257,8 +346,10 @@ export const load: PageServerLoad = async ({ url, setHeaders }) => {
 			status: statusParam || 'all',
 			mediaType: mediaType || 'all',
 			clientId: normalizedClientId,
+			sort,
 			historyStatus: historyStatus || 'all',
-			historyMediaType: historyMediaType || 'all'
+			historyMediaType: historyMediaType || 'all',
+			historySort
 		}
 	};
 };
@@ -370,6 +461,76 @@ export const actions: Actions = {
 			const message = error instanceof Error ? error.message : 'Unknown error';
 			return fail(500, { error: message });
 		}
+	},
+
+	removeBatch: async ({ request }) => {
+		const data = await request.formData();
+		const ids = data.getAll('ids').filter((v): v is string => typeof v === 'string');
+		const deleteFiles = data.get('deleteFiles') === 'true';
+
+		if (ids.length === 0) {
+			return fail(400, { error: 'No queue items selected' });
+		}
+
+		let removedCount = 0;
+		for (const id of ids) {
+			try {
+				const [queueItem] = await db
+					.select()
+					.from(downloadQueue)
+					.where(eq(downloadQueue.id, id))
+					.limit(1);
+
+				if (!queueItem) continue;
+
+				await db.insert(downloadHistory).values({
+					downloadClientId: queueItem.downloadClientId,
+					downloadId: queueItem.downloadId,
+					title: queueItem.title,
+					status: 'removed',
+					movieId: queueItem.movieId,
+					seriesId: queueItem.seriesId,
+					seasonNumber: queueItem.seasonNumber,
+					episodeIds: queueItem.episodeIds,
+					indexerId: queueItem.indexerId,
+					indexerName: queueItem.indexerName,
+					protocol: queueItem.protocol,
+					size: queueItem.size,
+					quality: queueItem.quality,
+					grabbedAt: queueItem.addedAt,
+					completedAt: queueItem.completedAt,
+					importedAt: null,
+					createdAt: new Date().toISOString()
+				});
+
+				if (queueItem.downloadClientId && queueItem.infoHash) {
+					try {
+						const clientInstance = await getDownloadClientManager().getClientInstance(
+							queueItem.downloadClientId
+						);
+						if (clientInstance) {
+							await clientInstance.removeDownload(queueItem.infoHash, deleteFiles);
+							logger.info('Removed torrent from download client', {
+								infoHash: queueItem.infoHash,
+								deleteFiles
+							});
+						}
+					} catch (err) {
+						logger.warn('Failed to remove from download client', {
+							error: err instanceof Error ? err.message : 'Unknown error',
+							infoHash: queueItem.infoHash
+						});
+					}
+				}
+
+				await db.delete(downloadQueue).where(eq(downloadQueue.id, id));
+				removedCount++;
+			} catch {
+				// Continue with next item
+			}
+		}
+
+		return { success: true, removedCount };
 	},
 
 	retry: async ({ request, fetch }) => {
