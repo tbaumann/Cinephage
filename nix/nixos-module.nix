@@ -134,7 +134,7 @@
               "LOG_DIR=/var/lib/cinephage/logs"
             ]
             ++ optionals cfg.ffmpeg.enable [
-              "FFPROBE_PATH=${cfg.ffmpeg.package}/bin/ffmpeg"
+              "FFPROBE_PATH=${cfg.ffmpeg.package}/bin/ffprobe"
             ]
             ++ mapAttrsToList (name: value: "${name}=${value}") cfg.environment;
 
