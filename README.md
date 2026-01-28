@@ -105,7 +105,6 @@ Dynamic content discovery with auto-add to library. Import from IMDb, Trakt, TMD
 - Jellyfin/Emby notifications
 - TRaSH Guides-compatible naming
 
-
 ---
 
 ## Quick Start
