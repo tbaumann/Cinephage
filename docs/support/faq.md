@@ -49,7 +49,7 @@ Yes. A free API key is required. Get one at [themoviedb.org/settings/api](https:
 
 ## Configuration
 
-### How do I change the port?
+### How do I change the port Cinephage listens on?
 
 **If using Docker Compose with `env_file`:** Edit `.env` and set `PORT=8080`
 
