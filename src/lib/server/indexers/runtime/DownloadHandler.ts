@@ -61,7 +61,7 @@ export class DownloadHandler {
 	async resolveDownload(downloadUrl: string, context: DownloadContext): Promise<DownloadResult> {
 		// Set up template variables
 		this.templateEngine.setSiteLink(context.baseUrl);
-		this.templateEngine.setConfig(context.settings);
+		this.templateEngine.setConfigWithDefaults(context.settings, this.definition.settings ?? []);
 		this.setDownloadUriVariables(downloadUrl);
 
 		const download = this.definition.download;

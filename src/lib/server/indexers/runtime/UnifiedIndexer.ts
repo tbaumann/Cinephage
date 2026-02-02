@@ -183,7 +183,7 @@ export class UnifiedIndexer implements IIndexer {
 		this.baseUrl = record.baseUrl || definition.links[0];
 		this.requestBuilder.setBaseUrl(this.baseUrl);
 		this.templateEngine.setSiteLink(this.baseUrl);
-		this.templateEngine.setConfig(settings);
+		this.templateEngine.setConfigWithDefaults(settings, definition.settings ?? []);
 
 		this.log = createChildLogger({ indexer: this.name, indexerId: this.id });
 
@@ -707,6 +707,87 @@ export class UnifiedIndexer implements IIndexer {
 					data: Buffer.from(url),
 					responseTimeMs: Date.now() - startTime
 				};
+			}
+
+			// Check if URL needs resolution (e.g., HTML page with selectors to extract magnet/torrent URL)
+			// This handles indexers like Torrent Downloads that return a details page URL instead of
+			// a direct torrent/magnet link. The DownloadHandler will fetch the page and extract the
+			// actual download URL using CSS selectors defined in the indexer YAML definition.
+			const needsRes = this.downloadHandler.needsResolution();
+			this.log.debug('Checking if download needs resolution', {
+				needsResolution: needsRes,
+				hasDownloadBlock: !!this.definition.download,
+				hasSelectors: !!this.definition.download?.selectors?.length,
+				selectorsCount: this.definition.download?.selectors?.length ?? 0
+			});
+			if (needsRes) {
+				const context = {
+					baseUrl: this.requestBuilder.getBaseUrl(),
+					cookies: this.cookies,
+					settings: this.settings
+				};
+
+				this.log.debug('Calling resolveDownload', {
+					url: url.substring(0, 80),
+					baseUrl: context.baseUrl,
+					hasSettings: Object.keys(context.settings).length > 0,
+					settingsKeys: Object.keys(context.settings)
+				});
+
+				const resolution = await this.downloadHandler.resolveDownload(url, context);
+
+				this.log.debug('Resolution result', {
+					success: resolution.success,
+					hasMagnetUrl: !!resolution.magnetUrl,
+					hasRequestUrl: !!resolution.request?.url,
+					error: resolution.error
+				});
+
+				if (resolution.success) {
+					// If resolution returned a magnet URL, use it directly
+					if (resolution.magnetUrl) {
+						this.log.debug('Resolved download URL to magnet', {
+							original: url.substring(0, 50),
+							magnetHash: resolution.magnetUrl.substring(0, 60)
+						});
+						const { extractInfoHashFromMagnet } =
+							await import('$lib/server/downloadClients/utils/torrentParser');
+						const infoHash = extractInfoHashFromMagnet(resolution.magnetUrl);
+						return {
+							success: true,
+							magnetUrl: resolution.magnetUrl,
+							infoHash,
+							responseTimeMs: Date.now() - startTime
+						};
+					}
+
+					// If resolution returned a different URL, use that for fetching
+					if (resolution.request?.url && resolution.request.url !== url) {
+						this.log.debug('Resolved download URL', {
+							original: url.substring(0, 50),
+							resolved: resolution.request.url.substring(0, 50)
+						});
+						url = resolution.request.url;
+
+						// Check if the resolved URL is a magnet link
+						if (url.startsWith('magnet:')) {
+							const { extractInfoHashFromMagnet } =
+								await import('$lib/server/downloadClients/utils/torrentParser');
+							const infoHash = extractInfoHashFromMagnet(url);
+							return {
+								success: true,
+								magnetUrl: url,
+								infoHash,
+								responseTimeMs: Date.now() - startTime
+							};
+						}
+					}
+				} else {
+					this.log.warn('Download URL resolution failed, trying direct fetch', {
+						error: resolution.error
+					});
+					// Continue with original URL as fallback
+				}
 			}
 
 			const headers: Record<string, string> = {
