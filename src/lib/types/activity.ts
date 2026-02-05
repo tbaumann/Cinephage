@@ -110,6 +110,7 @@ export interface ActivityFilters {
 	resolution?: string;
 	isUpgrade?: boolean;
 	downloadClientId?: string;
+	includeNoResults?: boolean;
 }
 
 /**

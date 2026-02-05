@@ -114,6 +114,7 @@
 		if (filters.releaseGroup) params.set('releaseGroup', filters.releaseGroup);
 		if (filters.resolution) params.set('resolution', filters.resolution);
 		if (filters.isUpgrade) params.set('isUpgrade', 'true');
+		if (filters.includeNoResults) params.set('includeNoResults', 'true');
 		if (filters.downloadClientId) params.set('downloadClientId', filters.downloadClientId);
 		if (filters.startDate) params.set('startDate', filters.startDate);
 		if (filters.endDate) params.set('endDate', filters.endDate);
@@ -206,6 +207,7 @@
 			if (filters.releaseGroup) apiUrl.searchParams.set('releaseGroup', filters.releaseGroup);
 			if (filters.resolution) apiUrl.searchParams.set('resolution', filters.resolution);
 			if (filters.isUpgrade) apiUrl.searchParams.set('isUpgrade', 'true');
+			if (filters.includeNoResults) apiUrl.searchParams.set('includeNoResults', 'true');
 			if (filters.downloadClientId)
 				apiUrl.searchParams.set('downloadClientId', filters.downloadClientId);
 			if (filters.startDate) apiUrl.searchParams.set('startDate', filters.startDate);

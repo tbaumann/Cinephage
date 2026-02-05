@@ -14,6 +14,7 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	const releaseGroup = url.searchParams.get('releaseGroup') || '';
 	const resolution = url.searchParams.get('resolution') || '';
 	const isUpgrade = url.searchParams.get('isUpgrade') === 'true';
+	const includeNoResults = url.searchParams.get('includeNoResults') === 'true';
 	const downloadClientId = url.searchParams.get('downloadClientId') || '';
 	const startDate = url.searchParams.get('startDate') || '';
 	const endDate = url.searchParams.get('endDate') || '';
@@ -28,6 +29,7 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 		releaseGroup: releaseGroup || undefined,
 		resolution: resolution || undefined,
 		isUpgrade: isUpgrade || undefined,
+		includeNoResults: includeNoResults || undefined,
 		downloadClientId: downloadClientId || undefined,
 		startDate: startDate || undefined,
 		endDate: endDate || undefined
@@ -46,6 +48,7 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	if (filters.releaseGroup) apiUrl.searchParams.set('releaseGroup', filters.releaseGroup);
 	if (filters.resolution) apiUrl.searchParams.set('resolution', filters.resolution);
 	if (filters.isUpgrade) apiUrl.searchParams.set('isUpgrade', 'true');
+	if (filters.includeNoResults) apiUrl.searchParams.set('includeNoResults', 'true');
 	if (filters.downloadClientId)
 		apiUrl.searchParams.set('downloadClientId', filters.downloadClientId);
 	if (filters.startDate) apiUrl.searchParams.set('startDate', filters.startDate);

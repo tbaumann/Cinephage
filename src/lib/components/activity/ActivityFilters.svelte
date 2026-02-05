@@ -32,6 +32,7 @@
 			filters.releaseGroup ||
 			filters.resolution ||
 			filters.isUpgrade ||
+			filters.includeNoResults ||
 			filters.startDate ||
 			filters.endDate ||
 			filters.search
@@ -337,6 +338,26 @@
 								onchange={(e) => updateFilter('isUpgrade', e.currentTarget.checked || undefined)}
 							/>
 							<span class="label-text text-sm">Show only upgrades</span>
+						</label>
+					</div>
+				</div>
+
+				<!-- Include No Results Toggle -->
+				<div class="space-y-2">
+					<label class="flex items-center gap-2 text-sm font-medium">
+						<Search class="h-4 w-4" />
+						Include 'No Results'
+					</label>
+					<div class="form-control">
+						<label class="label cursor-pointer justify-start gap-2">
+							<input
+								type="checkbox"
+								class="toggle toggle-primary toggle-sm"
+								checked={filters.includeNoResults || false}
+								onchange={(e) =>
+									updateFilter('includeNoResults', e.currentTarget.checked || undefined)}
+							/>
+							<span class="label-text text-sm">Show items with no releases found</span>
 						</label>
 					</div>
 				</div>

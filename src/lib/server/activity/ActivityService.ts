@@ -83,7 +83,7 @@ export class ActivityService {
 		const [activeDownloads, historyItems, monitoringItems] = await Promise.all([
 			this.fetchActiveDownloads(),
 			this.fetchHistoryItems(),
-			this.fetchMonitoringItems()
+			this.fetchMonitoringItems(filters.includeNoResults)
 		]);
 
 		// Batch fetch all media info
@@ -401,11 +401,17 @@ export class ActivityService {
 			.all();
 	}
 
-	private async fetchMonitoringItems(): Promise<MonitoringHistoryRecord[]> {
+	private async fetchMonitoringItems(
+		includeNoResults?: boolean
+	): Promise<MonitoringHistoryRecord[]> {
+		// Build status filter based on includeNoResults flag
+		// By default (undefined/false), exclude 'no_results' to reduce noise
+		const statuses = includeNoResults ? ['no_results', 'error', 'skipped'] : ['error', 'skipped'];
+
 		const items = await db
 			.select()
 			.from(monitoringHistory)
-			.where(inArray(monitoringHistory.status, ['no_results', 'error', 'skipped']))
+			.where(inArray(monitoringHistory.status, statuses))
 			.orderBy(desc(monitoringHistory.executedAt))
 			.limit(100)
 			.all();

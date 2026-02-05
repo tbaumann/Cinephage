@@ -19,6 +19,7 @@ import { eq } from 'drizzle-orm';
  * - releaseGroup: Filter by release group
  * - resolution: Filter by resolution (e.g., '1080p', '4K')
  * - isUpgrade: Filter for upgrades only ('true', 'false')
+ * - includeNoResults: Include 'no_results' activities ('true', 'false') - defaults to false
  * - downloadClientId: Filter by download client ID
  * - startDate: Filter activities after this date (ISO string)
  * - endDate: Filter activities before this date (ISO string)
@@ -38,6 +39,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		const releaseGroup = url.searchParams.get('releaseGroup') || undefined;
 		const resolution = url.searchParams.get('resolution') || undefined;
 		const isUpgradeParam = url.searchParams.get('isUpgrade');
+		const includeNoResultsParam = url.searchParams.get('includeNoResults');
 		const downloadClientId = url.searchParams.get('downloadClientId') || undefined;
 		const startDate = url.searchParams.get('startDate') || undefined;
 		const endDate = url.searchParams.get('endDate') || undefined;
@@ -58,6 +60,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			releaseGroup,
 			resolution,
 			isUpgrade: isUpgradeParam === 'true' ? true : isUpgradeParam === 'false' ? false : undefined,
+			includeNoResults: includeNoResultsParam === 'true' ? true : undefined,
 			downloadClientId,
 			startDate,
 			endDate
