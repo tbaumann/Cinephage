@@ -489,7 +489,7 @@ export class StalkerPortalClient {
 		// Response format: "ffmpeg http://actual-stream-url" or just the URL
 		const cmdStr = result.cmd.trim();
 		const parts = cmdStr.split(/\s+/);
-		let streamUrl = parts[parts.length - 1];
+		const streamUrl = parts[parts.length - 1];
 
 		if (!streamUrl || (!streamUrl.startsWith('http://') && !streamUrl.startsWith('https://'))) {
 			throw new Error(`create_link returned invalid URL: ${cmdStr}`);

@@ -346,7 +346,7 @@ export interface LiveTvChannel {
 
 	// Joined fields
 	accountName?: string;
-	categoryTitle?: string | null;
+	categoryTitle: string | null;
 }
 
 /**

@@ -46,7 +46,8 @@ function recordToChannel(record: LivetvChannelRecord): LiveTvChannel {
 		m3u: record.m3uData ?? undefined,
 		epgId: record.epgId,
 		createdAt: record.createdAt ?? new Date().toISOString(),
-		updatedAt: record.updatedAt ?? new Date().toISOString()
+		updatedAt: record.updatedAt ?? new Date().toISOString(),
+		categoryTitle: null
 	};
 }
 
