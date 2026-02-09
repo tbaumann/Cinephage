@@ -1039,18 +1039,18 @@ const TABLE_DEFINITIONS: string[] = [
 		"updated_at" text
 	)`,
 
-	// Live TV - User Channel Lineup
+	// Live TV - User Channel Lineup (legacy v1 - FKs removed to allow creation before referenced tables exist)
 	`CREATE TABLE IF NOT EXISTS "channel_lineup_items" (
 		"id" text PRIMARY KEY NOT NULL,
-		"account_id" text NOT NULL REFERENCES "livetv_accounts"("id") ON DELETE CASCADE,
-		"channel_id" text NOT NULL REFERENCES "livetv_channels"("id") ON DELETE CASCADE,
+		"account_id" text NOT NULL,
+		"channel_id" text NOT NULL,
 		"position" integer NOT NULL,
 		"channel_number" integer,
 		"custom_name" text,
 		"custom_logo" text,
 		"epg_id" text,
-		"epg_source_channel_id" text REFERENCES "livetv_channels"("id") ON DELETE SET NULL,
-		"category_id" text REFERENCES "channel_categories"("id") ON DELETE SET NULL,
+		"epg_source_channel_id" text,
+		"category_id" text,
 		"added_at" text,
 		"updated_at" text
 	)`,
@@ -1074,12 +1074,12 @@ const TABLE_DEFINITIONS: string[] = [
 		"updated_at" text
 	)`,
 
-	// Live TV - Channel Lineup Backups
+	// Live TV - Channel Lineup Backups (legacy v1 - FKs removed to allow creation before referenced tables exist)
 	`CREATE TABLE IF NOT EXISTS "channel_lineup_backups" (
 		"id" text PRIMARY KEY NOT NULL,
-		"lineup_item_id" text NOT NULL REFERENCES "channel_lineup_items"("id") ON DELETE CASCADE,
-		"account_id" text NOT NULL REFERENCES "livetv_accounts"("id") ON DELETE CASCADE,
-		"channel_id" text NOT NULL REFERENCES "livetv_channels"("id") ON DELETE CASCADE,
+		"lineup_item_id" text NOT NULL,
+		"account_id" text NOT NULL,
+		"channel_id" text NOT NULL,
 		"priority" integer NOT NULL,
 		"created_at" text,
 		"updated_at" text
