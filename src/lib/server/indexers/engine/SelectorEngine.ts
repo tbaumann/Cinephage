@@ -72,7 +72,7 @@ export class SelectorEngine {
 
 		// Get the element to select from
 		let selection = element;
-		let value: string | null = null;
+		let value: string | null;
 
 		if (selectorBlock.selector) {
 			// Expand template in selector
