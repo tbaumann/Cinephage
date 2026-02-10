@@ -56,7 +56,6 @@
 	let selectedMedia = $state<TmdbSearchResult | null>(null);
 	let previewResults = $state<PreviewResult[]>([]);
 	let previewError = $state('');
-	let defaultSeason = $state(1);
 
 	// Reset state when modal opens
 	$effect(() => {
@@ -95,9 +94,11 @@
 		});
 
 		// Find most common folder name
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const counts = new Map<string, number>();
 		for (const name of folderNames) {
-			counts.set(name, (counts.get(name) || 0) + 1);
+			const current = counts.get(name) ?? 0;
+			counts.set(name, current + 1);
 		}
 
 		let mostCommon = '';
@@ -273,7 +274,7 @@
 			Matching {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}:
 		</p>
 		<div class="mt-2 max-h-24 space-y-1 overflow-y-auto">
-			{#each selectedFiles.slice(0, 5) as file}
+			{#each selectedFiles.slice(0, 5) as file (file.id)}
 				<div class="flex items-center gap-2 text-xs">
 					{#if file.mediaType === 'movie'}
 						<Clapperboard class="h-3 w-3 text-primary" />
@@ -352,7 +353,7 @@
 					{:else if previewResults.length === 0}
 						<p class="py-4 text-center text-base-content/50">Click Preview to see match results</p>
 					{:else}
-						{#each previewResults as result}
+						{#each previewResults as result (result.fileId)}
 							<div
 								class="flex items-center justify-between rounded px-2 py-1.5 text-sm {result.status ===
 								'matched'

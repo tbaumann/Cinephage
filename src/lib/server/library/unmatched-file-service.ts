@@ -7,7 +7,7 @@
 
 import { db } from '$lib/server/db/index.js';
 import { unmatchedFiles, rootFolders } from '$lib/server/db/schema.js';
-import { eq, and, like, inArray, sql, desc, asc } from 'drizzle-orm';
+import { eq, and, sql, desc, asc } from 'drizzle-orm';
 import { dirname, basename } from 'path';
 import { logger } from '$lib/logging';
 import { mediaMatcherService } from './media-matcher.js';

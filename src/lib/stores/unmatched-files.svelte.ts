@@ -89,6 +89,7 @@ class UnmatchedFilesStore {
 		this.state.error = null;
 
 		try {
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
 			const params = new URLSearchParams();
 			params.set('page', String(this.state.pagination.page));
 			params.set('limit', String(this.state.pagination.limit));
@@ -151,7 +152,7 @@ class UnmatchedFilesStore {
 		this.state.files = [];
 
 		if (value) {
-			this.state.filters[key] = value as any;
+			(this.state.filters as Record<string, string | undefined>)[key] = value;
 		} else {
 			delete this.state.filters[key];
 		}

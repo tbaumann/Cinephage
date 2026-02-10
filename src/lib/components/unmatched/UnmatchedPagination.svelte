@@ -47,7 +47,7 @@
 			</button>
 
 			<!-- Page Numbers -->
-			{#each getPageNumbers() as pageNum}
+			{#each getPageNumbers() as pageNum (pageNum)}
 				<button
 					class="btn btn-sm {pageNum === pagination.page ? 'btn-primary' : ''}"
 					onclick={() => setPage(pageNum)}

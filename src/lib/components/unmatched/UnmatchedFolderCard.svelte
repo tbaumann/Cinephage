@@ -47,7 +47,7 @@
 								{folder.seasonFolders.length} season{folder.seasonFolders.length !== 1 ? 's' : ''}
 							</span>
 						{/if}
-						{#each folder.reasons as reason}
+						{#each folder.reasons as reason (reason)}
 							<span class="badge badge-sm badge-warning">{reason}</span>
 						{/each}
 					</div>
@@ -58,7 +58,7 @@
 					{/if}
 					{#if folder.seasonFolders && folder.seasonFolders.length > 0}
 						<div class="mt-2 flex flex-wrap gap-1">
-							{#each folder.seasonFolders as season}
+							{#each folder.seasonFolders as season (season.name)}
 								<span class="badge badge-outline badge-xs">
 									{season.name} ({season.fileCount})
 								</span>
@@ -88,7 +88,7 @@
 			<div class="mt-4 border-t border-base-300 pt-4">
 				<p class="mb-2 text-xs font-medium text-base-content/60">Files in this folder:</p>
 				<div class="space-y-1">
-					{#each folder.files as file}
+					{#each folder.files as file (file.id)}
 						<div class="flex items-center justify-between rounded bg-base-300/50 px-3 py-2 text-sm">
 							<span class="truncate">{file.path.split('/').pop()}</span>
 							<div class="flex items-center gap-2">

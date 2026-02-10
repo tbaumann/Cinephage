@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 	import { unmatchedFilesStore } from '$lib/stores/unmatched-files.svelte.js';
 	import {
 		UnmatchedFileCard,
@@ -32,7 +33,7 @@
 	let showCheckboxes = $state(false);
 
 	// Track expanded folders
-	let expandedFolders = $state<Set<string>>(new Set());
+	const expandedFolders = new SvelteSet<string>();
 
 	// Load data on mount
 	onMount(() => {
@@ -67,23 +68,23 @@
 
 	// Toggle folder expansion
 	function toggleFolder(folderPath: string) {
-		const newSet = new Set(expandedFolders);
-		if (newSet.has(folderPath)) {
-			newSet.delete(folderPath);
+		if (expandedFolders.has(folderPath)) {
+			expandedFolders.delete(folderPath);
 		} else {
-			newSet.add(folderPath);
+			expandedFolders.add(folderPath);
 		}
-		expandedFolders = newSet;
 	}
 
 	// Expand all folders
 	function expandAllFolders() {
-		expandedFolders = new Set(filteredFolders.map((f) => f.folderPath));
+		for (const folder of filteredFolders) {
+			expandedFolders.add(folder.folderPath);
+		}
 	}
 
 	// Collapse all folders
 	function collapseAllFolders() {
-		expandedFolders = new Set();
+		expandedFolders.clear();
 	}
 
 	// Handle file delete
@@ -102,7 +103,7 @@
 			toasts.success(deleteFromDisk ? 'File deleted from disk' : 'File removed from list');
 			showDeleteModal = false;
 			fileToDelete = null;
-		} catch (err) {
+		} catch (_err) {
 			toasts.error('Failed to delete file');
 		} finally {
 			isDeleting = false;
@@ -150,16 +151,10 @@
 	$effect(() => {
 		// This effect runs when filteredFolders changes
 		const validPaths = new Set(filteredFolders.map((f) => f.folderPath));
-		const newExpanded = new Set(expandedFolders);
-		let changed = false;
-		for (const path of newExpanded) {
+		for (const path of expandedFolders) {
 			if (!validPaths.has(path)) {
-				newExpanded.delete(path);
-				changed = true;
+				expandedFolders.delete(path);
 			}
-		}
-		if (changed) {
-			expandedFolders = newExpanded;
 		}
 	});
 </script>
