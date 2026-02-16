@@ -204,6 +204,10 @@ export const indexerStatus = sqliteTable(
 			.$type<Array<{ timestamp: string; message: string; requestUrl?: string }>>()
 			.default([]),
 
+		// Session cookies for persistent authentication (e.g., ncore 2FA sessions)
+		cookies: text('cookies', { mode: 'json' }).$type<Record<string, string>>(),
+		cookiesExpirationDate: text('cookies_expiration_date'),
+
 		// Timestamps
 		createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
 		updatedAt: text('updated_at').$defaultFn(() => new Date().toISOString())
