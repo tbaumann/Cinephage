@@ -113,7 +113,7 @@ interface HandshakeResponse {
 	random?: string;
 }
 
-interface ProfileAuthResponse {
+interface _ProfileAuthResponse {
 	id?: string;
 	fname?: string;
 }
@@ -203,7 +203,7 @@ function generateToken(): string {
  * Automatically skips retries for non-retryable StalkerProtocolError instances.
  * An optional `shouldRetry` predicate can further control retry behavior.
  */
-async function retryWithBackoff<T>(
+async function _retryWithBackoff<T>(
 	fn: () => Promise<T>,
 	config: RetryConfig = DEFAULT_RETRY_CONFIG,
 	shouldRetry?: (error: Error) => boolean
@@ -564,7 +564,7 @@ export class StalkerPortalClient {
 	/**
 	 * Create a stream link for a channel.
 	 * Returns a URL with a single-use play_token — each URL can only be used once.
-	 * Does NOT use retryWithBackoff because each create_link call returns a fresh
+	 * Does NOT use _retryWithBackoff because each create_link call returns a fresh
 	 * token; retrying the same request just wastes time on non-retryable errors.
 	 *
 	 * @param cmd - The channel CMD value (e.g., "ffmpeg http://...")
