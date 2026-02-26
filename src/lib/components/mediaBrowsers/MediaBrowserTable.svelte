@@ -99,7 +99,7 @@
 		<p class="mt-1 text-sm">Add a Jellyfin or Emby server to enable library notifications</p>
 	</div>
 {:else}
-	<div class="space-y-3 sm:hidden">
+	<div class="space-y-3 overflow-x-hidden sm:hidden">
 		<div class="rounded-lg border border-base-300/80 bg-base-100 px-3 py-2 shadow-sm">
 			<div class="flex items-center justify-between gap-2">
 				<label class="flex items-center gap-2 text-xs font-medium">
@@ -170,10 +170,7 @@
 				{#if server.serverName || server.serverVersion}
 					<div class="mb-2 flex flex-wrap items-center gap-1">
 						{#if server.serverName}
-							<span
-								class="badge max-w-[11rem] truncate badge-ghost badge-sm"
-								title={server.serverName}
-							>
+							<span class="badge max-w-44 truncate badge-ghost badge-sm" title={server.serverName}>
 								{getCompactServerInfoLabel(server.serverName)}
 							</span>
 						{/if}
@@ -355,7 +352,7 @@
 							{#if server.serverName}
 								<div class="flex flex-wrap items-center gap-1">
 									<span
-										class="badge max-w-[11rem] truncate badge-ghost badge-sm"
+										class="badge max-w-44 truncate badge-ghost badge-sm"
 										title={server.serverName}
 									>
 										{getCompactServerInfoLabel(server.serverName)}
